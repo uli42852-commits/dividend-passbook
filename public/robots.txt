@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://dividend-passbook.vercel.app/sitemap.xml
