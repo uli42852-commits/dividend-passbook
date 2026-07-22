@@ -122,6 +122,38 @@ const ARTICLES = [
       '월 현금 흐름이 목적이라면 유용한 도구지만, 자산을 불리는 성장 구간에서는 일반 배당성장 ETF와 비중을 나눠 담는 것이 균형 잡힌 접근입니다.',
     ],
   },
+  {
+    t: 'ISA 계좌로 배당 투자하면 세금이 얼마나 줄까',
+    p: [
+      'ISA(개인종합자산관리계좌)는 배당 투자자에게 강력한 세제 혜택을 주는 계좌입니다. 일반 계좌에서는 배당에 15.4%가 원천징수되지만, ISA 안에서 발생한 배당·이자 소득은 순이익 기준 200만원(서민형은 400만원)까지 비과세됩니다.',
+      '비과세 한도를 넘는 초과분에도 15.4% 대신 9.9% 분리과세가 적용돼 세율이 크게 낮아집니다. 3년 의무 보유 조건이 있지만, 배당은 원래 장기 투자가 기본이라 궁합이 좋습니다.',
+      '다만 ISA에서는 미국 주식 직접 투자가 안 되고 국내 상장 ETF를 통해야 합니다. 국내에 상장된 미국 배당 ETF(예: 미국 배당다우존스 추종 ETF)를 ISA에 담으면 세제 혜택과 미국 배당 노출을 동시에 얻을 수 있습니다.',
+    ],
+  },
+  {
+    t: '배당 재투자(DRIP)란? 복리로 배당을 굴리는 법',
+    p: [
+      '배당 재투자는 받은 배당금으로 같은 주식을 다시 사서 보유 주식을 늘리는 전략입니다. 영어로 DRIP(Dividend Reinvestment Plan)이라고 부릅니다. 주식이 늘면 다음 배당이 늘고, 그 배당으로 또 사면 눈덩이처럼 불어나는 복리 효과가 생깁니다.',
+      '예를 들어 배당수익률 4%짜리 종목을 배당 재투자하면서 20년 보유하면, 배당을 쓰지 않고 굴렸을 때와 아닐 때의 최종 자산 차이가 매우 커집니다. 시간이 길수록 복리의 위력이 세집니다.',
+      '한국 증권사 중 일부는 자동 배당 재투자 서비스를 제공하고, 없더라도 배당이 들어올 때마다 수동으로 재매수하면 됩니다. 당장 현금이 필요 없는 젊은 투자자일수록 배당 재투자가 유리합니다.',
+    ],
+  },
+  {
+    t: '미국 배당귀족·배당킹이란? 대표 종목 정리',
+    p: [
+      '배당귀족(Dividend Aristocrats)은 S&P500 기업 중 25년 이상 연속으로 배당을 늘려온 기업을 말합니다. 배당킹(Dividend Kings)은 그보다 더 엄격해서 50년 이상 연속 증배한 기업입니다. 불황과 위기를 여러 번 겪으면서도 배당을 깎지 않고 늘려왔다는 뜻이라 안정성의 상징으로 여겨집니다.',
+      '대표적인 배당킹으로는 코카콜라, 존슨앤드존슨, P&G, 3M 등이 있습니다. 이들은 성장성은 완만해도 배당 안정성이 뛰어나 은퇴 자금이나 장기 배당 포트폴리오의 뼈대로 많이 쓰입니다.',
+      '개별 종목을 고르기 부담스럽다면 배당귀족 지수를 추종하는 ETF에 투자하는 방법도 있습니다. 여러 배당귀족에 한 번에 분산 투자하는 효과를 얻을 수 있습니다.',
+    ],
+  },
+  {
+    t: '배당금으로 생활비 만들기 — 얼마를 모아야 할까',
+    p: [
+      '"배당금만으로 생활한다"는 목표를 세운다면, 필요한 원금은 목표 월 생활비와 배당수익률로 계산할 수 있습니다. 예를 들어 월 200만원(연 2,400만원)을 세전 배당으로 받고 싶고 포트폴리오 배당수익률이 4%라면, 필요한 원금은 6억원입니다. 세후 기준으로는 더 필요합니다.',
+      '수익률을 5~6%로 높이면 필요 원금은 줄지만, 그런 고배당 종목은 배당 삭감 위험이나 주가 하락 위험이 큰 경우가 많아 안정성이 떨어집니다. 무리한 고수익률 추종보다 4% 안팎의 견고한 포트폴리오가 현실적입니다.',
+      '한 번에 큰 원금을 만들기 어렵다면, 매달 적립하면서 배당을 재투자해 보유 주식을 꾸준히 늘려가는 것이 정석입니다. 이 계산기로 목표 월 배당에 도달하려면 지금 어떤 종목을 얼마나 담아야 하는지 시뮬레이션해 볼 수 있습니다.',
+    ],
+  },
 ];
 
 function Articles() {
@@ -254,6 +286,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [afterTax, setAfterTax] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [tab, setTab] = useState('calc'); // 'calc' | 'guide'
   const idRef = useRef(1);
   const formRef = useRef(null);
 
@@ -404,10 +437,27 @@ export default function App() {
         <div style={{ background: C.paper, borderRadius: '0 0 14px 14px', border: `1px solid ${C.line}`, borderTop: 'none', padding: '20px 16px 24px', boxSizing: 'border-box' }}>
 
           {/* 광고 */}
-          <div style={{ border: `1px dashed ${C.lineStrong}`, borderRadius: 8, padding: '9px 14px', textAlign: 'center', fontSize: 10.5, color: C.inkSoft, opacity: 0.6, marginBottom: 18 }}>
+          <div style={{ border: `1px dashed ${C.lineStrong}`, borderRadius: 8, padding: '9px 14px', textAlign: 'center', fontSize: 10.5, color: C.inkSoft, opacity: 0.6, marginBottom: 16 }}>
             광고 영역 · AdSense 승인 후 스크립트 삽입
           </div>
 
+          {/* ── 탭바 ── */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 18, background: 'rgba(34,49,42,0.05)', padding: 4, borderRadius: 10 }}>
+            {[{ v: 'calc', t: '계산기' }, { v: 'guide', t: '배당 공부방' }].map((o) => {
+              const on = tab === o.v;
+              return (
+                <button key={o.v} onClick={() => { setTab(o.v); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{
+                  flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  border: 'none', background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
+                }}>
+                  {o.t}
+                </button>
+              );
+            })}
+          </div>
+
+          {tab === 'calc' && (
+          <>
           {holdings.length === 0 ? (
             /* ── empty state ── */
             <Ruled style={{ padding: '34px 20px', textAlign: 'center', marginBottom: 18 }}>
@@ -618,11 +668,13 @@ export default function App() {
               <Plus size={15} /> {editingId !== null ? '수정 완료' : '통장에 기입하기'}
             </button>
           </form>
+          </>
+          )}
 
-          {/* ── guide articles ── */}
-          <Articles />
+          {/* ── guide articles (공부방 탭) ── */}
+          {tab === 'guide' && <Articles />}
 
-          {/* ── info folds ── */}
+          {/* ── info folds (항상 표시) ── */}
           <Fold icon={BookOpen} title="배당 투자 알아두면 좋은 것들">
             <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               <b>배당수익률</b>은 매입가 대비 연간 배당금 비율이에요. 이 통장의 수익률은 매입단가 기준이라 시가 기준과는 다를 수 있어요.
