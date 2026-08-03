@@ -5,14 +5,14 @@ import {
 
 /* ── design tokens ─────────────────────────────────────────── */
 const C = {
-  cover: '#1f3d2e',        // 통장 표지 딥그린
+  cover: '#1f3d2e',
   coverEdge: '#162d22',
-  foil: '#d9b36a',         // 금박
-  paper: '#f7f3e8',        // 내지
+  foil: '#d9b36a',
+  paper: '#f7f3e8',
   paperLine: 'rgba(31,61,46,0.10)',
   ink: '#22312a',
   inkSoft: '#5b6a61',
-  stamp: '#c03a2b',        // 도장 레드
+  stamp: '#c03a2b',
   brass: '#b8863c',
   cardBg: '#fdfaf1',
   line: 'rgba(34,49,42,0.12)',
@@ -22,8 +22,7 @@ const C = {
 const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const STORAGE_KEY = 'dividend-passbook-v1';
 const THIS_MONTH = new Date().getMonth() + 1;
-
-const TAX = { KRW: 0.154, USD: 0.15 }; // 원천징수 간이율
+const TAX = { KRW: 0.154, USD: 0.15 };
 
 function fmt(n, cur) {
   if (cur === 'USD') return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -296,8 +295,245 @@ function Articles() {
   );
 }
 
-/* ── small pieces ──────────────────────────────────────────── */
+/* ── 종목 분석 (팩트체크된 구조적 정보, 변하는 수치 제외) ────── */
+const STOCKS = [
+  {
+    ticker: 'SCHD', name: 'SCHD', typeTag: '배당성장형 ETF',
+    basic: '운용사 Charles Schwab · 상장 2011년 · 추종지수 다우존스 U.S. Dividend 100 · 배당 지급 3·6·9·12월(분기) · 운용보수 0.06%',
+    detail: [
+      '이 지수는 최소 10년 이상 연속 배당을 지급해온 미국 기업 중에서 현금흐름 대비 부채, 자기자본이익률(ROE), 배당수익률, 5년 배당성장률 등 재무 지표를 종합 평가해 종목을 고릅니다. 단순히 수익률이 높은 종목이 아니라 배당을 지속할 체력이 있는 기업을 거르는 방식이에요.',
+      '이런 방식 때문에 갓 상장했거나 주가가 급락해 수익률이 부풀려진 종목은 편입되기 어렵습니다. 담긴 기업들이 꾸준히 배당을 늘려온 이력이 있어 오래 보유할수록 매입가 대비 수익률이 올라가는 경향이 있어요.',
+      '2024년 10월 1대3 주식분할을 진행해 주당 가격이 낮아졌어요. 분할은 표시 가격만 바꾸는 것이라 실제 자산가치나 수익률에는 영향이 없습니다.',
+    ],
+    caution: [
+      '지수는 연 1회 리밸런싱을 하기 때문에 편입 종목과 비중이 매년 조금씩 바뀔 수 있어요.',
+      '운용보수 0.06%는 낮은 편이지만 매년 계속 부과되므로 장기 보유 시 누적 영향을 고려하세요.',
+      '최신 배당수익률·주가·편입 종목 비중은 슈왑 자산운용 공식 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'O', name: '리얼티인컴', typeTag: '월배당 리츠',
+    basic: '설립 1969년 · NYSE 상장 1994년 · 리츠(REIT, 부동산투자회사) · 배당 지급 매달 · S&P500 배당귀족 편입',
+    detail: [
+      '"The Monthly Dividend Company"라는 등록 상표를 쓸 만큼 월배당이 핵심 정체성이에요. 1994년 상장 이후 지금까지 월배당을 거른 적이 없고, 30년 넘게 매년 배당을 늘려온 이력으로 S&P500 배당귀족 지수에 편입돼 있어요.',
+      '리츠는 법적으로 과세대상 이익의 90% 이상을 배당으로 지급해야 하는 구조예요. 그래서 배당수익률이 일반 주식보다 높은 편이고, 배당성향도 원래부터 높게 나오는 게 정상입니다.',
+      '미국 전역과 유럽 여러 나라에 걸쳐 만 오천 개가 넘는 상업용 부동산에 장기 임대(net lease) 계약을 맺고, 그 임대수익을 배당 재원으로 씁니다. 특정 업종에 몰리지 않도록 임차인을 다양하게 분산하는 것이 전략이에요.',
+    ],
+    caution: [
+      '리츠는 부동산을 매입할 때 대출을 많이 쓰는 구조라 금리가 오르면 이자 부담이 커지고 채권 대비 매력이 줄어 주가가 눌리는 경향이 있어요.',
+      '배당성향이 90%를 넘는 건 리츠 특유의 정상적인 구조이지 배당이 위험하다는 신호는 아니에요. 다만 임대료가 밀리거나 공실이 늘면 배당 성장 속도가 느려질 수 있어요.',
+      '최신 배당수익률·주가·보유 부동산 현황은 리얼티인컴 투자자 페이지나 SEC 공시에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'JEPI', name: 'JEPI', typeTag: '고배당 커버드콜 ETF',
+    basic: '운용사 JP모건 · 출시 2020년 5월 · 커버드콜 전략형 액티브 ETF · 배당 지급 매달 · 운용보수 0.35%',
+    detail: [
+      'S&P500에 속한 대형주 위주로 실제 주식을 담고, 동시에 이 주식들에 대한 콜옵션을 파는 "커버드콜" 전략을 함께 써요. 콜옵션을 판 대가로 받는 프리미엄이 매달 나눠주는 분배금의 주요 재원 중 하나예요.',
+      '직접 옵션을 팔지 않고 ELN(주식연계채권)이라는 파생상품을 통해 이 전략을 구현해요. 일반 배당주와 달리 분배금의 상당 부분이 옵션 프리미엄 수익이라 세금 처리 방식도 일반 배당(적격배당)과 달라요.',
+      '출시 이후 월 분배를 거른 적이 없다고 알려져 있지만, 분배금 액수 자체는 시장 변동성에 따라 매달 오르내리는 구조예요. 변동성이 커지면 옵션 프리미엄이 늘어 분배금이 늘고, 시장이 조용하면 줄어들어요.',
+    ],
+    caution: [
+      '커버드콜 구조는 주가가 크게 오르는 구간에서 상승분을 다 누리지 못하고 일부를 포기하는 대신 분배금을 받는 방식이에요. 강한 상승장에서는 일반 지수 추종 ETF보다 총수익이 뒤처질 수 있어요.',
+      '분배금이 매달 다르게 나오기 때문에 정해진 금액이 꼭 필요한 용도로 쓰기엔 변동을 감안해야 해요.',
+      '최신 분배율·분배금 내역·보유종목은 JP모건 자산운용 공식 팩트시트에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'KO', name: '코카콜라', typeTag: '배당킹 개별주',
+    basic: '창립 1892년(음료 판매 1886년) · 배당킹(50년 이상 연속 증배) · 60년 이상 연속 배당 증액 · 배당 지급 보통 4·7·10·12월(분기)',
+    detail: [
+      '코카콜라는 60년 넘게 매년 배당을 늘려온 대표적인 배당킹 종목이에요. 워런 버핏이 1988년부터 지금까지 보유 중인 것으로 유명하고, 경기 침체·금융위기·팬데믹을 모두 거치면서도 배당을 깎은 적이 없어요.',
+      '200개 넘는 나라에 음료 원액을 판매하는 사업 구조라 특정 국가나 소비 트렌드 하나에 크게 흔들리지 않는 안정적인 현금흐름을 내요. 이런 안정성 덕분에 성장주보다 "배당이 끊길 걱정을 덜고 오래 들고 가는" 용도로 접근하는 경우가 많아요.',
+      '다만 이미 성숙한 대형 소비재 기업이라 주가나 실적의 고속 성장은 기대하기 어렵고, 최근 배당 증액 속도도 연 4~5% 안팎으로 완만한 편이에요.',
+    ],
+    caution: [
+      '연속 증배 연수는 집계 기준에 따라 출처마다 1~2년 차이가 나기도 해서 "60년 이상"이라는 표현이 가장 안전해요.',
+      '성숙 기업 특성상 배당 성장률이 SCHD 같은 배당성장형 ETF보다 낮을 수 있어요.',
+      '최신 배당수익률·주가·배당 발표 일정은 코카콜라 투자자 페이지(investors.coca-colacompany.com)에서 확인하세요.',
+    ],
+  },
+];
 
+function StockCards() {
+  return (
+    <section style={{ marginTop: 6, marginBottom: 14 }}>
+      <h2 style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 17, color: C.ink, margin: '0 0 4px' }}>
+        종목 분석
+      </h2>
+      <p style={{ fontSize: 11.5, color: C.inkSoft, margin: '0 0 12px' }}>
+        변하지 않는 구조적 사실 위주로 정리했어요. 배당수익률·주가는 매일 바뀌니 공식 출처에서 최신 수치를 확인하세요
+      </p>
+      {STOCKS.map((s) => (
+        <details key={s.ticker} style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 10, marginBottom: 8, padding: '0 16px', overflow: 'hidden' }}>
+          <summary style={{ padding: '13px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, listStyle: 'none' }}>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: C.ink }}>{s.name}</span>
+            <span style={{ fontSize: 10, color: C.inkSoft }}>{s.ticker}</span>
+            <span style={{ marginLeft: 'auto', fontSize: 9.5, fontWeight: 700, color: C.brass, border: `1px solid ${C.brass}`, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+              {s.typeTag}
+            </span>
+          </summary>
+          <div style={{ paddingBottom: 15 }}>
+            <p style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '2px 0 10px', fontFamily: "'IBM Plex Mono', monospace" }}>
+              {s.basic}
+            </p>
+            {s.detail.map((p, i) => (
+              <p key={i} style={{ fontSize: 12, lineHeight: 1.8, color: C.inkSoft, margin: '0 0 9px' }}>{p}</p>
+            ))}
+            <div style={{ marginTop: 10, padding: '10px 12px', background: 'rgba(192,58,43,0.06)', borderRadius: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.stamp, marginBottom: 5 }}>주의할 점</div>
+              {s.caution.map((c, i) => (
+                <p key={i} style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 5px' }}>· {c}</p>
+              ))}
+            </div>
+          </div>
+        </details>
+      ))}
+      <p style={{ fontSize: 10.5, color: C.inkSoft, opacity: 0.7, margin: '10px 0 0', lineHeight: 1.6 }}>
+        위 내용은 일반적인 정보 제공 목적이며 특정 종목에 대한 매수·매도 추천이 아니에요. 배당수익률·주가·최근 공시는 각 운용사·기업 공식 출처에서 확인하세요.
+      </p>
+    </section>
+  );
+}
+
+/* ── 유형 찾기 (3문항 점수제, 종목 추천 아닌 유형 안내) ───────── */
+const TYPE_QUESTIONS = [
+  {
+    q: '배당을 받는 가장 큰 목적은?',
+    options: [
+      { t: '매달 생활비처럼 받고 싶어요', score: { monthly: 2, highyield: 1 } },
+      { t: '오래 묻어두고 자산을 불리고 싶어요', score: { growth: 2, king: 1 } },
+      { t: '지금 당장 현금흐름이 최대한 많았으면 좋겠어요', score: { highyield: 2, monthly: 1 } },
+    ],
+  },
+  {
+    q: '주가가 출렁일 때 나는?',
+    options: [
+      { t: '변동성 있어도 수익률이 높으면 괜찮아요', score: { highyield: 2 } },
+      { t: '조금 흔들려도 배당이 꾸준히 늘면 안심돼요', score: { growth: 2, king: 1 } },
+      { t: '무엇보다 안정적인 게 최우선이에요', score: { king: 2, monthly: 1 } },
+    ],
+  },
+  {
+    q: '투자 관리 스타일은?',
+    options: [
+      { t: 'ETF처럼 여러 종목에 자동으로 분산되는 게 편해요', score: { growth: 2, highyield: 1 } },
+      { t: '익숙한 개별 우량 기업을 직접 골라 오래 갖고 가고 싶어요', score: { king: 2, monthly: 1 } },
+    ],
+  },
+];
+
+const TYPE_RESULTS = {
+  monthly: {
+    title: '월배당 안정형',
+    desc: '매달 꼬박꼬박 들어오는 현금 흐름을 가장 중요하게 여기는 유형이에요. 부동산을 임대하고 그 임대수익을 나눠주는 리츠(REITs)처럼, 법적으로 자주 배당을 지급하는 구조의 자산이 잘 맞아요.',
+    watch: '리츠는 대출을 많이 쓰는 구조라 금리 변화에 민감할 수 있어요. 배당수익률만 보지 말고 임대율·부채 수준도 함께 살펴보는 습관이 필요해요.',
+  },
+  growth: {
+    title: '배당성장형',
+    desc: '지금 당장의 수익률보다 시간이 지날수록 배당이 꾸준히 늘어나는 걸 중요하게 여기는 유형이에요. 10년 이상 배당을 늘려온 기업들을 모아놓은 배당성장 ETF 같은 자산이 잘 맞아요.',
+    watch: '초반 수익률이 낮게 느껴질 수 있어요. 배당 자체보다 "매년 얼마나 늘었는지" 성장률을 기준으로 판단하는 게 이 유형에는 더 중요해요.',
+  },
+  highyield: {
+    title: '고배당 현금흐름형',
+    desc: '지금 당장 높은 현금흐름이 중요한 유형이에요. 옵션 프리미엄 같은 부가 수익을 더해 분배율을 높이는 커버드콜형 ETF 같은 자산이 잘 맞아요.',
+    watch: '분배금이 시장 상황에 따라 매달 달라질 수 있고, 강한 상승장에서는 주가 상승분을 다 누리지 못할 수 있어요. 분배율만 보지 말고 구조를 이해하고 접근하는 게 중요해요.',
+  },
+  king: {
+    title: '배당킹 안정형',
+    desc: '오래 검증된 우량 기업을 직접 골라 배당이 끊길 걱정 없이 길게 들고 가는 걸 선호하는 유형이에요. 25년, 50년 넘게 배당을 늘려온 배당귀족·배당킹 개별 기업이 잘 맞아요.',
+    watch: '이미 성숙한 대형 기업이라 주가나 배당 성장 속도가 완만한 편이에요. 빠른 수익을 기대하기보다 긴 호흡으로 접근하는 유형이에요.',
+  },
+};
+
+function TypeFinder() {
+  const [answers, setAnswers] = useState([null, null, null]);
+  const [done, setDone] = useState(false);
+
+  const pick = (qi, oi) => {
+    const next = [...answers]; next[qi] = oi; setAnswers(next);
+  };
+
+  const canSee = answers.every((a) => a !== null);
+
+  const result = (() => {
+    const score = { monthly: 0, growth: 0, highyield: 0, king: 0 };
+    answers.forEach((oi, qi) => {
+      if (oi === null) return;
+      const s = TYPE_QUESTIONS[qi].options[oi].score;
+      Object.keys(s).forEach((k) => { score[k] += s[k]; });
+    });
+    let best = 'monthly'; let bestScore = -1;
+    Object.keys(score).forEach((k) => { if (score[k] > bestScore) { bestScore = score[k]; best = k; } });
+    return TYPE_RESULTS[best];
+  })();
+
+  const reset = () => { setAnswers([null, null, null]); setDone(false); };
+
+  return (
+    <section style={{ marginTop: 6, marginBottom: 14 }}>
+      <h2 style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 17, color: C.ink, margin: '0 0 4px' }}>
+        배당 유형 찾기
+      </h2>
+      <p style={{ fontSize: 11.5, color: C.inkSoft, margin: '0 0 14px' }}>
+        질문 3개에 답하면 나한테 맞는 배당 유형을 알려드려요
+      </p>
+
+      {!done && (
+        <>
+          {TYPE_QUESTIONS.map((q, qi) => (
+            <div key={qi} style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: C.ink, marginBottom: 8 }}>{qi + 1}. {q.q}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {q.options.map((o, oi) => {
+                  const on = answers[qi] === oi;
+                  return (
+                    <button key={oi} onClick={() => pick(qi, oi)} style={{
+                      textAlign: 'left', padding: '10px 12px', borderRadius: 8, fontSize: 12.5,
+                      border: `1px solid ${on ? C.cover : C.lineStrong}`,
+                      background: on ? C.cover : C.cardBg, color: on ? C.foil : C.ink,
+                      cursor: 'pointer', fontWeight: on ? 700 : 500,
+                    }}>
+                      {o.t}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+          <button disabled={!canSee} onClick={() => setDone(true)} style={{
+            width: '100%', padding: '12px', borderRadius: 8, fontSize: 14, fontWeight: 700,
+            cursor: canSee ? 'pointer' : 'default',
+            background: canSee ? C.cover : C.line, color: canSee ? C.foil : C.inkSoft,
+            border: 'none', marginTop: 4,
+          }}>
+            내 배당 유형 보기
+          </button>
+        </>
+      )}
+
+      {done && (
+        <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: 18 }}>
+          <div style={{ fontSize: 11, color: C.brass, fontWeight: 700, letterSpacing: 1, marginBottom: 6 }}>내 배당 유형</div>
+          <h3 style={{ margin: '0 0 10px', fontFamily: "'Noto Serif KR', serif", fontSize: 19, color: C.ink }}>{result.title}</h3>
+          <p style={{ fontSize: 12.5, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 12px' }}>{result.desc}</p>
+          <p style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 14px', padding: '10px 12px', background: 'rgba(192,58,43,0.06)', borderRadius: 8 }}>
+            <b style={{ color: C.stamp }}>주의할 점.</b> {result.watch}
+          </p>
+          <button onClick={reset} style={{ fontSize: 11.5, color: C.inkSoft, background: 'transparent', border: `1px solid ${C.lineStrong}`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer' }}>
+            다시 답하기
+          </button>
+        </div>
+      )}
+
+      <p style={{ fontSize: 10.5, color: C.inkSoft, opacity: 0.7, margin: '14px 0 0', lineHeight: 1.6 }}>
+        이 결과는 배당 유형을 이해하기 위한 참고용 안내이며 특정 종목이나 상품에 대한 매수 추천이 아니에요. '종목분석' 탭에서 각 유형에 해당하는 예시를 살펴보실 수 있어요.
+      </p>
+    </section>
+  );
+}
+
+/* ── small pieces ──────────────────────────────────────────── */
 function Ruled({ children, style }) {
   return (
     <div style={{
@@ -390,7 +626,6 @@ function Fold({ icon: Icon, title, children }) {
 }
 
 /* ── main app ─────────────────────────────────────────────── */
-
 export default function App() {
   const [holdings, setHoldings] = useState([]);
   const [form, setForm] = useState(emptyForm());
@@ -398,7 +633,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [afterTax, setAfterTax] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [tab, setTab] = useState('calc'); // 'calc' | 'guide'
+  const [tab, setTab] = useState('calc'); // 'calc' | 'find' | 'stocks' | 'guide'
   const idRef = useRef(1);
   const formRef = useRef(null);
 
@@ -419,7 +654,6 @@ export default function App() {
 
   const applyTax = (v, cur) => (afterTax ? v * (1 - TAX[cur]) : v);
 
-  /* form handlers */
   const toggleMonth = (m) => setForm((f) => ({
     ...f,
     months: f.months.includes(m) ? f.months.filter((x) => x !== m) : [...f.months, m].sort((a, b) => a - b),
@@ -454,6 +688,7 @@ export default function App() {
       name: form.name.trim(), ticker: form.ticker.trim(),
       shares, avgPrice, annualDiv, months: form.months, currency: form.currency,
     };
+
     let next;
     if (editingId !== null) {
       next = holdings.map((h) => (h.id === editingId ? { ...h, ...entry } : h));
@@ -475,7 +710,6 @@ export default function App() {
     idRef.current = 10;
   };
 
-  /* per-currency stats */
   const stats = ['KRW', 'USD']
     .map((cur) => {
       const items = holdings.filter((h) => (h.currency || 'KRW') === cur);
@@ -512,11 +746,11 @@ export default function App() {
         input::placeholder { color: rgba(34,49,42,0.35); }
         input:focus { outline: none; border-color: ${C.cover}; }
         button { font-family: inherit; }
+        summary { list-style: none; }
+        summary::-webkit-details-marker { display: none; }
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
       `}</style>
-
       <div style={{ width: '100%', maxWidth: 470 }}>
-
         {/* ── passbook cover ── */}
         <div style={{
           background: `linear-gradient(160deg, ${C.cover} 0%, #17301f 100%)`,
@@ -547,19 +781,17 @@ export default function App() {
 
         {/* ── paper body ── */}
         <div style={{ background: C.paper, borderRadius: '0 0 14px 14px', border: `1px solid ${C.line}`, borderTop: 'none', padding: '20px 16px 24px', boxSizing: 'border-box' }}>
-
-          {/* 광고 */}
           <div style={{ border: `1px dashed ${C.lineStrong}`, borderRadius: 8, padding: '9px 14px', textAlign: 'center', fontSize: 10.5, color: C.inkSoft, opacity: 0.6, marginBottom: 16 }}>
             광고 영역 · AdSense 승인 후 스크립트 삽입
           </div>
 
           {/* ── 탭바 ── */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 18, background: 'rgba(34,49,42,0.05)', padding: 4, borderRadius: 10 }}>
-            {[{ v: 'calc', t: '계산기' }, { v: 'guide', t: '배당 공부방' }].map((o) => {
+          <div style={{ display: 'flex', gap: 5, marginBottom: 18, background: 'rgba(34,49,42,0.05)', padding: 4, borderRadius: 10 }}>
+            {[{ v: 'calc', t: '계산기' }, { v: 'find', t: '유형찾기' }, { v: 'stocks', t: '종목분석' }, { v: 'guide', t: '공부방' }].map((o) => {
               const on = tab === o.v;
               return (
                 <button key={o.v} onClick={() => { setTab(o.v); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{
-                  flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
                   border: 'none', background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
                 }}>
                   {o.t}
@@ -569,224 +801,218 @@ export default function App() {
           </div>
 
           {tab === 'calc' && (
-          <>
-          {holdings.length === 0 ? (
-            /* ── empty state ── */
-            <Ruled style={{ padding: '34px 20px', textAlign: 'center', marginBottom: 18 }}>
-              <p style={{ margin: '0 0 6px', fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 17, color: C.ink }}>
-                첫 페이지가 비어 있어요
-              </p>
-              <p style={{ margin: '0 0 16px', fontSize: 12.5, color: C.inkSoft, lineHeight: 1.6 }}>
-                아래에서 보유 종목을 기입하면<br />이 자리에 배당 내역이 인쇄됩니다
-              </p>
-              <button onClick={loadSample} style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8,
-                border: `1px solid ${C.cover}`, background: 'transparent', color: C.cover,
-                fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
-              }}>
-                <Sparkles size={13} /> 샘플로 미리 체험하기
-              </button>
-            </Ruled>
-          ) : (
             <>
-              {/* ── 세전/세후 + 공유 ── */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <div style={{ display: 'flex', border: `1px solid ${C.lineStrong}`, borderRadius: 8, overflow: 'hidden' }}>
-                  {[{ v: false, t: '세전' }, { v: true, t: '세후' }].map((o) => (
-                    <button key={o.t} onClick={() => setAfterTax(o.v)} style={{
-                      padding: '7px 16px', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
-                      background: afterTax === o.v ? C.cover : 'transparent',
-                      color: afterTax === o.v ? C.foil : C.inkSoft,
+              {holdings.length === 0 ? (
+                <Ruled style={{ padding: '34px 20px', textAlign: 'center', marginBottom: 18 }}>
+                  <p style={{ margin: '0 0 6px', fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 17, color: C.ink }}>
+                    첫 페이지가 비어 있어요
+                  </p>
+                  <p style={{ margin: '0 0 16px', fontSize: 12.5, color: C.inkSoft, lineHeight: 1.6 }}>
+                    아래에서 보유 종목을 기입하면<br />이 자리에 배당 내역이 인쇄됩니다
+                  </p>
+                  <button onClick={loadSample} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8,
+                    border: `1px solid ${C.cover}`, background: 'transparent', color: C.cover,
+                    fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                  }}>
+                    <Sparkles size={13} /> 샘플로 미리 체험하기
+                  </button>
+                </Ruled>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                    <div style={{ display: 'flex', border: `1px solid ${C.lineStrong}`, borderRadius: 8, overflow: 'hidden' }}>
+                      {[{ v: false, t: '세전' }, { v: true, t: '세후' }].map((o) => (
+                        <button key={o.t} onClick={() => setAfterTax(o.v)} style={{
+                          padding: '7px 16px', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
+                          background: afterTax === o.v ? C.cover : 'transparent',
+                          color: afterTax === o.v ? C.foil : C.inkSoft,
+                        }}>
+                          {o.t}
+                        </button>
+                      ))}
+                    </div>
+                    <button onClick={copySummary} style={{
+                      display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8,
+                      border: `1px solid ${C.lineStrong}`, background: 'transparent',
+                      fontSize: 11.5, fontWeight: 600, color: copied ? C.cover : C.inkSoft, cursor: 'pointer',
                     }}>
-                      {o.t}
+                      {copied ? <Check size={12} /> : <Copy size={12} />}
+                      {copied ? '복사됨' : '요약 복사'}
                     </button>
-                  ))}
-                </div>
-                <button onClick={copySummary} style={{
-                  display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8,
-                  border: `1px solid ${C.lineStrong}`, background: 'transparent',
-                  fontSize: 11.5, fontWeight: 600, color: copied ? C.cover : C.inkSoft, cursor: 'pointer',
-                }}>
-                  {copied ? <Check size={12} /> : <Copy size={12} />}
-                  {copied ? '복사됨' : '요약 복사'}
-                </button>
-              </div>
-              {afterTax && (
-                <p style={{ margin: '0 0 14px', fontSize: 10.5, color: C.inkSoft, opacity: 0.8 }}>
-                  세후: 원화 15.4% · 달러 15% 원천징수 간이 적용 (참고용)
-                </p>
-              )}
-
-              {/* ── per-currency ledger blocks ── */}
-              {stats.map((s) => (
-                <div key={s.cur} style={{ marginBottom: 18 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
-                    <CurrencyBadge cur={s.cur} />
-                    <span style={{ fontSize: 12, fontWeight: 700, color: C.ink }}>
-                      {s.cur === 'USD' ? '달러 종목' : '원화 종목'}
-                    </span>
-                    <span style={{ flex: 1, height: 1, background: C.line }} />
-                    <span style={{ fontSize: 10.5, color: C.inkSoft }}>수익률 {s.yieldPct.toFixed(2)}%</span>
                   </div>
 
-                  <div style={{ display: 'flex', gap: 14, alignItems: 'center', background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '16px 16px' }}>
-                    <Stamp
-                      value={fmt(applyTax(s.annual, s.cur), s.cur)}
-                      sub={afterTax ? '세후' : '세전'}
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <Row k="월 평균" v={fmt(applyTax(s.annual / 12, s.cur), s.cur)} strong />
-                      <Row k={`이번 달 (${THIS_MONTH}월)`} v={fmt(applyTax(s.thisMonth, s.cur), s.cur)} hot={s.thisMonth > 0} />
-                      <Row k="투자 원금" v={fmt(s.principal, s.cur)} />
-                    </div>
-                  </div>
+                  {afterTax && (
+                    <p style={{ margin: '0 0 14px', fontSize: 10.5, color: C.inkSoft, opacity: 0.8 }}>
+                      세후: 원화 15.4% · 달러 15% 원천징수 간이 적용 (참고용)
+                    </p>
+                  )}
 
-                  <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '14px 14px 10px', marginTop: 10 }}>
-                    <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600, marginBottom: 10 }}>
-                      월별 배당 흐름 <span style={{ color: C.stamp }}>■</span> 이번 달
-                    </div>
-                    <Bars data={s.monthly.map((v) => applyTax(v, s.cur))} cur={s.cur} />
-                  </div>
-                </div>
-              ))}
-
-              {/* ── holdings ledger ── */}
-              <Ruled style={{ padding: '2px 14px', marginBottom: 18 }}>
-                {holdings.map((h, i) => {
-                  const cur = h.currency || 'KRW';
-                  const annual = h.shares * h.annualDiv;
-                  const paysNow = h.months.includes(THIS_MONTH);
-                  return (
-                    <div key={h.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '11px 0',
-                      borderBottom: i < holdings.length - 1 ? `1px solid ${C.line}` : 'none',
-                      background: editingId === h.id ? 'rgba(184,134,60,0.10)' : 'transparent',
-                    }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>{h.name}</span>
-                          {h.ticker && <span style={{ fontSize: 10.5, color: C.inkSoft }}>{h.ticker}</span>}
-                          <CurrencyBadge cur={cur} />
-                          {paysNow && (
-                            <span style={{ fontSize: 9.5, fontWeight: 700, color: C.stamp, border: `1px solid ${C.stamp}`, borderRadius: 999, padding: '1px 6px' }}>
-                              이번 달 지급
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: 11, color: C.inkSoft, marginTop: 3, fontFamily: "'IBM Plex Mono', monospace" }}>
-                          {h.shares}주 × {fmt(h.annualDiv, cur)} = 연 {fmt(applyTax(annual, cur), cur)}
+                  {stats.map((s) => (
+                    <div key={s.cur} style={{ marginBottom: 18 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
+                        <CurrencyBadge cur={s.cur} />
+                        <span style={{ fontSize: 12, fontWeight: 700, color: C.ink }}>
+                          {s.cur === 'USD' ? '달러 종목' : '원화 종목'}
+                        </span>
+                        <span style={{ flex: 1, height: 1, background: C.line }} />
+                        <span style={{ fontSize: 10.5, color: C.inkSoft }}>수익률 {s.yieldPct.toFixed(2)}%</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 14, alignItems: 'center', background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '16px 16px' }}>
+                        <Stamp
+                          value={fmt(applyTax(s.annual, s.cur), s.cur)}
+                          sub={afterTax ? '세후' : '세전'}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <Row k="월 평균" v={fmt(applyTax(s.annual / 12, s.cur), s.cur)} strong />
+                          <Row k={`이번 달 (${THIS_MONTH}월)`} v={fmt(applyTax(s.thisMonth, s.cur), s.cur)} hot={s.thisMonth > 0} />
+                          <Row k="투자 원금" v={fmt(s.principal, s.cur)} />
                         </div>
                       </div>
-                      <button onClick={() => startEdit(h)} aria-label="수정" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, color: C.cover, opacity: 0.75 }}>
-                        <Pencil size={14} />
-                      </button>
-                      <button onClick={() => remove(h.id)} aria-label="삭제" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, color: C.stamp, opacity: 0.7 }}>
-                        <Trash2 size={14} />
-                      </button>
+                      <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '14px 14px 10px', marginTop: 10 }}>
+                        <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600, marginBottom: 10 }}>
+                          월별 배당 흐름 <span style={{ color: C.stamp }}>■</span> 이번 달
+                        </div>
+                        <Bars data={s.monthly.map((v) => applyTax(v, s.cur))} cur={s.cur} />
+                      </div>
                     </div>
-                  );
-                })}
-              </Ruled>
+                  ))}
+
+                  <Ruled style={{ padding: '2px 14px', marginBottom: 18 }}>
+                    {holdings.map((h, i) => {
+                      const cur = h.currency || 'KRW';
+                      const annual = h.shares * h.annualDiv;
+                      const paysNow = h.months.includes(THIS_MONTH);
+                      return (
+                        <div key={h.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 8, padding: '11px 0',
+                          borderBottom: i < holdings.length - 1 ? `1px solid ${C.line}` : 'none',
+                          background: editingId === h.id ? 'rgba(184,134,60,0.10)' : 'transparent',
+                        }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>{h.name}</span>
+                              {h.ticker && <span style={{ fontSize: 10.5, color: C.inkSoft }}>{h.ticker}</span>}
+                              <CurrencyBadge cur={cur} />
+                              {paysNow && (
+                                <span style={{ fontSize: 9.5, fontWeight: 700, color: C.stamp, border: `1px solid ${C.stamp}`, borderRadius: 999, padding: '1px 6px' }}>
+                                  이번 달 지급
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 11, color: C.inkSoft, marginTop: 3, fontFamily: "'IBM Plex Mono', monospace" }}>
+                              {h.shares}주 × {fmt(h.annualDiv, cur)} = 연 {fmt(applyTax(annual, cur), cur)}
+                            </div>
+                          </div>
+                          <button onClick={() => startEdit(h)} aria-label="수정" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, color: C.cover, opacity: 0.75 }}>
+                            <Pencil size={14} />
+                          </button>
+                          <button onClick={() => remove(h.id)} aria-label="삭제" style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, color: C.stamp, opacity: 0.7 }}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </Ruled>
+                </>
+              )}
+
+              <form ref={formRef} onSubmit={submit} style={{
+                background: C.cardBg, border: `1.5px solid ${editingId !== null ? C.brass : C.line}`,
+                borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>
+                    {editingId !== null ? '기입 내용 수정' : '새 종목 기입'}
+                  </span>
+                  {editingId !== null && (
+                    <button type="button" onClick={cancelEdit} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.inkSoft, display: 'flex', alignItems: 'center', gap: 3, fontSize: 11 }}>
+                      <X size={12} /> 취소
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ flex: 2 }}>
+                    <label style={label}>종목명</label>
+                    <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="예: 코카콜라" style={input} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={label}>티커 (선택)</label>
+                    <input value={form.ticker} onChange={(e) => setForm({ ...form, ticker: e.target.value })} placeholder="KO" style={input} />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={label}>통화</label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {[{ v: 'KRW', t: '🇰🇷 원화' }, { v: 'USD', t: '🇺🇸 달러' }].map((o) => {
+                      const on = form.currency === o.v;
+                      return (
+                        <button type="button" key={o.v} onClick={() => setForm({ ...form, currency: o.v })} style={{
+                          flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                          border: `1px solid ${on ? C.cover : C.lineStrong}`,
+                          background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
+                        }}>
+                          {o.t}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={label}>보유수량 (주)</label>
+                    <input type="number" inputMode="decimal" min="0" value={form.shares} onChange={(e) => setForm({ ...form, shares: e.target.value })} placeholder="10" style={input} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={label}>매입단가 ({form.currency === 'USD' ? '$' : '원'})</label>
+                    <input type="number" inputMode="decimal" min="0" step={form.currency === 'USD' ? '0.01' : '1'} value={form.avgPrice} onChange={(e) => setForm({ ...form, avgPrice: e.target.value })} placeholder={form.currency === 'USD' ? '60.00' : '70000'} style={input} />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={label}>주당 연배당금 ({form.currency === 'USD' ? '$' : '원'})</label>
+                  <input type="number" inputMode="decimal" min="0" step={form.currency === 'USD' ? '0.01' : '1'} value={form.annualDiv} onChange={(e) => setForm({ ...form, annualDiv: e.target.value })} placeholder={form.currency === 'USD' ? '1.94' : '1500'} style={input} />
+                </div>
+
+                <div>
+                  <label style={label}>배당 지급월 (모두 선택)</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
+                    {MONTHS.map((m, i) => {
+                      const v = i + 1;
+                      const on = form.months.includes(v);
+                      return (
+                        <button type="button" key={v} onClick={() => toggleMonth(v)} style={{
+                          padding: '7px 0', borderRadius: 6, fontSize: 11.5, cursor: 'pointer', fontWeight: on ? 700 : 500,
+                          border: `1px solid ${on ? C.cover : C.lineStrong}`,
+                          background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
+                        }}>
+                          {m}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {error && <p style={{ fontSize: 12, color: C.stamp, margin: 0, fontWeight: 600 }}>{error}</p>}
+
+                <button type="submit" style={{
+                  padding: '12px', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                  background: C.cover, color: C.foil, border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}>
+                  <Plus size={15} /> {editingId !== null ? '수정 완료' : '통장에 기입하기'}
+                </button>
+              </form>
             </>
           )}
 
-          {/* ── entry form ── */}
-          <form ref={formRef} onSubmit={submit} style={{
-            background: C.cardBg, border: `1.5px solid ${editingId !== null ? C.brass : C.line}`,
-            borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>
-                {editingId !== null ? '기입 내용 수정' : '새 종목 기입'}
-              </span>
-              {editingId !== null && (
-                <button type="button" onClick={cancelEdit} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.inkSoft, display: 'flex', alignItems: 'center', gap: 3, fontSize: 11 }}>
-                  <X size={12} /> 취소
-                </button>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: 10 }}>
-              <div style={{ flex: 2 }}>
-                <label style={label}>종목명</label>
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="예: 코카콜라" style={input} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={label}>티커 (선택)</label>
-                <input value={form.ticker} onChange={(e) => setForm({ ...form, ticker: e.target.value })} placeholder="KO" style={input} />
-              </div>
-            </div>
-
-            <div>
-              <label style={label}>통화</label>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {[{ v: 'KRW', t: '🇰🇷 원화' }, { v: 'USD', t: '🇺🇸 달러' }].map((o) => {
-                  const on = form.currency === o.v;
-                  return (
-                    <button type="button" key={o.v} onClick={() => setForm({ ...form, currency: o.v })} style={{
-                      flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
-                      border: `1px solid ${on ? C.cover : C.lineStrong}`,
-                      background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
-                    }}>
-                      {o.t}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 10 }}>
-              <div style={{ flex: 1 }}>
-                <label style={label}>보유수량 (주)</label>
-                <input type="number" inputMode="decimal" min="0" value={form.shares} onChange={(e) => setForm({ ...form, shares: e.target.value })} placeholder="10" style={input} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={label}>매입단가 ({form.currency === 'USD' ? '$' : '원'})</label>
-                <input type="number" inputMode="decimal" min="0" step={form.currency === 'USD' ? '0.01' : '1'} value={form.avgPrice} onChange={(e) => setForm({ ...form, avgPrice: e.target.value })} placeholder={form.currency === 'USD' ? '60.00' : '70000'} style={input} />
-              </div>
-            </div>
-
-            <div>
-              <label style={label}>주당 연배당금 ({form.currency === 'USD' ? '$' : '원'})</label>
-              <input type="number" inputMode="decimal" min="0" step={form.currency === 'USD' ? '0.01' : '1'} value={form.annualDiv} onChange={(e) => setForm({ ...form, annualDiv: e.target.value })} placeholder={form.currency === 'USD' ? '1.94' : '1500'} style={input} />
-            </div>
-
-            <div>
-              <label style={label}>배당 지급월 (모두 선택)</label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
-                {MONTHS.map((m, i) => {
-                  const v = i + 1;
-                  const on = form.months.includes(v);
-                  return (
-                    <button type="button" key={v} onClick={() => toggleMonth(v)} style={{
-                      padding: '7px 0', borderRadius: 6, fontSize: 11.5, cursor: 'pointer', fontWeight: on ? 700 : 500,
-                      border: `1px solid ${on ? C.cover : C.lineStrong}`,
-                      background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
-                    }}>
-                      {m}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {error && <p style={{ fontSize: 12, color: C.stamp, margin: 0, fontWeight: 600 }}>{error}</p>}
-
-            <button type="submit" style={{
-              padding: '12px', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer',
-              background: C.cover, color: C.foil, border: 'none',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            }}>
-              <Plus size={15} /> {editingId !== null ? '수정 완료' : '통장에 기입하기'}
-            </button>
-          </form>
-          </>
-          )}
-
-          {/* ── guide articles (공부방 탭) ── */}
+          {tab === 'find' && <TypeFinder />}
+          {tab === 'stocks' && <StockCards />}
           {tab === 'guide' && <Articles />}
 
-          {/* ── info folds (항상 표시) ── */}
           <Fold icon={BookOpen} title="배당 투자 알아두면 좋은 것들">
             <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               <b>배당수익률</b>은 매입가 대비 연간 배당금 비율이에요. 이 통장의 수익률은 매입단가 기준이라 시가 기준과는 다를 수 있어요.
@@ -824,7 +1050,6 @@ export default function App() {
   );
 }
 
-/* summary row inside stamp card */
 function Row({ k, v, strong, hot }) {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px dashed ${C.line}` }}>
