@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Plus, Trash2, Pencil, X, BookOpen, Shield, Copy, Check, Sparkles,
+  Plus, Trash2, Pencil, X, BookOpen, Shield, Copy, Check, Sparkles, Star,
 } from 'lucide-react';
 
 /* ── design tokens ─────────────────────────────────────────── */
@@ -21,6 +21,7 @@ const C = {
 
 const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const STORAGE_KEY = 'dividend-passbook-v1';
+const FAVORITES_KEY = 'dividend-passbook-favorites-v1';
 const THIS_MONTH = new Date().getMonth() + 1;
 const TAX = { KRW: 0.154, USD: 0.15 };
 
@@ -297,15 +298,38 @@ const ARTICLES = [
   },
 ];
 
-function Articles() {
+function Articles({ deepId }) {
   const [q, setQ] = useState('');
+  const [copiedIdx, setCopiedIdx] = useState(null);
   const query = q.trim().toLowerCase();
+  const withIdx = ARTICLES.map((a, i) => ({ a, i }));
   const filtered = query
-    ? ARTICLES.filter((a) =>
+    ? withIdx.filter(({ a }) =>
         a.t.toLowerCase().includes(query) ||
         a.p.some((p) => p.toLowerCase().includes(query))
       )
-    : ARTICLES;
+    : withIdx;
+
+  useEffect(() => {
+    if (!deepId) return;
+    const t = setTimeout(() => {
+      const el = document.getElementById(`article-${deepId}`);
+      if (el) {
+        el.open = true;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 60);
+    return () => clearTimeout(t);
+  }, [deepId]);
+
+  const copyLink = (idx) => {
+    const url = `${window.location.origin}${window.location.pathname}#/guide/${idx}`;
+    try {
+      navigator.clipboard.writeText(url);
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx(null), 1600);
+    } catch (e) { /* clipboard unavailable */ }
+  };
 
   return (
     <section style={{ marginTop: 6, marginBottom: 14 }}>
@@ -344,8 +368,8 @@ function Articles() {
           {filtered.length > 0 ? `${filtered.length}개 글이 검색됐어요` : '검색 결과가 없어요. 다른 키워드로 찾아보세요'}
         </p>
       )}
-      {filtered.map((a, i) => (
-        <details key={i} style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 10, marginBottom: 8, padding: '0 16px', overflow: 'hidden' }}>
+      {filtered.map(({ a, i }) => (
+        <details key={i} id={`article-${i}`} style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 10, marginBottom: 8, padding: '0 16px', overflow: 'hidden' }}>
           <summary style={{ padding: '13px 0', fontSize: 12.5, fontWeight: 700, color: C.ink, cursor: 'pointer' }}>
             {a.t}
           </summary>
@@ -353,6 +377,17 @@ function Articles() {
             {a.p.map((para, j) => (
               <p key={j} style={{ fontSize: 12, lineHeight: 1.8, color: C.inkSoft, margin: j === 0 ? '2px 0 9px' : '0 0 9px' }}>{para}</p>
             ))}
+            <button
+              onClick={(e) => { e.preventDefault(); copyLink(i); }}
+              style={{
+                marginTop: 4, display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5,
+                color: copiedIdx === i ? C.cover : C.inkSoft, background: 'transparent',
+                border: `1px solid ${C.lineStrong}`, borderRadius: 7, padding: '6px 10px', cursor: 'pointer',
+              }}
+            >
+              {copiedIdx === i ? <Check size={11} /> : <Copy size={11} />}
+              {copiedIdx === i ? '링크 복사됨' : '이 글 링크 복사'}
+            </button>
           </div>
         </details>
       ))}
@@ -2523,16 +2558,86 @@ const STOCKS = [
   },
 ];
 
-function StockCards() {
+const PAGE_SIZE = 24;
+
+const STOCK_FILTERS = [
+  { v: 'all', t: '전체', test: () => true },
+  { v: 'kr', t: '한국', test: (s) => /^\d/.test(s.ticker) },
+  { v: 'reit', t: '리츠', test: (s) => /리츠|REIT/i.test(s.typeTag) },
+  { v: 'etf', t: 'ETF', test: (s) => /ETF/i.test(s.typeTag) },
+  { v: 'king', t: '배당킹·귀족', test: (s) => /배당킹|배당귀족/.test(s.typeTag) },
+  { v: 'cut', t: '배당삭감 사례', test: (s) => /삭감|중단|사례|리셋/.test(s.typeTag) },
+];
+
+function StockCards({ deepId }) {
   const [q, setQ] = useState('');
+  const [chip, setChip] = useState('all');
+  const [onlyFav, setOnlyFav] = useState(false);
+  const [favs, setFavs] = useState(() => new Set());
+  const [favLoaded, setFavLoaded] = useState(false);
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [copiedTicker, setCopiedTicker] = useState(null);
   const query = q.trim().toLowerCase();
-  const filtered = query
-    ? STOCKS.filter((s) =>
-        s.name.toLowerCase().includes(query) ||
-        s.ticker.toLowerCase().includes(query) ||
-        s.typeTag.toLowerCase().includes(query)
-      )
-    : STOCKS;
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(FAVORITES_KEY);
+      if (raw) setFavs(new Set(JSON.parse(raw)));
+    } catch (e) { /* first visit */ }
+    setFavLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!favLoaded) return;
+    try { localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favs])); } catch (e) { /* ignore */ }
+  }, [favs, favLoaded]);
+
+  const toggleFav = (ticker) => {
+    setFavs((prev) => {
+      const next = new Set(prev);
+      if (next.has(ticker)) next.delete(ticker); else next.add(ticker);
+      return next;
+    });
+  };
+
+  const chipTest = STOCK_FILTERS.find((f) => f.v === chip)?.test || (() => true);
+  const filtered = STOCKS.filter((s) => {
+    if (query && !(
+      s.name.toLowerCase().includes(query) ||
+      s.ticker.toLowerCase().includes(query) ||
+      s.typeTag.toLowerCase().includes(query)
+    )) return false;
+    if (!chipTest(s)) return false;
+    if (onlyFav && !favs.has(s.ticker)) return false;
+    return true;
+  });
+
+  useEffect(() => { setVisible(PAGE_SIZE); }, [query, chip, onlyFav]);
+
+  useEffect(() => {
+    if (!deepId) return;
+    const idx = filtered.findIndex((s) => s.ticker === deepId);
+    if (idx >= 0 && idx >= visible) setVisible(idx + PAGE_SIZE);
+    const t = setTimeout(() => {
+      const el = document.getElementById(`stock-${deepId}`);
+      if (el) {
+        el.open = true;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 60);
+    return () => clearTimeout(t);
+  }, [deepId, filtered, visible]);
+
+  const shown = filtered.slice(0, visible);
+
+  const copyLink = (ticker) => {
+    const url = `${window.location.origin}${window.location.pathname}#/stocks/${ticker}`;
+    try {
+      navigator.clipboard.writeText(url);
+      setCopiedTicker(ticker);
+      setTimeout(() => setCopiedTicker(null), 1600);
+    } catch (e) { /* clipboard unavailable */ }
+  };
 
   return (
     <section style={{ marginTop: 6, marginBottom: 14 }}>
@@ -2542,7 +2647,7 @@ function StockCards() {
       <p style={{ fontSize: 11.5, color: C.inkSoft, margin: '0 0 12px' }}>
         변하지 않는 구조적 사실 위주로 정리했어요. 배당수익률·주가는 매일 바뀌니 공식 출처에서 최신 수치를 확인하세요 (총 {STOCKS.length}종목)
       </p>
-      <div style={{ position: 'relative', marginBottom: 12 }}>
+      <div style={{ position: 'relative', marginBottom: 10 }}>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -2566,36 +2671,89 @@ function StockCards() {
           </button>
         )}
       </div>
-      {query && (
-        <p style={{ fontSize: 11, color: C.inkSoft, margin: '0 0 10px' }}>
-          {filtered.length > 0 ? `${filtered.length}개 종목이 검색됐어요` : '검색 결과가 없어요. 다른 키워드로 찾아보세요'}
-        </p>
-      )}
-      {filtered.map((s) => (
-        <details key={s.ticker} style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 10, marginBottom: 8, padding: '0 16px', overflow: 'hidden' }}>
-          <summary style={{ padding: '13px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, listStyle: 'none' }}>
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: C.ink }}>{s.name}</span>
-            <span style={{ fontSize: 10, color: C.inkSoft }}>{s.ticker}</span>
-            <span style={{ marginLeft: 'auto', fontSize: 9.5, fontWeight: 700, color: C.brass, border: `1px solid ${C.brass}`, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
-              {s.typeTag}
-            </span>
-          </summary>
-          <div style={{ paddingBottom: 15 }}>
-            <p style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '2px 0 10px', fontFamily: "'IBM Plex Mono', monospace" }}>
-              {s.basic}
-            </p>
-            {s.detail.map((p, i) => (
-              <p key={i} style={{ fontSize: 12, lineHeight: 1.8, color: C.inkSoft, margin: '0 0 9px' }}>{p}</p>
-            ))}
-            <div style={{ marginTop: 10, padding: '10px 12px', background: 'rgba(192,58,43,0.06)', borderRadius: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.stamp, marginBottom: 5 }}>주의할 점</div>
-              {s.caution.map((c, i) => (
-                <p key={i} style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 5px' }}>· {c}</p>
+      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, marginBottom: 4, WebkitOverflowScrolling: 'touch' }}>
+        {STOCK_FILTERS.map((f) => {
+          const on = chip === f.v;
+          return (
+            <button key={f.v} onClick={() => setChip(f.v)} style={{
+              flexShrink: 0, padding: '6px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              border: `1px solid ${on ? C.cover : C.lineStrong}`,
+              background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft, whiteSpace: 'nowrap',
+            }}>
+              {f.t}
+            </button>
+          );
+        })}
+        <button onClick={() => setOnlyFav((v) => !v)} style={{
+          flexShrink: 0, padding: '6px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 4,
+          border: `1px solid ${onlyFav ? C.brass : C.lineStrong}`,
+          background: onlyFav ? C.brass : 'transparent', color: onlyFav ? '#fff' : C.inkSoft, whiteSpace: 'nowrap',
+        }}>
+          <Star size={11} fill={onlyFav ? '#fff' : 'none'} /> 즐겨찾기{favs.size > 0 ? ` (${favs.size})` : ''}
+        </button>
+      </div>
+      <p style={{ fontSize: 11, color: C.inkSoft, margin: '6px 0 10px' }}>
+        {filtered.length}개 종목{query || chip !== 'all' || onlyFav ? ' 표시 중' : ''}
+        {filtered.length === 0 && ' · 다른 조건으로 찾아보세요'}
+      </p>
+      {shown.map((s) => {
+        const isFav = favs.has(s.ticker);
+        return (
+          <details key={s.ticker} id={`stock-${s.ticker}`} style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 10, marginBottom: 8, padding: '0 16px', overflow: 'hidden' }}>
+            <summary style={{ padding: '13px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, listStyle: 'none' }}>
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFav(s.ticker); }}
+                aria-label={isFav ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2, display: 'flex', flexShrink: 0 }}
+              >
+                <Star size={14} color={isFav ? C.brass : C.inkSoft} fill={isFav ? C.brass : 'none'} />
+              </button>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: C.ink }}>{s.name}</span>
+              <span style={{ fontSize: 10, color: C.inkSoft }}>{s.ticker}</span>
+              <span style={{ marginLeft: 'auto', fontSize: 9.5, fontWeight: 700, color: C.brass, border: `1px solid ${C.brass}`, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                {s.typeTag}
+              </span>
+            </summary>
+            <div style={{ paddingBottom: 15 }}>
+              <p style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '2px 0 10px', fontFamily: "'IBM Plex Mono', monospace" }}>
+                {s.basic}
+              </p>
+              {s.detail.map((p, i) => (
+                <p key={i} style={{ fontSize: 12, lineHeight: 1.8, color: C.inkSoft, margin: '0 0 9px' }}>{p}</p>
               ))}
+              <div style={{ marginTop: 10, padding: '10px 12px', background: 'rgba(192,58,43,0.06)', borderRadius: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.stamp, marginBottom: 5 }}>주의할 점</div>
+                {s.caution.map((c, i) => (
+                  <p key={i} style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 5px' }}>· {c}</p>
+                ))}
+              </div>
+              <button
+                onClick={(e) => { e.preventDefault(); copyLink(s.ticker); }}
+                style={{
+                  marginTop: 10, display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5,
+                  color: copiedTicker === s.ticker ? C.cover : C.inkSoft, background: 'transparent',
+                  border: `1px solid ${C.lineStrong}`, borderRadius: 7, padding: '6px 10px', cursor: 'pointer',
+                }}
+              >
+                {copiedTicker === s.ticker ? <Check size={11} /> : <Copy size={11} />}
+                {copiedTicker === s.ticker ? '링크 복사됨' : '이 종목 링크 복사'}
+              </button>
             </div>
-          </div>
-        </details>
-      ))}
+          </details>
+        );
+      })}
+      {visible < filtered.length && (
+        <button
+          onClick={() => setVisible((v) => v + PAGE_SIZE)}
+          style={{
+            width: '100%', padding: '12px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+            background: 'transparent', color: C.cover, border: `1px solid ${C.cover}`, marginTop: 4, marginBottom: 4,
+          }}
+        >
+          {filtered.length - visible}개 더보기 ({visible}/{filtered.length})
+        </button>
+      )}
       <p style={{ fontSize: 10.5, color: C.inkSoft, opacity: 0.7, margin: '10px 0 0', lineHeight: 1.6 }}>
         위 내용은 일반적인 정보 제공 목적이며 특정 종목에 대한 매수·매도 추천이 아니에요. 배당수익률·주가·최근 공시는 각 운용사·기업 공식 출처에서 확인하세요.
       </p>
@@ -2832,6 +2990,15 @@ function Fold({ icon: Icon, title, children }) {
   );
 }
 
+/* ── 해시 라우팅 (URL: #/calc, #/find, #/stocks, #/stocks/TICKER, #/guide, #/guide/N) ── */
+function parseHash() {
+  const raw = (typeof window !== 'undefined' ? window.location.hash : '').replace(/^#\/?/, '');
+  const [seg1, seg2] = raw.split('/').filter(Boolean);
+  const validTabs = ['calc', 'find', 'stocks', 'guide'];
+  const tab = validTabs.includes(seg1) ? seg1 : 'calc';
+  return { tab, deepId: seg2 || null };
+}
+
 /* ── main app ─────────────────────────────────────────────── */
 export default function App() {
   const [holdings, setHoldings] = useState([]);
@@ -2840,9 +3007,66 @@ export default function App() {
   const [error, setError] = useState('');
   const [afterTax, setAfterTax] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [tab, setTab] = useState('calc'); // 'calc' | 'find' | 'stocks' | 'guide'
+  const initial = typeof window !== 'undefined' ? parseHash() : { tab: 'calc', deepId: null };
+  const [tab, setTab] = useState(initial.tab); // 'calc' | 'find' | 'stocks' | 'guide'
+  const [deepId, setDeepId] = useState(initial.deepId);
   const idRef = useRef(1);
   const formRef = useRef(null);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const parsed = parseHash();
+      setTab(parsed.tab);
+      setDeepId(parsed.deepId);
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  const goTab = (v) => {
+    setTab(v);
+    setDeepId(null);
+    window.location.hash = `/${v}`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  /* ── schema.org 구조화 데이터 (FAQPage + WebSite) ── */
+  useEffect(() => {
+    const faqEntities = ARTICLES.map((a) => ({
+      '@type': 'Question',
+      name: a.t,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: a.p[0],
+      },
+    }));
+
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          name: '배당 통장',
+          url: 'https://dividend-passbook.vercel.app',
+          description: '보유한 국내·미국 배당주를 기입하면 연간 배당금, 월별 배당 흐름, 세후 실수령액까지 계산해주는 무료 배당 계산기',
+          inLanguage: 'ko-KR',
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: faqEntities,
+        },
+      ],
+    };
+
+    let script = document.getElementById('ld-json-main');
+    if (!script) {
+      script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.id = 'ld-json-main';
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(jsonLd);
+  }, []);
 
   useEffect(() => {
     try {
@@ -2997,7 +3221,7 @@ export default function App() {
             {[{ v: 'calc', t: '계산기' }, { v: 'find', t: '유형찾기' }, { v: 'stocks', t: '종목분석' }, { v: 'guide', t: '공부방' }].map((o) => {
               const on = tab === o.v;
               return (
-                <button key={o.v} onClick={() => { setTab(o.v); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{
+                <button key={o.v} onClick={() => goTab(o.v)} style={{
                   flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
                   border: 'none', background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
                 }}>
@@ -3217,8 +3441,8 @@ export default function App() {
           )}
 
           {tab === 'find' && <TypeFinder />}
-          {tab === 'stocks' && <StockCards />}
-          {tab === 'guide' && <Articles />}
+          {tab === 'stocks' && <StockCards deepId={deepId} />}
+          {tab === 'guide' && <Articles deepId={deepId} />}
 
           <Fold icon={BookOpen} title="배당 투자 알아두면 좋은 것들">
             <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
