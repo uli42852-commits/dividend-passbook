@@ -24,6 +24,7 @@ const STORAGE_KEY = 'dividend-passbook-v1';
 const FAVORITES_KEY = 'dividend-passbook-favorites-v1';
 const THIS_MONTH = new Date().getMonth() + 1;
 const TAX = { KRW: 0.154, USD: 0.15 };
+const FX_KRW_PER_USD = 1400; // 참고용 환산 환율, 실제 환율과 다를 수 있음
 
 function fmt(n, cur) {
   if (cur === 'USD') return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -3490,6 +3491,124 @@ const STOCKS = [
   },
 ];
 
+function classifyAssetClass(ticker) {
+  const s = STOCKS.find((x) => x.ticker === ticker);
+  if (!s) return 'unknown';
+  if (/ETF/i.test(s.typeTag)) return 'etf';
+  if (/리츠|REIT/i.test(s.typeTag)) return 'reit';
+  return 'stock';
+}
+
+function diagnosePortfolio(holdings) {
+  if (holdings.length === 0) return null;
+
+  const weighted = holdings.map((h) => {
+    const principal = h.shares * h.avgPrice;
+    const krwPrincipal = (h.currency || 'KRW') === 'USD' ? principal * FX_KRW_PER_USD : principal;
+    return { ...h, krwPrincipal };
+  });
+  const total = weighted.reduce((s, h) => s + h.krwPrincipal, 0) || 1;
+
+  // 1) 종목 집중도 (HHI)
+  const weights = weighted.map((h) => h.krwPrincipal / total);
+  const hhi = weights.reduce((s, w) => s + w * w, 0) * 10000;
+  const concentrationScore = Math.max(0, Math.min(100, 100 - hhi / 100));
+  const top = weighted.reduce((a, b) => (b.krwPrincipal > a.krwPrincipal ? b : a));
+  const topWeightPct = (top.krwPrincipal / total) * 100;
+
+  // 2) 월별 분산
+  const coveredMonths = new Set();
+  holdings.forEach((h) => h.months.forEach((m) => coveredMonths.add(m)));
+  const monthScore = (coveredMonths.size / 12) * 100;
+  const missingMonths = MONTHS.filter((_, i) => !coveredMonths.has(i + 1));
+
+  // 3) 통화 분산
+  const krw = weighted.filter((h) => (h.currency || 'KRW') === 'KRW').reduce((s, h) => s + h.krwPrincipal, 0);
+  const krwPct = (krw / total) * 100;
+  const singleCurrency = holdings.every((h) => (h.currency || 'KRW') === (holdings[0].currency || 'KRW'));
+  const currencyScore = singleCurrency ? 40 : 100 - Math.abs(krwPct - 50) * 2;
+
+  // 4) 자산군 분산 (종목분석 탭 데이터와 매칭)
+  const classWeights = { stock: 0, etf: 0, reit: 0, unknown: 0 };
+  weighted.forEach((h) => {
+    classWeights[classifyAssetClass(h.ticker)] += h.krwPrincipal / total;
+  });
+  const classHhi = Object.values(classWeights).reduce((s, w) => s + w * w, 0) * 10000;
+  const classScore = Math.max(0, Math.min(100, 100 - classHhi / 100));
+
+  const score = Math.round(
+    concentrationScore * 0.3 + monthScore * 0.3 + currencyScore * 0.15 + classScore * 0.25
+  );
+
+  let grade = 'D';
+  if (score >= 90) grade = 'S';
+  else if (score >= 78) grade = 'A';
+  else if (score >= 62) grade = 'B';
+  else if (score >= 45) grade = 'C';
+
+  const feedback = [];
+  if (topWeightPct > 35) {
+    feedback.push(`${top.name} 비중이 전체의 ${topWeightPct.toFixed(0)}%예요. 한 종목에 쏠려 있으면 그 종목에 이슈가 생겼을 때 타격이 커요.`);
+  }
+  if (missingMonths.length > 0) {
+    feedback.push(`${missingMonths.join(', ')}에는 배당이 없어요. 이 달에 지급하는 종목을 더하면 월배당 흐름이 완성돼요.`);
+  }
+  if (currencyScore < 60) {
+    feedback.push(`현재 ${krwPct > 50 ? '원화' : '달러'} 종목에 쏠려 있어요. 다른 통화 종목을 섞으면 환율 분산 효과를 얻을 수 있어요.`);
+  }
+  if (classWeights.stock > 0.7) {
+    feedback.push('개별 종목 비중이 높아요. ETF를 일부 섞으면 개별 기업 리스크를 줄일 수 있어요.');
+  }
+  if (feedback.length === 0) {
+    feedback.push('종목·통화·월별로 고르게 분산돼 있어요. 지금 구성을 잘 유지해보세요.');
+  }
+
+  return { score, grade, concentrationScore, monthScore, currencyScore, classScore, feedback };
+}
+
+function PortfolioDiagnosis({ holdings }) {
+  const d = diagnosePortfolio(holdings);
+  if (!d) return null;
+  const gradeColor = { S: C.brass, A: C.cover, B: '#8a7a3f', C: C.stamp, D: C.stamp }[d.grade];
+  return (
+    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: 16, marginBottom: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+        <div style={{
+          width: 62, height: 62, borderRadius: '50%', border: `2.5px solid ${gradeColor}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          fontFamily: "'Noto Serif KR', serif", fontWeight: 900, fontSize: 26, color: gradeColor,
+        }}>
+          {d.grade}
+        </div>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: C.ink }}>통장 분산도 진단</div>
+          <div style={{ fontSize: 20, fontWeight: 900, color: C.ink, fontFamily: "'IBM Plex Mono', monospace" }}>{d.score}점</div>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8, marginBottom: 12 }}>
+        {[
+          ['종목 집중도', d.concentrationScore],
+          ['월별 분산', d.monthScore],
+          ['통화 분산', d.currencyScore],
+          ['자산군 분산', d.classScore],
+        ].map(([label, v]) => (
+          <div key={label} style={{ fontSize: 10.5, color: C.inkSoft }}>
+            {label}
+            <div style={{ height: 5, borderRadius: 3, background: C.line, marginTop: 4, overflow: 'hidden' }}>
+              <div style={{ width: `${Math.max(0, Math.min(100, v))}%`, height: '100%', background: C.cover }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      {d.feedback.map((f, i) => (
+        <p key={i} style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 6px' }}>
+          · {f}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 const PAGE_SIZE = 24;
 
 // 문자 티커이지만 미국 종목이 아닌 것들(캐나다·영국·유럽·싱가포르·대만 등)
@@ -4257,6 +4376,8 @@ export default function App() {
                       </div>
                     </div>
                   ))}
+
+                  <PortfolioDiagnosis holdings={holdings} />
 
                   <Ruled style={{ padding: '2px 14px', marginBottom: 18 }}>
                     {holdings.map((h, i) => {
