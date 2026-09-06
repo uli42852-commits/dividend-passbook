@@ -3609,6 +3609,72 @@ function PortfolioDiagnosis({ holdings }) {
   );
 }
 
+const FINANCIAL_INCOME_THRESHOLD = 20000000; // 금융소득종합과세 기준선 (연 2,000만원)
+
+function calcTotalAnnualDividendKRW(holdings) {
+  return holdings.reduce((sum, h) => {
+    const annual = h.shares * h.annualDiv;
+    const krw = (h.currency || 'KRW') === 'USD' ? annual * FX_KRW_PER_USD : annual;
+    return sum + krw;
+  }, 0);
+}
+
+function TaxThresholdCheck({ holdings }) {
+  const [otherIncome, setOtherIncome] = useState('');
+  if (holdings.length === 0) return null;
+
+  const dividendKRW = calcTotalAnnualDividendKRW(holdings);
+  const otherNum = parseFloat(otherIncome) || 0;
+  const total = dividendKRW + otherNum;
+  const pct = Math.min(100, (total / FINANCIAL_INCOME_THRESHOLD) * 100);
+  const over = total >= FINANCIAL_INCOME_THRESHOLD;
+  const near = !over && total >= FINANCIAL_INCOME_THRESHOLD * 0.8;
+  const barColor = over ? C.stamp : near ? C.brass : C.cover;
+
+  const inputStyle = {
+    width: '100%', background: '#fffef9', borderRadius: 7, padding: '10px 11px', fontSize: 14,
+    color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box',
+    fontFamily: "'Noto Sans KR', sans-serif", marginBottom: 12,
+  };
+
+  return (
+    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: 16, marginBottom: 18 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: C.ink, marginBottom: 10 }}>
+        금융소득종합과세 체크
+      </div>
+      <label style={{ display: 'block', fontSize: 11, color: C.inkSoft, marginBottom: 5, fontWeight: 600 }}>
+        이 통장 밖의 다른 이자·배당소득 (연간, 세전, 원화)
+      </label>
+      <input
+        type="number" inputMode="decimal" min="0"
+        value={otherIncome}
+        onChange={(e) => setOtherIncome(e.target.value)}
+        placeholder="0"
+        style={inputStyle}
+      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 11, color: C.inkSoft, marginBottom: 6 }}>
+        <span>합산 금융소득 (세전, 원화 환산)</span>
+        <span style={{ fontWeight: 700, color: C.ink, fontFamily: "'IBM Plex Mono', monospace", fontSize: 13 }}>
+          {Math.round(total).toLocaleString('ko-KR')}원
+        </span>
+      </div>
+      <div style={{ height: 8, borderRadius: 4, background: C.line, overflow: 'hidden', marginBottom: 10 }}>
+        <div style={{ width: `${pct}%`, height: '100%', background: barColor, transition: 'width .3s ease' }} />
+      </div>
+      <p style={{ fontSize: 11.5, lineHeight: 1.7, color: over ? C.stamp : C.inkSoft, margin: 0, fontWeight: over ? 700 : 500 }}>
+        {over
+          ? '기준선(연 2,000만원)을 넘었어요. 다음 해 5월 종합소득세 신고 때 다른 소득과 합산해 신고해야 할 수 있어요.'
+          : near
+          ? '기준선(연 2,000만원)에 가까워지고 있어요. 배당이 더 늘어나면 종합과세 대상이 될 수 있어요.'
+          : '연 2,000만원 기준선까지 아직 여유가 있어요.'}
+      </p>
+      <p style={{ fontSize: 10, color: C.inkSoft, opacity: 0.7, marginTop: 8, lineHeight: 1.6 }}>
+        이미 원천징수된 세금은 기납부세액으로 인정돼요. 정확한 신고 여부는 세무 전문가와 상담하세요. 달러 배당은 참고 환율({FX_KRW_PER_USD.toLocaleString('ko-KR')}원/달러)로 환산한 근사치예요.
+      </p>
+    </div>
+  );
+}
+
 const PAGE_SIZE = 24;
 
 // 문자 티커이지만 미국 종목이 아닌 것들(캐나다·영국·유럽·싱가포르·대만 등)
@@ -3879,6 +3945,129 @@ const TYPE_RESULTS = {
   },
 };
 
+const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+
+function DividendCalendar({ holdings }) {
+  const [monthOffset, setMonthOffset] = useState(0);
+
+  const now = new Date();
+  const base = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+  const year = base.getFullYear();
+  const monthIdx = base.getMonth(); // 0-11
+  const monthNum = monthIdx + 1;
+  const isCurrentMonth = monthOffset === 0;
+
+  const payers = holdings.filter((h) => h.months.includes(monthNum));
+
+  const firstWeekday = new Date(year, monthIdx, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+  const todayDate = isCurrentMonth ? now.getDate() : -1;
+
+  const cells = [];
+  for (let i = 0; i < firstWeekday; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+
+  const navBtn = {
+    width: 30, height: 30, borderRadius: 8, border: `1px solid ${C.lineStrong}`, background: 'transparent',
+    color: C.ink, fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+  };
+
+  return (
+    <section style={{ marginTop: 6, marginBottom: 14 }}>
+      <h2 style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 17, color: C.ink, margin: '0 0 4px' }}>
+        배당 달력
+      </h2>
+      <p style={{ fontSize: 11.5, color: C.inkSoft, margin: '0 0 14px' }}>
+        보유 종목이 이 달에 배당을 지급하는지 한눈에 확인하세요
+      </p>
+
+      {holdings.length === 0 ? (
+        <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '28px 16px', textAlign: 'center' }}>
+          <p style={{ fontSize: 12.5, color: C.inkSoft, margin: 0, lineHeight: 1.7 }}>
+            계산기 탭에서 종목을 먼저 기입하면<br />이 달력에 배당 예정 종목이 표시돼요
+          </p>
+        </div>
+      ) : (
+        <>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: 12,
+          }}>
+            <button onClick={() => setMonthOffset((v) => v - 1)} aria-label="이전 달" style={navBtn}>‹</button>
+            <div style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 15, color: C.ink }}>
+              {year}년 {monthNum}월
+            </div>
+            <button onClick={() => setMonthOffset((v) => v + 1)} aria-label="다음 달" style={navBtn}>›</button>
+          </div>
+
+          <div style={{
+            background: payers.length > 0 ? 'rgba(192,58,43,0.06)' : C.cardBg,
+            border: `1px solid ${payers.length > 0 ? 'rgba(192,58,43,0.25)' : C.line}`,
+            borderRadius: 10, padding: '12px 14px', marginBottom: 12,
+          }}>
+            {payers.length > 0 ? (
+              <>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.stamp, marginBottom: 7 }}>
+                  이 달 배당 예정 · {payers.length}종목
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {payers.map((h) => (
+                    <span key={h.id} style={{
+                      fontSize: 11, fontWeight: 700, color: C.ink, background: C.cardBg,
+                      border: `1px solid ${C.lineStrong}`, borderRadius: 999, padding: '4px 10px',
+                    }}>
+                      {h.name}{h.ticker ? ` · ${h.ticker}` : ''}
+                    </span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p style={{ fontSize: 11.5, color: C.inkSoft, margin: 0 }}>이 달엔 예정된 배당이 없어요.</p>
+            )}
+          </div>
+
+          <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '12px 10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 6 }}>
+              {WEEKDAY_LABELS.map((w) => (
+                <div key={w} style={{ textAlign: 'center', fontSize: 10.5, fontWeight: 700, color: C.inkSoft }}>{w}</div>
+              ))}
+            </div>
+            {weeks.map((week, wi) => (
+              <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+                {week.map((d, di) => {
+                  const isToday = d === todayDate;
+                  return (
+                    <div key={di} style={{
+                      textAlign: 'center', padding: '7px 0', fontSize: 11.5,
+                      color: d === null ? 'transparent' : (isToday ? C.foil : C.ink),
+                      fontWeight: isToday ? 700 : 500,
+                    }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        width: 22, height: 22, borderRadius: '50%',
+                        background: isToday ? C.cover : 'transparent',
+                      }}>
+                        {d ?? '·'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          <p style={{ fontSize: 10.5, color: C.inkSoft, opacity: 0.7, margin: '10px 0 0', lineHeight: 1.6 }}>
+            정확한 지급일(며칠)은 종목마다 달라요. 이 달력은 "몇 월에 배당이 있는지"만 알려드리며, 정확한 배당락일·지급일은 각 기업 IR이나 증권사 앱에서 확인하세요.
+          </p>
+        </>
+      )}
+    </section>
+  );
+}
+
 function TypeFinder() {
   const [answers, setAnswers] = useState([null, null, null]);
   const [done, setDone] = useState(false);
@@ -4062,9 +4251,21 @@ function Fold({ icon: Icon, title, children }) {
 function parseHash() {
   const raw = (typeof window !== 'undefined' ? window.location.hash : '').replace(/^#\/?/, '');
   const [seg1, seg2] = raw.split('/').filter(Boolean);
-  const validTabs = ['calc', 'find', 'stocks', 'guide'];
-  const tab = validTabs.includes(seg1) ? seg1 : 'calc';
+  const validTabs = ['calc', 'calendar', 'find', 'stocks', 'guide'];
+  const tab = validTabs.includes(seg1) ? seg1 : null; // null = URL에 명시된 탭 없음
   return { tab, deepId: seg2 || null };
+}
+
+function hasSavedHoldings() {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    return Array.isArray(d) && d.length > 0;
+  } catch (e) {
+    return false;
+  }
 }
 
 /* ── main app ─────────────────────────────────────────────── */
@@ -4075,8 +4276,9 @@ export default function App() {
   const [error, setError] = useState('');
   const [afterTax, setAfterTax] = useState(false);
   const [copied, setCopied] = useState(false);
-  const initial = typeof window !== 'undefined' ? parseHash() : { tab: 'calc', deepId: null };
-  const [tab, setTab] = useState(initial.tab); // 'calc' | 'find' | 'stocks' | 'guide'
+  const initial = typeof window !== 'undefined' ? parseHash() : { tab: null, deepId: null };
+  const initialTab = initial.tab || (hasSavedHoldings() ? 'calc' : 'guide');
+  const [tab, setTab] = useState(initialTab); // 'calc' | 'calendar' | 'find' | 'stocks' | 'guide'
   const [deepId, setDeepId] = useState(initial.deepId);
   const idRef = useRef(1);
   const formRef = useRef(null);
@@ -4084,7 +4286,7 @@ export default function App() {
   useEffect(() => {
     const onHashChange = () => {
       const parsed = parseHash();
-      setTab(parsed.tab);
+      setTab(parsed.tab || (hasSavedHoldings() ? 'calc' : 'guide'));
       setDeepId(parsed.deepId);
     };
     window.addEventListener('hashchange', onHashChange);
@@ -4286,7 +4488,7 @@ export default function App() {
 
           {/* ── 탭바 ── */}
           <div style={{ display: 'flex', gap: 5, marginBottom: 18, background: 'rgba(34,49,42,0.05)', padding: 4, borderRadius: 10 }}>
-            {[{ v: 'calc', t: '계산기' }, { v: 'find', t: '유형찾기' }, { v: 'stocks', t: '종목분석' }, { v: 'guide', t: '공부방' }].map((o) => {
+            {[{ v: 'calc', t: '계산기' }, { v: 'calendar', t: '달력' }, { v: 'find', t: '유형찾기' }, { v: 'stocks', t: '종목분석' }, { v: 'guide', t: '공부방' }].map((o) => {
               const on = tab === o.v;
               return (
                 <button key={o.v} onClick={() => goTab(o.v)} style={{
@@ -4378,6 +4580,8 @@ export default function App() {
                   ))}
 
                   <PortfolioDiagnosis holdings={holdings} />
+
+                  <TaxThresholdCheck holdings={holdings} />
 
                   <Ruled style={{ padding: '2px 14px', marginBottom: 18 }}>
                     {holdings.map((h, i) => {
@@ -4510,6 +4714,7 @@ export default function App() {
             </>
           )}
 
+          {tab === 'calendar' && <DividendCalendar holdings={holdings} />}
           {tab === 'find' && <TypeFinder />}
           {tab === 'stocks' && <StockCards deepId={deepId} />}
           {tab === 'guide' && <Articles deepId={deepId} />}
