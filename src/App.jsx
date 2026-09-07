@@ -1,22 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Plus, Trash2, Pencil, X, BookOpen, Shield, Copy, Check, Sparkles, Star,
+  Calculator, CalendarDays, Compass, LineChart, Sun, Moon, Download, Upload, Info,
 } from 'lucide-react';
 
-/* ── design tokens ─────────────────────────────────────────── */
+/* ── design tokens (CSS 변수로 연결 — prefers-color-scheme: dark 대응) ── */
 const C = {
-  cover: '#1f3d2e',
-  coverEdge: '#162d22',
-  foil: '#d9b36a',
-  paper: '#f7f3e8',
-  paperLine: 'rgba(31,61,46,0.10)',
-  ink: '#22312a',
-  inkSoft: '#5b6a61',
-  stamp: '#c03a2b',
-  brass: '#b8863c',
-  cardBg: '#fdfaf1',
-  line: 'rgba(34,49,42,0.12)',
-  lineStrong: 'rgba(34,49,42,0.24)',
+  cover: 'var(--pb-cover)',
+  coverEdge: 'var(--pb-cover-edge)',
+  foil: 'var(--pb-foil)',
+  paper: 'var(--pb-paper)',
+  paperLine: 'var(--pb-paper-line)',
+  ink: 'var(--pb-ink)',
+  inkSoft: 'var(--pb-ink-soft)',
+  stamp: 'var(--pb-stamp)',
+  brass: 'var(--pb-brass)',
+  cardBg: 'var(--pb-card-bg)',
+  line: 'var(--pb-line)',
+  lineStrong: 'var(--pb-line-strong)',
+  etf: 'var(--pb-etf)',
+  reit: 'var(--pb-reit)',
 };
 
 const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
@@ -417,7 +420,34 @@ const ARTICLES = [
       '배당금을 받을 때도 달러로 입금된 뒤 필요할 때 원화로 환전하게 되는데, 이때도 환전 수수료가 발생합니다. 여러 번에 걸쳐 조금씩 환전하기보다, 어느 정도 금액이 모였을 때 한 번에 환전하는 것이 수수료 부담을 줄이는 데 도움이 될 수 있습니다.',
     ],
   },
+  {
+    t: '배당 ETF 순자산(AUM) 규모, 왜 중요할까',
+    p: [
+      '순자산(AUM, 운용자산)은 그 ETF에 실제로 투자된 돈의 총액을 말해요. 같은 지수를 추종하는 ETF가 여러 개 있을 때, 순자산이 큰 쪽이 보통 거래량도 많아서 사고팔 때 가격 차이(호가 스프레드)가 좁고, 원하는 시점에 원하는 가격으로 체결되기 쉬운 편이에요.',
+      '반대로 순자산이 지나치게 작은 ETF는 운용사가 수익성이 없다고 판단해 상장폐지(청산)를 결정하는 경우가 있어요. 청산되면 보유하던 자산을 그 시점 가치로 현금화해서 돌려받게 되는데, 원하는 시점이 아닌데 강제로 매도되는 셈이라 세금이나 재투자 계획에 번거로움이 생길 수 있어요.',
+      '다만 순자산이 크다고 무조건 좋은 ETF는 아니에요. 총보수(운용수수료), 추종오차(지수와 실제 수익률의 차이), 괴리율(시장가격과 순자산가치의 차이)도 함께 봐야 진짜 비교가 돼요. 이 계산기의 종목분석 탭에 있는 국내 상장 SCHD류 ETF들(ACE·TIGER·KODEX·SOL)처럼 같은 지수를 추종하는 상품이 여럿 있다면, 순자산·총보수·괴리율을 나란히 놓고 비교해보는 습관이 도움이 돼요.',
+    ],
+  },
+  {
+    t: '배당주와 성장주, 기업 생애주기로 보면 어떻게 다를까',
+    p: [
+      '기업은 보통 창업기 → 고성장기 → 성숙기 → 쇠퇴기의 생애주기를 거친다고 이야기해요. 창업기·고성장기에는 벌어들인 돈을 배당으로 나누기보다 사업 확장에 재투자하는 것이 더 효율적인 경우가 많아서, 이 시기 기업은 배당을 아예 지급하지 않는 경우가 흔해요.',
+      '기업이 성숙기에 들어서면 신사업에 투자해도 예전만큼 폭발적인 성장을 만들기 어려워지고, 대신 안정적으로 남는 현금(잉여현금흐름)이 쌓여요. 이 잉여현금을 주주에게 돌려주기 시작하는 시점이 바로 그 기업이 "배당을 시작하는" 시점인 경우가 많아요.',
+      '이 계산기 종목분석 탭에 있는 알파벳(2024년 첫 배당)이나 메타플랫폼스(2024년 첫 배당) 같은 최근 사례가 이런 흐름을 보여줘요. 두 회사 모두 상장 후 10년 넘게 배당이 없었다가, 사업이 성숙 단계에 들어서고 현금흐름이 충분히 쌓인 뒤에야 배당을 시작했어요.',
+      '그래서 "배당을 준다/안 준다"만으로 좋은 기업, 나쁜 기업을 가르는 것은 정확한 판단이 아니에요. 고성장기 기업이 배당을 안 주는 것은 오히려 재투자에 더 집중하고 있다는 신호일 수 있고, 반대로 성숙기 기업이 배당을 늘리는 것은 더 이상 예전만큼 빠르게 성장하기 어렵다는 신호로 해석되기도 해요. 배당주 포트폴리오를 짤 때 이런 생애주기 관점을 함께 고려하면 종목을 보는 시야가 넓어져요.',
+    ],
+  },
+  {
+    t: '커버드콜 ETF 분배금이 "원금을 갉아먹는다"는 말, 무슨 뜻일까',
+    p: [
+      '커버드콜 ETF의 높은 분배율을 보고 투자했다가, "분배금이 원금(자본)에서 나온다"는 이야기를 듣고 헷갈리는 경우가 많아요. 이 말을 이해하려면 먼저 순자산가치(NAV)라는 개념을 알아야 해요. NAV는 그 ETF가 실제로 보유한 자산의 가치를 주당으로 나눈 값으로, ETF의 "진짜 몸값"이라고 볼 수 있어요.',
+      '정상적인 상황에서는 옵션을 팔아서 받은 프리미엄만큼만 분배금으로 나눠주고, NAV 자체는 크게 줄지 않아요. 하지만 분배율을 인위적으로 높게 유지하기 위해 옵션 프리미엄보다 더 많은 금액을 매달 나눠주는 상품이 있다면, 그 차액은 결국 ETF가 보유한 자산(원금)을 헐어서 지급하는 셈이 돼요. 이런 지급 방식을 ROC(Return of Capital, 자본 반환)라고 불러요.',
+      'ROC 자체가 항상 나쁜 것은 아니에요. 세금 관점에서는 일반 소득이 아니라 원금 반환으로 처리돼 과세가 뒤로 미뤄지는 효과가 있을 수 있어요. 문제는 이런 지급이 반복되면 ETF의 NAV가 시간이 지날수록 서서히 줄어들 수 있다는 점이에요. 분배율은 높아 보이는데 정작 주가(NAV)는 꾸준히 빠지는 상품이라면 이런 구조를 의심해볼 필요가 있어요.',
+      '확인하는 방법은 두 가지예요. 첫째, 분배금 재원 구성을 공시하는 자료(미국 상품은 19a-1 notice, 국내 상품은 운용보고서의 분배금 재원 내역)를 살펴보는 것이에요. 둘째, 분배금만 보지 말고 장기간의 NAV 추이를 함께 확인하는 것이에요. 분배금을 받아도 NAV가 꾸준히 우하향한다면, 총수익(분배금+가격변동) 관점에서는 기대만큼의 성과가 아닐 수 있어요.',
+    ],
+  },
 ];
+
 
 function Articles({ deepId }) {
   const [q, setQ] = useState('');
@@ -466,7 +496,7 @@ function Articles({ deepId }) {
           onChange={(e) => setQ(e.target.value)}
           placeholder="글 제목이나 키워드로 검색 (예: 세금, ISA, DRIP)"
           style={{
-            width: '100%', background: '#fffef9', borderRadius: 8, padding: '10px 34px 10px 12px',
+            width: '100%', background: 'var(--pb-input-bg)', borderRadius: 8, padding: '10px 34px 10px 12px',
             fontSize: 13, color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box',
             fontFamily: "'Noto Sans KR', sans-serif",
           }}
@@ -3489,6 +3519,216 @@ const STOCKS = [
       '이 종목은 비상장 전환 절차가 진행 중이거나 이미 완료됐을 수 있어, 투자 전 최신 상장 상태를 반드시 확인하세요.',
     ],
   },
+  {
+    ticker: 'ABT', name: '애보트래버러토리스', typeTag: '배당킹 개별주(헬스케어)',
+    basic: '1888년 설립 · 배당킹(54년 연속 증배, 2026년 기준) · 진단·의료기기·영양·제네릭의약품 4개 사업부 · 2013년 제약 사업부(애브비) 분사 · 분기 배당 지급',
+    detail: [
+      '애보트는 혈당측정기(프리스타일 리브레), 심장·구조질환 의료기기, 유아용 분유 같은 영양제품, 진단키트까지 폭넓은 헬스케어 사업을 함께 운영하는 회사예요. 이 계산기 종목분석에도 있는 애브비가 원래 애보트의 제약 사업부였는데, 2013년 별도 회사로 분사됐어요.',
+      '2026년 기준 54년 연속으로 배당을 늘려온 배당킹이에요. 분사 이전 애보트 시절의 연속 증배 기록을 그대로 이어받아 인정되는 방식이라, 이 계산기에 함께 있는 애브비와 같은 뿌리를 공유하는 배당킹인 셈이에요.',
+      '진단·의료기기·영양·제네릭의약품 네 개 사업부로 고르게 분산돼 있어서, 한 사업부가 부진해도 다른 사업부가 완충하는 구조를 갖고 있어요. 특히 연속혈당측정기 프리스타일 리브레는 최근 분기마다 매출이 꾸준히 늘고 있는 성장 축으로 꼽혀요.',
+    ],
+    caution: [
+      '의료기기·진단 사업은 각국 규제기관의 인허가, 병원 예산 정책에 실적이 영향을 받을 수 있어요.',
+      '배당수익률 자체는 2% 안팎으로 낮은 편이라, 고배당보다는 꾸준한 배당 성장에 초점을 맞춘 종목이에요.',
+      '최신 배당수익률·주가·사업부별 실적은 애보트 투자자 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'BMY', name: '브리스톨마이어스스큅', typeTag: '고배당 개별주(제약, 특허절벽 직면)',
+    basic: '17년 연속 증배, 94년 연속 배당 지급(2026년 기준) · 혈액암·면역질환 치료제 중심 제약사 · 주력 제품 특허 만료(특허절벽) 대응 중 · 분기 배당 지급',
+    detail: [
+      '브리스톨마이어스스큅은 혈액암 치료제 레블리미드, 항응고제 엘리퀴스 등을 주력으로 하는 대형 제약회사예요. 2026년 기준 94년 연속으로 배당을 지급해왔고, 최근 17년 연속으로 배당을 늘려왔어요.',
+      '다만 배당귀족(25년 이상 연속 증배)이나 배당킹(50년 이상)에는 아직 못 미치는 수준이에요. "오래 배당을 지급해온 것"과 "오래 배당을 늘려온 것"은 다른 기준이라는 점을 보여주는 사례로, 이 계산기의 다른 종목들과 비교해볼 만해요.',
+      '최근 몇 년 사이 비용 절감 프로그램을 진행하며, 2026년까지 연간 15억 달러, 2027년까지 추가로 20억 달러의 비용을 줄이겠다는 계획을 발표했어요. 이는 뒤에 설명할 주력 제품의 특허 만료에 대비해 수익성을 지키려는 전략으로 풀이돼요.',
+    ],
+    caution: [
+      '엘리퀴스, 레블리미드 같은 주력 의약품들이 순차적으로 특허 만료(특허절벽) 시기를 맞고 있어요. 이 시기 매출 공백을 신약과 후속 파이프라인이 얼마나 메꿔주는지가 향후 배당 지속의 핵심 변수예요.',
+      '배당성향(이익 대비 배당 비율)이 다른 배당주보다 높게 나오는 시기가 있어, 신약 성과와 함께 지켜볼 필요가 있어요.',
+      '최신 배당수익률·주가·특허 만료 일정은 브리스톨마이어스스큅 투자자 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'MDLZ', name: '몬델리즈인터내셔널', typeTag: '배당성장 개별주(스낵·제과)',
+    basic: '2012년 옛 크래프트푸드에서 분할·출범 · 2013년부터 매년 배당 증액 · 오레오·리츠·캐드버리 등 브랜드 보유 · 비스킷·초콜릿 부문 세계 1~2위 · 분기 배당 지급',
+    detail: [
+      '몬델리즈인터내셔널은 오레오, 리츠, 캐드버리 같은 과자·초콜릿 브랜드를 보유한 세계적인 스낵 기업이에요. 2012년 옛 크래프트푸드가 북미 식료품 사업(현 크래프트하인즈)과 해외 스낵 사업으로 분할되면서, 몬델리즈라는 이름으로 새 출발한 회사예요.',
+      '분할 이듬해인 2013년부터 지금까지 매년 배당을 늘려왔어요. 아직 배당귀족(25년) 기준에는 못 미치지만, 10년 넘게 꾸준히 배당을 늘려온 배당성장주로 분류돼요.',
+      '매출의 상당 부분이 신흥국에서 나와요. 신흥국 소비 성장의 수혜를 받을 수 있다는 장점이 있는 대신, 환율이나 현지 경기 변동에 노출되는 정도도 다른 미국 내수 중심 소비재 기업보다 큰 편이에요.',
+    ],
+    caution: [
+      '초콜릿 원재료인 코코아 가격 급등 시기에는 원가 부담이 커질 수 있어요. 이 계산기 공부방의 코코아 가격 관련 내용(허쉬 카드 참고)이 몬델리즈에도 비슷하게 적용돼요.',
+      '신흥국 매출 비중이 커서 환율 변동, 현지 경기 둔화가 실적에 영향을 줄 수 있어요.',
+      '최신 배당수익률·주가·코코아 원가 동향은 몬델리즈인터내셔널 투자자 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'WEC', name: 'WEC에너지그룹', typeTag: '전력·가스 유틸리티(배당귀족 근접)',
+    basic: '1942년부터 배당 중단 없이 지급 · 2026년 기준 23년 연속 증배 · 위스콘신 등 미국 중서부 4개 주 전기·가스 공급 · 배당성향 목표 65~70% · 분기 배당 지급',
+    detail: [
+      'WEC에너지그룹은 위스콘신·일리노이·미시간·미네소타 등 미국 중서부 지역에 전기·가스를 공급하는 규제 유틸리티예요. 1942년부터 지금까지 한 번도 거르지 않고 배당을 지급해온, 80년이 넘는 배당 지급 이력을 갖고 있어요.',
+      '2026년 기준 23년 연속으로 배당을 늘려왔어요. 배당귀족 등재 기준인 25년에 근접해 있어, "곧 배당귀족이 될 유틸리티"로 자주 언급되는 종목이에요.',
+      '최근에는 데이터센터·AI 인프라 확대에 따른 전력 수요 증가가 새로운 성장 동력으로 꼽혀요. 위스콘신 지역에 대형 데이터센터 프로젝트가 유치되면서, 전력 판매량 증가를 기대하는 분위기예요.',
+    ],
+    caution: [
+      '2026년 기준 23년이라는 연속 증배 연수는 매년 갱신되는 숫자라, 이 계산기를 보는 시점에 따라 실제 연수가 다를 수 있어요.',
+      '규제 유틸리티 특성상 각 주 공익사업위원회의 요금 인상 승인 속도가 이익 성장 속도를 좌우해요.',
+      '최신 배당수익률·주가·연속 증배 연수는 WEC에너지그룹 투자자 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: '105560', name: 'KB금융지주', typeTag: '국내 금융지주 고배당주',
+    basic: 'KB국민은행·KB증권·KB손해보험 등을 계열사로 둔 국내 금융지주 · 2022년부터 분기배당 정례화 · 보통주자본비율(CET1) 13% 초과 잉여자본을 배당·자사주 매입 재원으로 활용하는 밸류업 정책 시행 중',
+    detail: [
+      'KB금융지주는 KB국민은행을 중심으로 증권·보험·카드 등 종합 금융 계열사를 거느린 국내 대표 금융지주 중 하나예요. 2022년부터 분기배당을 정례화해서, 신한지주처럼 배당의 예측 가능성을 높이는 방향으로 정책을 운영하고 있어요.',
+      '기업 밸류업 프로그램에 맞춰, 연말 기준 보통주자본비율(CET1)이 13%를 넘는 잉여자본을 다음 해 현금배당과 자사주 매입·소각 재원으로 쓰겠다는 정책을 시행 중이에요. 정해진 상한선을 두지 않고, 일정 자본비율을 넘는 부분은 계속 주주환원에 쓰겠다는 방침을 밝히고 있어요.',
+      '배당뿐 아니라 자사주 매입 후 소각, 그리고 자본준비금을 활용한 감액배당(세금 처리가 일반 배당과 다른 방식의 환원)까지 함께 병행하며, 국내 금융지주 중에서도 다양한 방식의 주주환원 수단을 쓰는 곳으로 꼽혀요.',
+    ],
+    caution: [
+      '은행지주 특성상 금리 환경, 대손충당금 변화에 실적이 민감하게 반응해요.',
+      '주주환원 규모(배당성향·자사주 매입 금액)는 그해 순이익과 자본비율에 따라 달라지는 정책이라, 특정 연도의 환원율 숫자를 그대로 다음 해에 적용해 기대하지 않는 것이 좋아요.',
+      '최신 배당수익률·주가·주주환원 정책은 KB금융지주 IR 페이지나 DART 전자공시에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'USB', name: 'US뱅코프', typeTag: '배당성장 개별주(지역은행)',
+    basic: '2026년 기준 56년 연속 배당 지급, 15년 연속 증배 · 미국 5위권 상업은행(미네소타 미니애폴리스 본사) · 2020년 팬데믹 규제로 증액 일시 중단(삭감은 아님) · 분기 배당 지급',
+    detail: [
+      'US뱅코프는 미네소타 미니애폴리스에 본사를 둔 미국 5위권 상업은행이에요. 2026년 기준 56년 연속으로 배당을 지급해왔고, 15년 연속으로 배당을 늘려왔어요.',
+      '2020년 코로나19 팬데믹 당시 연준이 대형 은행들의 배당 증액을 제한하는 규제를 시행하면서, US뱅코프도 당시 분기 배당(0.42달러)을 늘리지 못하고 유지하는 데 그쳤어요. 다만 이는 배당을 줄인 삭감이 아니라 규제로 증액만 잠시 멈춘 경우라, 다른 은행들의 실제 삭감 사례와는 성격이 달라요.',
+      '규제가 풀린 이후 다시 매년 배당을 늘려오고 있고, 최근에는 카드·결제(payments) 사업 부문의 성장이 실적을 뒷받침하는 것으로 평가받아요.',
+    ],
+    caution: [
+      '다른 대형 은행과 마찬가지로 연준 스트레스테스트, 스트레스자본버퍼(SCB) 결과가 배당 여력에 영향을 줄 수 있어요.',
+      '지역은행 특성상 특정 지역 경기, 금리 환경에 실적이 민감하게 반응할 수 있어요.',
+      '최신 배당수익률·주가·스트레스테스트 결과는 US뱅코프 투자자 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'TD', name: '토론토도미니언은행', typeTag: '캐나다 대형 은행(미국 리테일 병행)',
+    basic: '캐나다 5대 은행(빅식스) 중 하나 · 캐나다 배당귀족 지수 편입 · 미국 동부 지역에서 TD Bank 브랜드로 리테일 은행망 별도 운영 · 분기 배당(캐나다달러) 지급',
+    detail: [
+      '토론토도미니언은행(TD)은 캐나다 5대 은행 중 하나로, 캐나다 내 리테일·상업은행 사업뿐 아니라 미국 동부 지역에서 TD Bank라는 브랜드로 별도의 리테일 은행망을 운영하는 것이 특징이에요. 앞서 소개한 로열뱅크오브캐나다와 함께 캐나다 은행업의 오랜 배당 지급 전통을 보여주는 종목이에요.',
+      '캐나다 배당귀족 지수에 편입돼 있을 만큼 오랜 기간 배당을 지급·증액해온 이력이 있어요. 다만 캐나다 배당귀족 지수의 편입 기준은 미국 S&P500 배당귀족(25년)과 다르게 운영돼요.',
+      '최근에는 미국 자금세탁방지(AML) 규정 위반과 관련한 미국 당국의 조사·제재로 미국 사업 확장에 일부 제약을 받았던 이력이 있어, 캐나다 은행이라도 미국 규제 리스크에서 자유롭지 않다는 것을 보여준 사례로 언급돼요.',
+    ],
+    caution: [
+      '캐나다 주식이라 미국 주식과는 원천징수 세율·세금 처리 방식이 다를 수 있어요.',
+      '미국 사업 관련 규제 이슈가 향후 성장 전략에 계속 영향을 줄 수 있어요.',
+      '최신 배당수익률·주가·규제 현황은 토론토도미니언은행 투자자 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'QCOM', name: '퀄컴', typeTag: '배당성장 개별주(반도체·통신)',
+    basic: '2003년부터 배당 지급, 2026년 기준 20년 넘게 연속 증배 · 스마트폰 AP·통신칩 세계적 기업 · 반도체 판매(QCT)+특허 라이선스(QTL) 이원화 사업 구조 · 분기 배당 지급',
+    detail: [
+      '퀄컴은 스마트폰에 들어가는 AP(애플리케이션 프로세서)와 통신 모뎀칩을 만드는 세계적인 반도체 기업이에요. 2003년부터 배당을 지급해왔고, 2026년 기준 20년 넘게 매년 배당을 늘려온 배당성장주예요.',
+      '특이한 점은 매출이 반도체를 직접 판매하는 사업(QCT)과, 통신 특허 기술을 다른 기업에 라이선스해주고 사용료를 받는 사업(QTL)으로 나뉘어 있다는 거예요. QTL 부문은 직접 반도체를 생산하지 않고도 로열티 수익을 얻는 구조라 마진율이 매우 높은 편이에요.',
+      '최근에는 스마트폰 시장 성장 둔화에 대응해 자동차용 반도체, PC용 프로세서, AI 온디바이스 칩 등으로 사업을 다각화하고 있어요.',
+    ],
+    caution: [
+      '스마트폰 판매량, 특히 중국 스마트폰 업체들의 주문량 변화가 실적에 직접 영향을 줄 수 있는 경기·산업 민감 업종이에요.',
+      '통신 특허 로열티 수익은 주요 고객사와의 라이선스 계약 조건, 관련 소송 결과에 따라 변동될 수 있어요.',
+      '최신 배당수익률·주가·사업 다각화 현황은 퀄컴 투자자 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'PGR', name: '프로그레시브', typeTag: '변동형 연차배당 개별주(자동차보험)',
+    basic: '미국 대표 자동차보험사 중 하나 · 정기 분기배당 대신 "연차 변동배당" 정책 운영 · 배당 재원 = 세후 언더라이팅이익 × 게인셰어 계수(0~2) · 이사회 재량으로 무배당 연도도 가능',
+    detail: [
+      '프로그레시브는 자동차보험을 중심으로 하는 미국 대표 손해보험사로, 다른 배당주들과 확연히 다른 독특한 배당 정책을 갖고 있어요. 매 분기 일정 금액을 지급하는 방식이 아니라, 한 해 실적을 정산해 연말에 한 번 "변동배당(annual variable dividend)"을 지급하는 방식이에요.',
+      '이 변동배당은 세후 언더라이팅이익(보험 인수 부문에서 낸 이익)의 정해진 목표 비율(오랫동안 33.3% 수준을 유지)에, 회사 전체 실적 목표 달성도를 나타내는 "게인셰어(Gainshare) 계수"를 곱해 계산해요. 이 계수는 0에서 2 사이로 정해지는데, 계수가 0이면 그 해엔 변동배당이 아예 지급되지 않을 수도 있어요.',
+      '즉 프로그레시브 주주는 "매년 반드시 배당을 받는다"고 기대하기보다, 그 해 보험 인수 실적이 좋았는지에 따라 배당 액수(심지어 지급 여부까지)가 달라질 수 있다는 점을 이해하고 접근해야 해요. 최종 지급 여부와 액수는 매년 12월 이사회가 결정해요.',
+    ],
+    caution: [
+      '이 계산기에서 소개한 대부분의 종목과 달리, "매년 꾸준히 늘어나는 배당"을 기대하는 구조가 아니에요. 실적이 나쁜 해에는 배당이 전혀 없을 수도 있다는 점을 미리 이해하고 있어야 해요.',
+      '자동차보험업 특성상 사고율, 자동차 수리비 인플레이션 등이 언더라이팅이익에 영향을 줘요.',
+      '최신 배당 정책·게인셰어 계수·언더라이팅이익은 프로그레시브 투자자 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'NSC', name: '노퍽서던', typeTag: '배당성장 개별주(철도, 2001년 대규모 삭감 이력)',
+    basic: '1980년대부터 배당 지급 · 2001년 경기 침체기 배당 약 70% 삭감 후 재건, 이후 매년 증액 · 미국 동부 화물철도 운영 · 분기 배당 지급',
+    detail: [
+      '노퍽서던은 앞서 소개한 유니언퍼시픽과 함께 미국을 대표하는 대형 화물철도 회사예요. 유니언퍼시픽이 미국 서부를 담당한다면, 노퍽서던은 주로 미국 동부 지역의 철도 화물 운송을 맡고 있어요.',
+      '2001년 경기 침체기에 배당을 약 70% 큰 폭으로 삭감한 이력이 있어요. 이후 재무구조를 재정비하며 꾸준히 배당을 재건해왔고, 지금은 매년 배당을 늘려온 배당성장주로 평가받아요.',
+      '최근에는 유니언퍼시픽이 노퍽서던과의 대형 합병을 추진하는 등, 철도업계 전반에 대형 통합 움직임이 이어지고 있어요. 두 회사의 합병이 성사되면 미국을 가로지르는 대륙횡단철도망이 만들어지는 셈이라 업계의 큰 관심을 받고 있어요.',
+    ],
+    caution: [
+      '2001년 대규모 삭감 이력이 있다는 점에서, 오래된 철도회사라도 경기 침체기에는 배당이 크게 흔들릴 수 있다는 것을 보여주는 사례예요.',
+      '유니언퍼시픽과의 합병이 아직 완전히 확정된 사안이 아니라면, 성사 여부와 조건이 향후 배당 정책에 영향을 줄 수 있어요.',
+      '최신 배당수익률·주가·합병 진행 상황은 노퍽서던 투자자 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'NOC', name: '노스럽그루먼', typeTag: '배당귀족 개별주(방위산업)',
+    basic: '1997년부터 매년 배당 증액, 배당귀족(25년 이상) 편입 · B-21 폭격기·글로벌호크 무인기 등 항공·우주 방산 전문 · 분기 배당 지급',
+    detail: [
+      '노스럽그루먼은 B-21 스텔스 폭격기, 글로벌호크 무인정찰기 등을 만드는 미국의 대형 방위산업체예요. 앞서 소개한 록히드마틴·제너럴다이내믹스와 함께 미국 방산 배당주를 대표하는 종목이에요.',
+      '1997년부터 매년 배당을 늘려와, 배당귀족(25년 이상 연속 증배) 반열에 올라 있어요. 방산업체 중에서는 상대적으로 늦게 배당귀족 대열에 합류한 편이지만, 최근 배당 성장률이 두 자릿수에 이를 정도로 빠른 편이에요.',
+      '우주 시스템 부문(인공위성, 우주발사체 부품)도 함께 키우고 있어, 전통적인 항공기·무기체계 방산업 외에 우주 산업 성장의 수혜도 함께 노리는 구조예요.',
+    ],
+    caution: [
+      '록히드마틴과 마찬가지로 매출 대부분이 미국 국방예산에 좌우돼, 정부 예산안·정치적 결정에 실적이 민감하게 반응할 수 있어요.',
+      '대형 무기체계 프로그램(B-21 등)은 개발 지연·비용 초과 리스크가 있어, 개별 프로그램 진행 상황이 실적에 영향을 줄 수 있어요.',
+      '최신 배당수익률·주가·수주 잔고는 노스럽그루먼 투자자 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'PAYX', name: '페이첵스', typeTag: '배당성장 개별주(급여·인사관리 서비스)',
+    basic: '1988년부터 배당 지급, 2026년 기준 10년 넘게 연속 증배 · 중소기업 대상 급여·인사관리(HCM) 서비스 · 2025년 페이코(Paycor) 약 41억 달러에 인수 · 분기 배당 지급',
+    detail: [
+      '페이첵스는 이 계산기에서 소개한 ADP와 비슷하게, 중소기업의 급여 계산·지급과 인사관리 업무를 대신 처리해주는 아웃소싱 서비스 회사예요. ADP가 대기업까지 폭넓게 다룬다면, 페이첵스는 상대적으로 중소기업 고객 비중이 큰 편이에요.',
+      '1988년부터 지금까지 배당을 지급해왔고, 최근 10년 넘게 매년 배당을 늘려왔어요. 2025년에는 인사관리 소프트웨어 업체 페이코(Paycor)를 약 41억 달러에 인수하며 사업 규모를 크게 키웠어요.',
+      '배당성향(이익 대비 배당 비율)이 90% 안팎으로 이 계산기에 있는 다른 배당성장주들보다 상당히 높은 편이에요. 이는 이익의 대부분을 배당으로 지급하고 있다는 뜻이라, 배당 증액 여력을 판단할 때 함께 살펴봐야 할 지표예요.',
+    ],
+    caution: [
+      '배당성향이 90% 안팎으로 높은 편이라, 실적이 둔화되면 다른 배당성장주보다 배당 증액 폭이 줄어들 가능성을 염두에 둘 필요가 있어요.',
+      '고용 시장(취업자 수, 신규 채용) 상황이 매출과 연동되는 구조라, 경기 침체로 실업률이 오르면 실적에 영향을 줄 수 있어요.',
+      '최신 배당수익률·주가·배당성향은 페이첵스 투자자 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: 'CVS', name: 'CVS헬스', typeTag: '고배당 개별주(약국·헬스케어, 배당 동결 후 재개 사례)',
+    basic: '약국 체인+처방약급여관리(PBM)+건강보험(애트나) 겸업 · 2018년 애트나 인수 후 배당 동결(2018~2021), 2022년부터 재개 · 분기 배당 지급',
+    detail: [
+      'CVS헬스는 미국 최대 약국 체인 중 하나이면서, 처방약급여관리(PBM) 사업과 건강보험사 애트나(Aetna)까지 함께 운영하는 대형 헬스케어 복합기업이에요. 약국·PBM·보험을 수직계열화해 하나의 헬스케어 생태계를 만드는 전략을 갖고 있어요.',
+      '2018년 애트나를 약 700억 달러에 인수하면서 부채가 크게 늘었고, 이 부채를 줄이는 동안 배당을 늘리지 않고 분기 0.50달러 수준에서 동결했어요. 앞서 소개한 월그린스처럼 삭감한 것은 아니지만, 몇 년간 배당 성장이 멈췄던 사례예요.',
+      '부채를 어느 정도 줄인 뒤인 2022년부터 다시 배당을 늘리기 시작했어요. 대규모 인수합병이 배당 정책에 미치는 영향을 보여주는 사례로, 배당을 아예 삭감한 월그린스와는 다른 결말을 보여줘요.',
+    ],
+    caution: [
+      '처방약급여관리(PBM) 사업은 최근 미국에서 가격 구조의 투명성을 요구하는 규제 압박을 받고 있어요.',
+      '약국·보험·PBM을 모두 운영하는 복합 사업 구조라, 어느 한 부문의 부진이 실적에 미치는 영향을 파악하려면 사업부별로 나눠 살펴볼 필요가 있어요.',
+      '최신 배당수익률·주가·사업부별 실적은 CVS헬스 투자자 페이지에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: '030200', name: 'KT', typeTag: '국내 통신 대표주(민영화 기업)',
+    basic: '2002년 완전 민영화(옛 한국전기통신공사) · 전기통신사업법상 외국인 지분 보유한도 49% 제한 · 2026~2028년 조정 당기순이익 50% 주주환원 목표, 최소 주당배당금(DPS) 제시 · 자사주 매입·소각 병행',
+    detail: [
+      'KT는 옛 한국전기통신공사가 2002년 완전히 민영화되며 지금의 모습을 갖춘 국내 통신사예요. 앞서 소개한 SK텔레콤과 함께 국내 통신 3사를 대표하는 배당주로 꼽혀요.',
+      '전기통신사업법에 따라 KT 같은 기간통신사업자는 외국인 지분 합계가 49%를 넘을 수 없도록 법적으로 제한돼 있어요. 이 때문에 외국인 투자자 비중이 이미 한도에 가까워지면, 매입한 자사주를 곧바로 소각하지 못하고 일정 기간 보유했다가 처리하는 경우가 있어요.',
+      '2026~2028년 중기 주주환원 정책을 통해, 일회성 손익을 제외한 조정 당기순이익의 50%를 배당과 자사주 매입·소각 재원으로 쓰겠다는 방침과 함께 매년 최소 지급할 주당배당금(DPS) 하한선을 제시했어요. 배당 예측 가능성을 높이려는 목적이에요.',
+    ],
+    caution: [
+      '국내 통신 3사 간 요금 경쟁, 정부의 통신비 인하 압박 정책이 실적에 지속적인 부담 요인이 될 수 있어요.',
+      '외국인 지분 한도 제한 때문에 자사주 매입 후 소각까지 시차가 발생할 수 있다는 점을 참고해야 해요.',
+      '최신 배당금·주주환원 정책은 KT IR 페이지나 DART 전자공시에서 확인하세요.',
+    ],
+  },
+  {
+    ticker: '086790', name: '하나금융지주', typeTag: '국내 금융지주 고배당주',
+    basic: '하나은행·하나증권·하나카드 등을 계열사로 둔 국내 금융지주 · 그룹 순이익의 90% 안팎을 하나은행이 창출 · 2021년부터 연 1조원 규모 배당 유지, 2023년부터 자사주 매입·소각 병행',
+    detail: [
+      '하나금융지주는 하나은행을 중심으로 하나증권·하나카드 등 계열사를 거느린 국내 4대 금융지주 중 하나예요. 이 계산기에 함께 있는 신한지주·KB금융지주와 비교해보면, 그룹 순이익에서 은행 계열사가 차지하는 비중이 상대적으로 높은 편이라는 차이가 있어요.',
+      '2021년부터 연간 1조원 규모의 현금배당을 유지해오고 있고, 2023년부터는 자사주 매입·소각까지 함께 병행하며 주주환원 규모를 키워왔어요. 저평가 구간에서는 자사주 소각으로, 주가가 개선되는 국면에서는 현금배당 비중을 늘리는 식으로 환원 수단을 유연하게 조정하는 전략을 펴고 있어요.',
+      '다른 국내 금융지주들과 마찬가지로 기업 밸류업 프로그램에 발맞춰 주주환원율을 확대해왔고, 배당소득 분리과세 요건(고배당기업 요건)을 충족하기 위해 4분기 배당을 늘리는 방식을 활용하기도 했어요.',
+    ],
+    caution: [
+      '은행지주 특성상 순이익의 대부분을 차지하는 하나은행의 실적(금리 환경, 대손충당금)에 그룹 전체 배당 여력이 크게 좌우돼요.',
+      '배당과 자사주 매입 중 어느 쪽에 무게를 둘지는 매년 이사회 판단에 따라 달라질 수 있어, 특정 연도의 환원 방식을 다음 해에도 그대로 기대하지 않는 것이 좋아요.',
+      '최신 배당수익률·주가·주주환원 정책은 하나금융지주 IR 페이지나 DART 전자공시에서 확인하세요.',
+    ],
+  },
 ];
 
 function classifyAssetClass(ticker) {
@@ -3632,7 +3872,7 @@ function TaxThresholdCheck({ holdings }) {
   const barColor = over ? C.stamp : near ? C.brass : C.cover;
 
   const inputStyle = {
-    width: '100%', background: '#fffef9', borderRadius: 7, padding: '10px 11px', fontSize: 14,
+    width: '100%', background: 'var(--pb-input-bg)', borderRadius: 7, padding: '10px 11px', fontSize: 14,
     color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box',
     fontFamily: "'Noto Sans KR', sans-serif", marginBottom: 12,
   };
@@ -3683,6 +3923,13 @@ const NON_US_LETTER_TICKERS = new Set([
   'BASFY', 'BHP', 'RIO', 'SIEGY', 'URW', 'ENB', 'RY', 'BCE', 'TRP', 'FTS',
   'D05', 'O39', 'U11', 'TSM',
 ]);
+
+function tagColorFor(typeTag) {
+  if (/삭감|중단|사례|리셋/.test(typeTag)) return C.stamp;
+  if (/ETF/i.test(typeTag)) return C.etf;
+  if (/리츠|REIT/i.test(typeTag)) return C.reit;
+  return C.brass;
+}
 
 const STOCK_FILTERS = [
   { v: 'all', t: '전체', test: () => true },
@@ -3779,7 +4026,7 @@ function StockCards({ deepId }) {
           onChange={(e) => setQ(e.target.value)}
           placeholder="종목명, 티커, 유형으로 검색 (예: 리츠, SCHD, 배당킹)"
           style={{
-            width: '100%', background: '#fffef9', borderRadius: 8, padding: '10px 34px 10px 12px',
+            width: '100%', background: 'var(--pb-input-bg)', borderRadius: 8, padding: '10px 34px 10px 12px',
             fontSize: 13, color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box',
             fontFamily: "'Noto Sans KR', sans-serif",
           }}
@@ -3837,7 +4084,7 @@ function StockCards({ deepId }) {
               </button>
               <span style={{ fontSize: 12.5, fontWeight: 700, color: C.ink }}>{s.name}</span>
               <span style={{ fontSize: 10, color: C.inkSoft }}>{s.ticker}</span>
-              <span style={{ marginLeft: 'auto', fontSize: 9.5, fontWeight: 700, color: C.brass, border: `1px solid ${C.brass}`, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+              <span style={{ marginLeft: 'auto', fontSize: 9.5, fontWeight: 700, color: tagColorFor(s.typeTag), border: `1px solid ${tagColorFor(s.typeTag)}`, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
                 {s.typeTag}
               </span>
             </summary>
@@ -3848,7 +4095,7 @@ function StockCards({ deepId }) {
               {s.detail.map((p, i) => (
                 <p key={i} style={{ fontSize: 12, lineHeight: 1.8, color: C.inkSoft, margin: '0 0 9px' }}>{p}</p>
               ))}
-              <div style={{ marginTop: 10, padding: '10px 12px', background: 'rgba(192,58,43,0.06)', borderRadius: 8 }}>
+              <div style={{ marginTop: 10, padding: '10px 12px', background: 'var(--pb-stamp-06)', borderRadius: 8 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: C.stamp, marginBottom: 5 }}>주의할 점</div>
                 {s.caution.map((c, i) => (
                   <p key={i} style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 5px' }}>· {c}</p>
@@ -4004,8 +4251,8 @@ function DividendCalendar({ holdings }) {
           </div>
 
           <div style={{
-            background: payers.length > 0 ? 'rgba(192,58,43,0.06)' : C.cardBg,
-            border: `1px solid ${payers.length > 0 ? 'rgba(192,58,43,0.25)' : C.line}`,
+            background: payers.length > 0 ? 'var(--pb-stamp-06)' : C.cardBg,
+            border: `1px solid ${payers.length > 0 ? 'var(--pb-stamp-25)' : C.line}`,
             borderRadius: 10, padding: '12px 14px', marginBottom: 12,
           }}>
             {payers.length > 0 ? (
@@ -4139,7 +4386,7 @@ function TypeFinder() {
           <div style={{ fontSize: 11, color: C.brass, fontWeight: 700, letterSpacing: 1, marginBottom: 6 }}>내 배당 유형</div>
           <h3 style={{ margin: '0 0 10px', fontFamily: "'Noto Serif KR', serif", fontSize: 19, color: C.ink }}>{result.title}</h3>
           <p style={{ fontSize: 12.5, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 12px' }}>{result.desc}</p>
-          <p style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 14px', padding: '10px 12px', background: 'rgba(192,58,43,0.06)', borderRadius: 8 }}>
+          <p style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 14px', padding: '10px 12px', background: 'var(--pb-stamp-06)', borderRadius: 8 }}>
             <b style={{ color: C.stamp }}>주의할 점.</b> {result.watch}
           </p>
           <button onClick={reset} style={{ fontSize: 11.5, color: C.inkSoft, background: 'transparent', border: `1px solid ${C.lineStrong}`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer' }}>
@@ -4172,8 +4419,8 @@ function Stamp({ value, sub }) {
     <div aria-label={`연간 예상 배당 ${value}`} style={{
       width: 132, height: 132, borderRadius: '50%', border: `3px solid ${C.stamp}`,
       color: C.stamp, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      transform: 'rotate(-6deg)', flexShrink: 0, background: 'rgba(192,58,43,0.04)',
-      boxShadow: 'inset 0 0 0 1px rgba(192,58,43,0.35)',
+      transform: 'rotate(-6deg)', flexShrink: 0, background: 'var(--pb-stamp-04)',
+      boxShadow: 'inset 0 0 0 1px var(--pb-stamp-35)',
     }}>
       <span style={{ fontSize: 10, letterSpacing: 3, fontWeight: 700 }}>연간 배당</span>
       <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: value.length > 11 ? 14 : 17, fontWeight: 700, marginTop: 4, textAlign: 'center', lineHeight: 1.25, padding: '0 8px', wordBreak: 'keep-all' }}>
@@ -4282,6 +4529,21 @@ export default function App() {
   const [deepId, setDeepId] = useState(initial.deepId);
   const idRef = useRef(1);
   const formRef = useRef(null);
+  const importInputRef = useRef(null);
+
+  const [dark, setDark] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const saved = window.localStorage.getItem('pb-theme');
+      if (saved) return saved === 'dark';
+    } catch (e) { /* ignore */ }
+    return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    try { window.localStorage.setItem('pb-theme', dark ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+  }, [dark]);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -4351,6 +4613,48 @@ export default function App() {
 
   const persist = (next) => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch (e) { /* ignore */ }
+  };
+
+  const exportHoldings = () => {
+    try {
+      const blob = new Blob([JSON.stringify(holdings, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const today = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `배당통장-백업-${today}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) { /* ignore */ }
+  };
+
+  const triggerImport = () => importInputRef.current?.click();
+
+  const handleImportFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result));
+        if (!Array.isArray(parsed)) throw new Error('invalid');
+        const valid = parsed.every((h) => h && typeof h.name === 'string' && typeof h.shares === 'number' && typeof h.avgPrice === 'number' && typeof h.annualDiv === 'number' && Array.isArray(h.months));
+        if (!valid) throw new Error('invalid');
+        const proceed = holdings.length === 0 || window.confirm(`현재 저장된 ${holdings.length}개 종목을 백업 파일의 ${parsed.length}개 종목으로 덮어쓸까요?`);
+        if (!proceed) return;
+        const withIds = parsed.map((h, i) => ({ ...h, id: h.id || Date.now() + i }));
+        setHoldings(withIds);
+        persist(withIds);
+        idRef.current = withIds.reduce((m, h) => Math.max(m, h.id || 0), 0) + 1;
+      } catch (err) {
+        window.alert('파일을 읽을 수 없어요. 이 계산기에서 내보낸 백업 파일(.json)이 맞는지 확인해주세요.');
+      } finally {
+        e.target.value = '';
+      }
+    };
+    reader.readAsText(file);
   };
 
   const applyTax = (v, cur) => (afterTax ? v * (1 - TAX[cur]) : v);
@@ -4436,12 +4740,102 @@ export default function App() {
     } catch (e) { /* clipboard unavailable */ }
   };
 
-  const input = { width: '100%', background: '#fffef9', borderRadius: 7, padding: '10px 11px', fontSize: 14, color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box', fontFamily: "'Noto Sans KR', sans-serif" };
+  const input = { width: '100%', background: 'var(--pb-input-bg)', borderRadius: 7, padding: '10px 11px', fontSize: 14, color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box', fontFamily: "'Noto Sans KR', sans-serif" };
   const label = { display: 'block', fontSize: 11, color: C.inkSoft, marginBottom: 5, fontWeight: 600 };
 
   return (
-    <div style={{ minHeight: '100vh', width: '100%', background: '#ece6d6', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '26px 14px 44px', boxSizing: 'border-box', fontFamily: "'Noto Sans KR', -apple-system, sans-serif" }}>
+    <div style={{ minHeight: '100vh', width: '100%', background: 'var(--pb-page)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '26px 14px 44px', boxSizing: 'border-box', fontFamily: "'Noto Sans KR', -apple-system, sans-serif" }}>
       <style>{`
+        :root {
+          --pb-cover: #1f3d2e;
+          --pb-cover-edge: #17301f;
+          --pb-foil: #d9b36a;
+          --pb-paper: #f7f3e8;
+          --pb-paper-line: rgba(31,61,46,0.10);
+          --pb-ink: #22312a;
+          --pb-ink-soft: #5b6a61;
+          --pb-stamp: #c03a2b;
+          --pb-brass: #b8863c;
+          --pb-card-bg: #fdfaf1;
+          --pb-line: rgba(34,49,42,0.12);
+          --pb-line-strong: rgba(34,49,42,0.24);
+          --pb-etf: #3f6f8f;
+          --pb-reit: #2f8f74;
+          --pb-input-bg: #fffef9;
+          --pb-page: #ece6d6;
+          --pb-stamp-04: rgba(192,58,43,0.04);
+          --pb-stamp-06: rgba(192,58,43,0.06);
+          --pb-stamp-25: rgba(192,58,43,0.25);
+          --pb-stamp-35: rgba(192,58,43,0.35);
+        }
+        @media (prefers-color-scheme: dark) {
+          :root {
+            --pb-cover: #1b2f22;
+            --pb-cover-edge: #142419;
+            --pb-foil: #dcbb7e;
+            --pb-paper: #1c2921;
+            --pb-paper-line: rgba(220,187,126,0.05);
+            --pb-ink: #e4ddc9;
+            --pb-ink-soft: #99a696;
+            --pb-stamp: #d8654f;
+            --pb-brass: #c99c5f;
+            --pb-card-bg: #24352b;
+            --pb-line: rgba(228,221,201,0.09);
+            --pb-line-strong: rgba(228,221,201,0.17);
+            --pb-etf: #7fb2d6;
+            --pb-reit: #5ecba6;
+            --pb-input-bg: #24352b;
+            --pb-page: #142018;
+            --pb-stamp-04: rgba(216,101,79,0.09);
+            --pb-stamp-06: rgba(216,101,79,0.13);
+            --pb-stamp-25: rgba(216,101,79,0.32);
+            --pb-stamp-35: rgba(216,101,79,0.42);
+          }
+        }
+        :root[data-theme="dark"] {
+          --pb-cover: #1b2f22;
+          --pb-cover-edge: #142419;
+          --pb-foil: #dcbb7e;
+          --pb-paper: #1c2921;
+          --pb-paper-line: rgba(220,187,126,0.05);
+          --pb-ink: #e4ddc9;
+          --pb-ink-soft: #99a696;
+          --pb-stamp: #d8654f;
+          --pb-brass: #c99c5f;
+          --pb-card-bg: #24352b;
+          --pb-line: rgba(228,221,201,0.09);
+          --pb-line-strong: rgba(228,221,201,0.17);
+          --pb-etf: #7fb2d6;
+          --pb-reit: #5ecba6;
+          --pb-input-bg: #24352b;
+          --pb-page: #142018;
+          --pb-stamp-04: rgba(216,101,79,0.09);
+          --pb-stamp-06: rgba(216,101,79,0.13);
+          --pb-stamp-25: rgba(216,101,79,0.32);
+          --pb-stamp-35: rgba(216,101,79,0.42);
+        }
+        :root[data-theme="light"] {
+          --pb-cover: #1f3d2e;
+          --pb-cover-edge: #17301f;
+          --pb-foil: #d9b36a;
+          --pb-paper: #f7f3e8;
+          --pb-paper-line: rgba(31,61,46,0.10);
+          --pb-ink: #22312a;
+          --pb-ink-soft: #5b6a61;
+          --pb-stamp: #c03a2b;
+          --pb-brass: #b8863c;
+          --pb-card-bg: #fdfaf1;
+          --pb-line: rgba(34,49,42,0.12);
+          --pb-line-strong: rgba(34,49,42,0.24);
+          --pb-etf: #3f6f8f;
+          --pb-reit: #2f8f74;
+          --pb-input-bg: #fffef9;
+          --pb-page: #ece6d6;
+          --pb-stamp-04: rgba(192,58,43,0.04);
+          --pb-stamp-06: rgba(192,58,43,0.06);
+          --pb-stamp-25: rgba(192,58,43,0.25);
+          --pb-stamp-35: rgba(192,58,43,0.35);
+        }
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
         * { -webkit-tap-highlight-color: transparent; }
         input::placeholder { color: rgba(34,49,42,0.35); }
@@ -4454,7 +4848,7 @@ export default function App() {
       <div style={{ width: '100%', maxWidth: 470 }}>
         {/* ── passbook cover ── */}
         <div style={{
-          background: `linear-gradient(160deg, ${C.cover} 0%, #17301f 100%)`,
+          background: `linear-gradient(160deg, ${C.cover} 0%, ${C.coverEdge} 100%)`,
           borderRadius: '14px 14px 0 0', padding: '26px 24px 22px',
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
         }}>
@@ -4469,13 +4863,50 @@ export default function App() {
               <p style={{ margin: '8px 0 0', fontSize: 12, color: 'rgba(217,179,106,0.75)', lineHeight: 1.5 }}>
                 보유 배당주를 기입하면 연간·월별 배당 흐름을 정리해 드립니다
               </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 13 }}>
+                {[
+                  { n: STOCKS.length, l: '종목분석' },
+                  { n: ARTICLES.length, l: '가이드' },
+                  { n: null, l: '무료' },
+                ].map((s, i) => (
+                  <React.Fragment key={s.l}>
+                    {i > 0 && <span style={{ width: 1, height: 11, background: 'rgba(217,179,106,0.3)' }} />}
+                    <span style={{ fontSize: 11, color: 'rgba(217,179,106,0.8)' }}>
+                      {s.l}
+                      {s.n !== null && (
+                        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, marginLeft: 4 }}>{s.n}개</span>
+                      )}
+                    </span>
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
-            <div aria-hidden style={{
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+              <button
+                onClick={() => setDark((d) => !d)}
+                aria-label={dark ? '라이트 모드로 전환' : '다크 모드로 전환'}
+                style={{
+                  width: 26, height: 26, borderRadius: '50%', border: '1px solid rgba(217,179,106,0.4)',
+                  background: 'transparent', color: C.foil, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.85,
+                }}
+              >
+                {dark ? <Moon size={13} /> : <Sun size={13} />}
+              </button>
+              <div aria-hidden style={{
               width: 46, height: 46, borderRadius: '50%', border: `1.5px solid ${C.foil}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: C.foil, fontFamily: "'Noto Serif KR', serif", fontWeight: 900, fontSize: 20, opacity: 0.85, flexShrink: 0,
+              opacity: 0.9, flexShrink: 0,
             }}>
-              配
+              <svg width="30" height="30" viewBox="0 0 100 100">
+                <rect x="27" y="42" width="46" height="32" rx="4" fill="none" stroke={C.foil} strokeWidth="3" />
+                <line x1="33" y1="52" x2="63" y2="52" stroke={C.foil} strokeWidth="1.6" />
+                <line x1="33" y1="61" x2="63" y2="61" stroke={C.foil} strokeWidth="1.6" />
+                <rect x="54" y="35" width="5" height="7" fill={C.foil} />
+                <rect x="60" y="30" width="5" height="12" fill={C.foil} />
+                <rect x="66" y="25" width="5" height="17" fill={C.foil} />
+              </svg>
+              </div>
             </div>
           </div>
         </div>
@@ -4488,13 +4919,21 @@ export default function App() {
 
           {/* ── 탭바 ── */}
           <div style={{ display: 'flex', gap: 5, marginBottom: 18, background: 'rgba(34,49,42,0.05)', padding: 4, borderRadius: 10 }}>
-            {[{ v: 'calc', t: '계산기' }, { v: 'calendar', t: '달력' }, { v: 'find', t: '유형찾기' }, { v: 'stocks', t: '종목분석' }, { v: 'guide', t: '공부방' }].map((o) => {
+            {[
+              { v: 'calc', t: '계산기', Icon: Calculator },
+              { v: 'calendar', t: '달력', Icon: CalendarDays },
+              { v: 'find', t: '유형찾기', Icon: Compass },
+              { v: 'stocks', t: '종목분석', Icon: LineChart },
+              { v: 'guide', t: '공부방', Icon: BookOpen },
+            ].map((o) => {
               const on = tab === o.v;
               return (
                 <button key={o.v} onClick={() => goTab(o.v)} style={{
-                  flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+                  flex: 1, padding: '8px 0 7px', borderRadius: 7, fontSize: 10.5, fontWeight: 700, cursor: 'pointer',
                   border: 'none', background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
                 }}>
+                  <o.Icon size={14} />
                   {o.t}
                 </button>
               );
@@ -4503,6 +4942,10 @@ export default function App() {
 
           {tab === 'calc' && (
             <>
+              <input
+                ref={importInputRef} type="file" accept="application/json,.json"
+                onChange={handleImportFile} style={{ display: 'none' }}
+              />
               {holdings.length === 0 ? (
                 <Ruled style={{ padding: '34px 20px', textAlign: 'center', marginBottom: 18 }}>
                   <p style={{ margin: '0 0 6px', fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 17, color: C.ink }}>
@@ -4511,13 +4954,22 @@ export default function App() {
                   <p style={{ margin: '0 0 16px', fontSize: 12.5, color: C.inkSoft, lineHeight: 1.6 }}>
                     아래에서 보유 종목을 기입하면<br />이 자리에 배당 내역이 인쇄됩니다
                   </p>
-                  <button onClick={loadSample} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8,
-                    border: `1px solid ${C.cover}`, background: 'transparent', color: C.cover,
-                    fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
-                  }}>
-                    <Sparkles size={13} /> 샘플로 미리 체험하기
-                  </button>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <button onClick={loadSample} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8,
+                      border: `1px solid ${C.cover}`, background: 'transparent', color: C.cover,
+                      fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                    }}>
+                      <Sparkles size={13} /> 샘플로 미리 체험하기
+                    </button>
+                    <button onClick={triggerImport} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8,
+                      border: `1px solid ${C.lineStrong}`, background: 'transparent', color: C.inkSoft,
+                      fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                    }}>
+                      <Upload size={13} /> 백업 불러오기
+                    </button>
+                  </div>
                 </Ruled>
               ) : (
                 <>
@@ -4540,6 +4992,23 @@ export default function App() {
                     }}>
                       {copied ? <Check size={12} /> : <Copy size={12} />}
                       {copied ? '복사됨' : '요약 복사'}
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+                    <button onClick={exportHoldings} style={{
+                      display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 7,
+                      border: `1px solid ${C.lineStrong}`, background: 'transparent',
+                      fontSize: 10.5, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
+                    }}>
+                      <Download size={11} /> 백업 내보내기
+                    </button>
+                    <button onClick={triggerImport} style={{
+                      display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 7,
+                      border: `1px solid ${C.lineStrong}`, background: 'transparent',
+                      fontSize: 10.5, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
+                    }}>
+                      <Upload size={11} /> 백업 가져오기
                     </button>
                   </div>
 
@@ -4640,7 +5109,18 @@ export default function App() {
                 <div style={{ display: 'flex', gap: 10 }}>
                   <div style={{ flex: 2 }}>
                     <label style={label}>종목명</label>
-                    <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="예: 코카콜라" style={input} />
+                    <input
+                      value={form.name}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        const match = STOCKS.find((s) => s.name === v);
+                        setForm((f) => ({ ...f, name: v, ticker: match && !f.ticker ? match.ticker : f.ticker }));
+                      }}
+                      placeholder="예: 코카콜라" list="stock-name-list" style={input}
+                    />
+                    <datalist id="stock-name-list">
+                      {STOCKS.map((s) => <option key={s.ticker} value={s.name} />)}
+                    </datalist>
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={label}>티커 (선택)</label>
@@ -4718,6 +5198,18 @@ export default function App() {
           {tab === 'find' && <TypeFinder />}
           {tab === 'stocks' && <StockCards deepId={deepId} />}
           {tab === 'guide' && <Articles deepId={deepId} />}
+
+          <Fold icon={Info} title="이 사이트는요">
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              배당 통장은 배당 투자를 하거나 시작하려는 분들을 위해 만든 개인 프로젝트예요. 보유 배당주를 기입하면 연간·월별 배당 흐름을 계산해주는 무료 도구와, 종목분석·배당 상식을 정리한 글을 함께 제공하고 있어요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              사이트에 담긴 종목·배당 정보는 공개된 자료를 바탕으로 최대한 사실 확인을 거쳐 작성하고 있지만, 투자 자문이나 특정 종목 추천이 아니라 일반적인 정보 제공을 목적으로 해요. 실제 투자 결정 전에는 반드시 공식 출처에서 최신 정보를 다시 확인해주세요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
+              오탈자·잘못된 정보 제보나 문의는 <a href="mailto:contact@dividendpassbook.com" style={{ color: C.cover, fontWeight: 700 }}>contact@dividendpassbook.com</a>으로 보내주시면 확인 후 반영할게요.
+            </p>
+          </Fold>
 
           <Fold icon={BookOpen} title="배당 투자 알아두면 좋은 것들">
             <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
