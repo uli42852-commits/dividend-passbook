@@ -7146,6 +7146,41 @@ export default function App() {
     script.textContent = JSON.stringify(jsonLd);
   }, []);
 
+  /* ── 탭·종목·글에 따라 title/meta description을 동적으로 갱신 (개별 URL마다 고유한 제목을 갖게 함) ── */
+  useEffect(() => {
+    const DEFAULT_TITLE = '배당 통장 — 배당주 포트폴리오 계산기 · 월배당 계산';
+    const DEFAULT_DESC = '보유한 국내·미국 배당주를 기입하면 연간 배당금, 월별 배당 흐름, 세후 실수령액까지 계산해주는 무료 배당 계산기. SCHD, 리얼티인컴, 코카콜라 등 배당주 가이드 포함.';
+    const TAB_LABEL = { calc: '배당 계산기', calendar: '배당 캘린더', find: '유형 찾기', stocks: '종목분석', guide: '공부방' };
+
+    let title = DEFAULT_TITLE;
+    let desc = DEFAULT_DESC;
+
+    if (tab === 'stocks' && deepId) {
+      const s = STOCKS.find((x) => x.ticker === deepId);
+      if (s) {
+        title = `${s.name}(${s.ticker}) 배당 정보 — ${s.typeTag} | 배당 통장`;
+        desc = s.basic;
+      }
+    } else if (tab === 'guide' && deepId != null) {
+      const a = ARTICLES[Number(deepId)];
+      if (a) {
+        title = `${a.t} | 배당 통장 공부방`;
+        desc = a.p[0].slice(0, 150);
+      }
+    } else if (TAB_LABEL[tab]) {
+      title = `${TAB_LABEL[tab]} | 배당 통장`;
+    }
+
+    document.title = title;
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.name = 'description';
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', desc);
+  }, [tab, deepId]);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
