@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Plus, Trash2, Pencil, X, BookOpen, Shield, Copy, Check, Sparkles, Star,
   Calculator, CalendarDays, Compass, LineChart, Sun, Moon, Download, Upload, Info,
+  FileText, AlertTriangle, Mail,
 } from 'lucide-react';
 
 /* ── design tokens (CSS 변수로 연결 — prefers-color-scheme: dark 대응) ── */
@@ -7764,6 +7765,46 @@ export default function App() {
             </p>
             <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
               브라우저 사이트 데이터를 삭제하면 저장된 내용도 함께 삭제돼요.
+            </p>
+          </Fold>
+
+          <Fold icon={FileText} title="이용약관">
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              배당 통장은 누구나 무료로 이용할 수 있는 개인 프로젝트예요. 회원가입 절차 없이 배당 계산기·종목분석·배당 가이드 콘텐츠를 자유롭게 이용하실 수 있어요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              이 사이트에서 제공하는 계산 결과와 종목 정보는 참고용이며, 그 정확성·완전성·최신성을 보장하지 않아요. 운영자는 사이트 이용 과정에서 발생한 직접·간접적인 손해에 대해 법적 책임을 지지 않아요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              운영자는 서비스 내용을 사전 고지 없이 변경·중단할 수 있고, 안정적인 서비스 제공을 위해 노력하지만 서버 사정 등으로 일시적으로 접속이 어려울 수 있어요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
+              사이트의 콘텐츠(종목분석·가이드 글 등)를 무단으로 복제하거나, 자동화된 방식(크롤링·스크래핑 등)으로 대량 수집해 재배포하는 행위는 허용하지 않아요.
+            </p>
+          </Fold>
+
+          <Fold icon={AlertTriangle} title="투자 유의사항 (면책조항)">
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              이 사이트에서 제공하는 모든 정보는 <b>투자 자문이나 특정 종목의 매수·매도 권유가 아니에요.</b> 투자 판단과 그 결과에 대한 책임은 전적으로 투자자 본인에게 있어요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              배당금·배당수익률·주가는 계속 변동해요. 종목분석에 담긴 배당 이력·정책은 작성 시점 기준 공개 자료를 바탕으로 정리한 것이라, 실제 최신 배당금·배당일과 다를 수 있어요. 매수·매도 결정 전에는 반드시 기업 IR·DART 전자공시 등 공식 출처에서 최신 정보를 다시 확인해주세요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              세후 배당금·세금 계산 결과는 원화 15.4%, 미국 주식 15% 원천징수를 적용한 간이 추정치예요. 실제 과세는 개인의 종합소득 구간, 금융소득종합과세 여부 등에 따라 달라질 수 있어, 정확한 세금은 세무 전문가와 상담하시는 게 안전해요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
+              과거 배당 지급 이력이 미래의 배당 지급을 보장하지 않아요. 기업은 실적·경영 상황에 따라 배당을 축소하거나 중단할 수 있어요.
+            </p>
+          </Fold>
+
+          <Fold icon={Mail} title="문의하기">
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              종목 정보의 오탈자나 잘못된 내용을 발견하셨거나, 다뤘으면 하는 종목·주제가 있으시면 언제든 알려주세요. 확인 후 반영하고 있어요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
+              이메일: <a href="mailto:contact@dividendpassbook.com" style={{ color: C.cover, fontWeight: 700 }}>contact@dividendpassbook.com</a><br />
+              오류 제보, 데이터 정정 요청, 기능 제안, 제휴 문의 모두 이 이메일로 받고 있어요.
             </p>
           </Fold>
 
