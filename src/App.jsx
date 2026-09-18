@@ -7154,31 +7154,47 @@ export default function App() {
 
     let title = DEFAULT_TITLE;
     let desc = DEFAULT_DESC;
+    let path = '/';
 
     if (tab === 'stocks' && deepId) {
       const s = STOCKS.find((x) => x.ticker === deepId);
       if (s) {
         title = `${s.name}(${s.ticker}) 배당 정보 — ${s.typeTag} | 배당 통장`;
         desc = s.basic;
+        path = `/stocks/${s.ticker}`;
       }
     } else if (tab === 'guide' && deepId != null) {
       const a = ARTICLES[Number(deepId)];
       if (a) {
         title = `${a.t} | 배당 통장 공부방`;
         desc = a.p[0].slice(0, 150);
+        path = `/guide/${deepId}`;
       }
     } else if (TAB_LABEL[tab]) {
       title = `${TAB_LABEL[tab]} | 배당 통장`;
+      path = `/${tab}`;
     }
 
     document.title = title;
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement('meta');
-      metaDesc.name = 'description';
-      document.head.appendChild(metaDesc);
-    }
-    metaDesc.setAttribute('content', desc);
+
+    const setMeta = (selector, attr, value) => {
+      let el = document.querySelector(selector);
+      if (!el) {
+        el = document.createElement(selector.startsWith('link') ? 'link' : 'meta');
+        if (selector.includes('rel="canonical"')) el.setAttribute('rel', 'canonical');
+        else if (selector.includes('property=')) el.setAttribute('property', selector.match(/property="([^"]+)"/)[1]);
+        else if (selector.includes('name=')) el.setAttribute('name', selector.match(/name="([^"]+)"/)[1]);
+        document.head.appendChild(el);
+      }
+      el.setAttribute(attr, value);
+    };
+
+    const canonicalUrl = `https://www.dividendpassbook.com${path}`;
+    setMeta('meta[name="description"]', 'content', desc);
+    setMeta('link[rel="canonical"]', 'href', canonicalUrl);
+    setMeta('meta[property="og:title"]', 'content', title);
+    setMeta('meta[property="og:description"]', 'content', desc);
+    setMeta('meta[property="og:url"]', 'content', canonicalUrl);
   }, [tab, deepId]);
 
   useEffect(() => {
@@ -7509,14 +7525,14 @@ export default function App() {
             ].map((o) => {
               const on = tab === o.v;
               return (
-                <button key={o.v} onClick={() => goTab(o.v)} style={{
+                <a key={o.v} href={`/${o.v}`} onClick={(e) => { e.preventDefault(); goTab(o.v); }} style={{
                   flex: 1, padding: '8px 0 7px', borderRadius: 7, fontSize: 10.5, fontWeight: 700, cursor: 'pointer',
                   border: 'none', background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none',
                 }}>
                   <o.Icon size={14} />
                   {o.t}
-                </button>
+                </a>
               );
             })}
           </div>
