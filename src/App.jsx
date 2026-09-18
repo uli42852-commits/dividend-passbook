@@ -655,7 +655,7 @@ function Articles({ deepId }) {
   }, [deepId]);
 
   const copyLink = (idx) => {
-    const url = `${window.location.origin}${window.location.pathname}#/guide/${idx}`;
+    const url = `${window.location.origin}/guide/${idx}`;
     try {
       navigator.clipboard.writeText(url);
       setCopiedIdx(idx);
@@ -6525,7 +6525,7 @@ function StockCards({ deepId }) {
   const shown = filtered.slice(0, visible);
 
   const copyLink = (ticker) => {
-    const url = `${window.location.origin}${window.location.pathname}#/stocks/${ticker}`;
+    const url = `${window.location.origin}/stocks/${ticker}`;
     try {
       navigator.clipboard.writeText(url);
       setCopiedTicker(ticker);
@@ -7027,11 +7027,20 @@ function Fold({ icon: Icon, title, children }) {
   );
 }
 
-/* ── 해시 라우팅 (URL: #/calc, #/find, #/stocks, #/stocks/TICKER, #/guide, #/guide/N) ── */
+/* ── 라우팅 (URL: /calc, /find, /stocks, /stocks/TICKER, /guide, /guide/N — 예전 해시 링크 #/guide/N 등도 하위호환으로 계속 인식) ── */
 function parseHash() {
-  const raw = (typeof window !== 'undefined' ? window.location.hash : '').replace(/^#\/?/, '');
-  const [seg1, seg2] = raw.split('/').filter(Boolean);
+  if (typeof window === 'undefined') return { tab: null, deepId: null };
   const validTabs = ['calc', 'calendar', 'find', 'stocks', 'guide'];
+
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
+  if (path) {
+    const [pseg1, pseg2] = path.split('/').filter(Boolean);
+    if (validTabs.includes(pseg1)) return { tab: pseg1, deepId: pseg2 || null };
+  }
+
+  // 예전에 공유된 해시 링크(#/guide/5, #/stocks/AAPL 등) 하위호환
+  const raw = window.location.hash.replace(/^#\/?/, '');
+  const [seg1, seg2] = raw.split('/').filter(Boolean);
   const tab = validTabs.includes(seg1) ? seg1 : null; // null = URL에 명시된 탭 없음
   return { tab, deepId: seg2 || null };
 }
@@ -7079,19 +7088,23 @@ export default function App() {
   }, [dark]);
 
   useEffect(() => {
-    const onHashChange = () => {
+    const onLocationChange = () => {
       const parsed = parseHash();
       setTab(parsed.tab || (hasSavedHoldings() ? 'calc' : 'guide'));
       setDeepId(parsed.deepId);
     };
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
+    window.addEventListener('hashchange', onLocationChange);
+    window.addEventListener('popstate', onLocationChange);
+    return () => {
+      window.removeEventListener('hashchange', onLocationChange);
+      window.removeEventListener('popstate', onLocationChange);
+    };
   }, []);
 
   const goTab = (v) => {
     setTab(v);
     setDeepId(null);
-    window.location.hash = `/${v}`;
+    window.history.pushState({}, '', `/${v}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -7112,7 +7125,7 @@ export default function App() {
         {
           '@type': 'WebSite',
           name: '배당 통장',
-          url: 'https://dividend-passbook.vercel.app',
+          url: 'https://www.dividendpassbook.com',
           description: '보유한 국내·미국 배당주를 기입하면 연간 배당금, 월별 배당 흐름, 세후 실수령액까지 계산해주는 무료 배당 계산기',
           inLanguage: 'ko-KR',
         },
