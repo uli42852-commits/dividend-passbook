@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://dividend-passbook.vercel.app/sitemap.xml
+Sitemap: https://www.dividendpassbook.com/sitemap.xml
