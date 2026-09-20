@@ -15,7 +15,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ARTICLES, STOCKS } from '../data.js';
+import { ARTICLES, STOCKS, getRelatedStocks, getRelatedArticles } from '../data.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(__dirname, '..', 'dist');
@@ -81,6 +81,16 @@ function renderPage(template, { title, description, canonicalPath, bodyHtml }) {
 function stockBodyHtml(s) {
   const detailHtml = s.detail.map((p) => `<p>${escapeHtml(p)}</p>`).join('\n');
   const cautionHtml = s.caution.map((p) => `<li>${escapeHtml(p)}</li>`).join('\n');
+  const relatedStocks = getRelatedStocks(s.ticker, 4);
+  const relatedArticles = getRelatedArticles(s.ticker, s.name, 4);
+  const relatedStocksHtml = relatedStocks.length
+    ? `<h2 style="font-size:15px;margin:18px 0 8px;">비슷한 종목</h2>
+       <ul style="font-size:13px;padding-left:20px;">${relatedStocks.map((r) => `<li><a href="/stocks/${escapeHtml(r.ticker)}">${escapeHtml(r.name)}(${escapeHtml(r.ticker)})</a> — ${escapeHtml(r.typeTag)}</li>`).join('\n')}</ul>`
+    : '';
+  const relatedArticlesHtml = relatedArticles.length
+    ? `<h2 style="font-size:15px;margin:18px 0 8px;">관련 배당 가이드</h2>
+       <ul style="font-size:13px;padding-left:20px;">${relatedArticles.map((a) => `<li><a href="/guide/${escapeHtml(a.id)}">${escapeHtml(a.t)}</a></li>`).join('\n')}</ul>`
+    : '';
   return `
     <main style="max-width:720px;margin:40px auto;padding:0 20px;font-family:-apple-system,'Noto Sans KR',sans-serif;color:#22312a;line-height:1.75;">
       <h1 style="font-size:20px;margin:0 0 4px;">${escapeHtml(s.name)} (${escapeHtml(s.ticker)}) 배당 정보</h1>
@@ -89,16 +99,27 @@ function stockBodyHtml(s) {
       ${detailHtml}
       <h2 style="font-size:15px;margin:18px 0 8px;">주의할 점</h2>
       <ul style="font-size:13px;padding-left:20px;">${cautionHtml}</ul>
-      <p style="font-size:12px;color:#5b6a61;margin-top:20px;">페이지를 불러오는 중입니다…</p>
+      ${relatedStocksHtml}
+      ${relatedArticlesHtml}
+      <p style="font-size:11px;color:#8a978f;margin-top:20px;">이 페이지의 배당 정책 설명은 최근 공개된 기업·운용사 자료를 바탕으로 정리했으며, 실시간으로 자동 갱신되지 않아요. 최신 배당수익률·배당금은 위 "주의할 점"에 안내된 공식 페이지에서 확인하세요.</p>
+      <p style="font-size:12px;color:#5b6a61;margin-top:8px;">페이지를 불러오는 중입니다…</p>
     </main>`;
 }
 
 function guideBodyHtml(a) {
   const bodyHtml = a.p.map((p) => `<p>${escapeHtml(p)}</p>`).join('\n');
+  // 이 글 본문에 언급된 티커를 역으로 찾아 "관련 종목"으로 연결
+  const text = a.t + ' ' + a.p.join(' ');
+  const mentioned = STOCKS.filter((s) => new RegExp(`\\b${s.ticker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(text)).slice(0, 4);
+  const relatedStocksHtml = mentioned.length
+    ? `<h2 style="font-size:15px;margin:18px 0 8px;">관련 종목</h2>
+       <ul style="font-size:13px;padding-left:20px;">${mentioned.map((s) => `<li><a href="/stocks/${escapeHtml(s.ticker)}">${escapeHtml(s.name)}(${escapeHtml(s.ticker)})</a></li>`).join('\n')}</ul>`
+    : '';
   return `
     <main style="max-width:720px;margin:40px auto;padding:0 20px;font-family:-apple-system,'Noto Sans KR',sans-serif;color:#22312a;line-height:1.75;">
       <h1 style="font-size:20px;margin:0 0 14px;">${escapeHtml(a.t)}</h1>
       ${bodyHtml}
+      ${relatedStocksHtml}
       <p style="font-size:12px;color:#5b6a61;margin-top:20px;">페이지를 불러오는 중입니다…</p>
     </main>`;
 }
