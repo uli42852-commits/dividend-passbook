@@ -6174,3 +6174,62 @@ export const STOCKS = [
   },
 ];
 
+/* ── 관련 종목 / 관련 가이드 계산 헬퍼 ──────────────────────
+   App.jsx(실제 화면)와 scripts/prerender.mjs(정적 HTML 생성) 양쪽에서
+   똑같은 함수를 가져다 써요 — 그래야 크롤러가 보는 링크와 실제 사용자가
+   보는 링크가 항상 일치해요. 전부 STOCKS·ARTICLES에 이미 있는 데이터만
+   가지고 계산하고, 새로운 데이터를 지어내지 않아요. */
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function tokenizeTypeTag(typeTag) {
+  return new Set(typeTag.replace(/[()·,]/g, ' ').split(/\s+/).filter(Boolean));
+}
+
+const STOCK_TOKENS = new Map(STOCKS.map((s) => [s.ticker, tokenizeTypeTag(s.typeTag)]));
+
+// 토큰별 등장 빈도 → 흔한 단어(예: "ETF")는 가중치를 낮추고, 특이한 단어(예: "배당성장형")는 높여요.
+const TOKEN_DOC_FREQ = new Map();
+for (const tokens of STOCK_TOKENS.values()) {
+  for (const t of tokens) TOKEN_DOC_FREQ.set(t, (TOKEN_DOC_FREQ.get(t) || 0) + 1);
+}
+function tokenWeight(t) {
+  const df = TOKEN_DOC_FREQ.get(t) || 1;
+  return 1 / Math.log2(df + 1.5); // 흔할수록(df가 클수록) 가중치가 작아짐
+}
+
+// 같은 typeTag 키워드(예: "배당귀족", "월배당", "리츠")를 공유하는 종목 중,
+// 겹치는 키워드가 많은 순으로 관련 종목을 골라요.
+export function getRelatedStocks(ticker, limit = 4) {
+  const base = STOCK_TOKENS.get(ticker);
+  if (!base) return [];
+  const scored = [];
+  for (const s of STOCKS) {
+    if (s.ticker === ticker) continue;
+    const tokens = STOCK_TOKENS.get(s.ticker);
+    let overlap = 0;
+    for (const t of base) if (tokens.has(t)) overlap += tokenWeight(t);
+    if (overlap > 0) scored.push({ s, overlap });
+  }
+  scored.sort((a, b) => b.overlap - a.overlap || a.s.ticker.localeCompare(b.s.ticker));
+  return scored.slice(0, limit).map((x) => x.s);
+}
+
+// 그 종목의 티커·종목명이 본문에 실제로 언급된 가이드 글을 찾아요.
+export function getRelatedArticles(ticker, name, limit = 4) {
+  const tickerRe = new RegExp(`\\b${escapeRegExp(ticker)}\\b`);
+  const scored = [];
+  for (const a of ARTICLES) {
+    const text = a.p.join(' ');
+    let score = 0;
+    if (tickerRe.test(text)) score += 1;
+    if (name && text.includes(name)) score += 1;
+    if (tickerRe.test(a.t) || (name && a.t.includes(name))) score += 2;
+    if (score > 0) scored.push({ a, score });
+  }
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, limit).map((x) => x.a);
+}
+
