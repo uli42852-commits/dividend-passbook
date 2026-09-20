@@ -4,7 +4,7 @@ import {
   Calculator, CalendarDays, Compass, LineChart, Sun, Moon, Download, Upload, Info,
   FileText, AlertTriangle, Mail,
 } from 'lucide-react';
-import { ARTICLES, STOCKS } from './data.js';
+import { ARTICLES, STOCKS } from '../data.js';
 
 /* ── design tokens (CSS 변수로 연결 — prefers-color-scheme: dark 대응) ── */
 const C = {
