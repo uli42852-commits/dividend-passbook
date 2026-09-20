@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Plus, Trash2, Pencil, X, BookOpen, Shield, Copy, Check, Sparkles, Star,
   Calculator, CalendarDays, Compass, LineChart, Sun, Moon, Download, Upload, Info,
-  FileText, AlertTriangle, Mail,
+  FileText, AlertTriangle, Mail, HelpCircle,
 } from 'lucide-react';
-import { ARTICLES, STOCKS } from '../data.js';
+import { ARTICLES, STOCKS, getRelatedStocks, getRelatedArticles } from '../data.js';
 
 /* ── design tokens (CSS 변수로 연결 — prefers-color-scheme: dark 대응) ── */
 const C = {
@@ -58,7 +58,30 @@ function resolveArticle(deepId) {
   return null;
 }
 
-function Articles({ deepId }) {
+// 가이드 글 본문에 실제로 언급된 종목 티커를 찾아 링크로 보여줌
+function RelatedStocksForArticle({ article, onNavigate }) {
+  const text = article.t + ' ' + article.p.join(' ');
+  const mentioned = STOCKS.filter((s) => {
+    const re = new RegExp(`\\b${s.ticker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+    return re.test(text);
+  }).slice(0, 4);
+  if (!mentioned.length) return null;
+  return (
+    <div style={{ fontSize: 11.5, margin: '0 0 9px' }}>
+      <span style={{ color: C.inkSoft, marginRight: 6 }}>관련 종목:</span>
+      {mentioned.map((s, i) => (
+        <span key={s.ticker}>
+          <a href={`/stocks/${s.ticker}`} style={{ color: C.cover, textDecoration: 'none' }} onClick={(e) => { e.preventDefault(); onNavigate?.('stocks', s.ticker); }}>
+            {s.name}({s.ticker})
+          </a>
+          {i < mentioned.length - 1 ? ', ' : ''}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function Articles({ deepId, onNavigate }) {
   const [q, setQ] = useState('');
   const [copiedIdx, setCopiedIdx] = useState(null);
   const query = q.trim().toLowerCase();
@@ -139,6 +162,7 @@ function Articles({ deepId }) {
             {a.p.map((para, j) => (
               <p key={j} style={{ fontSize: 12, lineHeight: 1.8, color: C.inkSoft, margin: j === 0 ? '2px 0 9px' : '0 0 9px' }}>{para}</p>
             ))}
+            <RelatedStocksForArticle article={a} onNavigate={onNavigate} />
             <button
               onClick={(e) => { e.preventDefault(); copyLink(a.id); }}
               style={{
@@ -374,7 +398,45 @@ const STOCK_FILTERS = [
   { v: 'cut', t: '배당삭감 사례', test: (s) => /삭감|중단|사례|리셋/.test(s.typeTag) },
 ];
 
-function StockCards({ deepId }) {
+// 종목 카드 안에 보여주는 "비슷한 종목·관련 가이드" — 실제 <a href> 링크, 클릭하면 해당 상세로 이동
+function RelatedLinks({ stock, onNavigate }) {
+  const relStocks = getRelatedStocks(stock.ticker, 4);
+  const relArticles = getRelatedArticles(stock.ticker, stock.name, 3);
+  if (!relStocks.length && !relArticles.length) return null;
+  const linkStyle = { color: C.cover, textDecoration: 'none', fontSize: 11.5 };
+  return (
+    <div style={{ marginTop: 10, fontSize: 11.5 }}>
+      {relStocks.length > 0 && (
+        <div style={{ marginBottom: 6 }}>
+          <span style={{ color: C.inkSoft, marginRight: 6 }}>비슷한 종목:</span>
+          {relStocks.map((r, i) => (
+            <span key={r.ticker}>
+              <a href={`/stocks/${r.ticker}`} style={linkStyle} onClick={(e) => { e.preventDefault(); onNavigate?.('stocks', r.ticker); }}>
+                {r.name}({r.ticker})
+              </a>
+              {i < relStocks.length - 1 ? ', ' : ''}
+            </span>
+          ))}
+        </div>
+      )}
+      {relArticles.length > 0 && (
+        <div>
+          <span style={{ color: C.inkSoft, marginRight: 6 }}>관련 가이드:</span>
+          {relArticles.map((a, i) => (
+            <span key={a.id}>
+              <a href={`/guide/${a.id}`} style={linkStyle} onClick={(e) => { e.preventDefault(); onNavigate?.('guide', a.id); }}>
+                {a.t}
+              </a>
+              {i < relArticles.length - 1 ? ', ' : ''}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StockCards({ deepId, onNavigate }) {
   const [q, setQ] = useState('');
   const [chip, setChip] = useState('all');
   const [onlyFav, setOnlyFav] = useState(false);
@@ -533,6 +595,7 @@ function StockCards({ deepId }) {
                   <p key={i} style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 5px' }}>· {c}</p>
                 ))}
               </div>
+              <RelatedLinks stock={s} onNavigate={onNavigate} />
               <button
                 onClick={(e) => { e.preventDefault(); copyLink(s.ticker); }}
                 style={{
@@ -1016,6 +1079,14 @@ export default function App() {
     setTab(v);
     setDeepId(null);
     window.history.pushState({}, '', `/${v}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 관련 종목·관련 가이드 링크 클릭 시 해당 상세로 바로 이동
+  const goDeep = (targetTab, id) => {
+    setTab(targetTab);
+    setDeepId(id);
+    window.history.pushState({}, '', `/${targetTab}/${id}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -1704,8 +1775,8 @@ export default function App() {
 
           {tab === 'calendar' && <DividendCalendar holdings={holdings} />}
           {tab === 'find' && <TypeFinder />}
-          {tab === 'stocks' && <StockCards deepId={deepId} />}
-          {tab === 'guide' && <Articles deepId={deepId} />}
+          {tab === 'stocks' && <StockCards deepId={deepId} onNavigate={goDeep} />}
+          {tab === 'guide' && <Articles deepId={deepId} onNavigate={goDeep} />}
 
           <Fold icon={Info} title="이 사이트는요">
             <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
@@ -1713,6 +1784,9 @@ export default function App() {
             </p>
             <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               사이트에 담긴 종목·배당 정보는 공개된 자료를 바탕으로 최대한 사실 확인을 거쳐 작성하고 있지만, 투자 자문이나 특정 종목 추천이 아니라 일반적인 정보 제공을 목적으로 해요. 실제 투자 결정 전에는 반드시 공식 출처에서 최신 정보를 다시 확인해주세요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              종목분석·가이드 콘텐츠는 사람이 직접 조사해서 정리·검토하는 방식으로 관리하고 있고, 실시간 시세·배당 공시를 자동으로 가져와 반영하는 시스템은 아니에요. 그래서 배당수익률처럼 매일 바뀌는 수치는 이 사이트에 고정 숫자로 적어두지 않고, 각 종목 카드의 "주의할 점"에 안내된 공식 페이지(기업 IR·DART·운용사 사이트 등)에서 확인하도록 링크만 제공해요.
             </p>
             <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
               오탈자·잘못된 정보 제보나 문의는 <a href="mailto:contact@dividendpassbook.com" style={{ color: C.cover, fontWeight: 700 }}>contact@dividendpassbook.com</a>으로 보내주시면 확인 후 반영할게요.
@@ -1728,6 +1802,29 @@ export default function App() {
             </p>
             <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
               <b>지급월</b>이 서로 다른 종목을 섞으면 매달 배당이 들어오는 포트폴리오를 만들 수 있어요. 정확한 지급월은 DART 공시나 기업 IR에서 확인하세요.
+            </p>
+          </Fold>
+
+          <Fold icon={HelpCircle} title="자주 묻는 질문">
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              <b>Q. 계산된 배당금이 실제로 받는 금액과 왜 다를 수 있나요?</b><br />
+              기업이 배당금을 늘리거나 줄이면 실제 지급액이 달라져요. 이 계산기는 입력하신 "연간 배당금(주당)" 값을 그대로 곱해서 보여주는 방식이라, 그 값 자체가 최신이 아니면 결과도 어긋나요. 최신 주당배당금은 기업 IR·DART·운용사 페이지에서 확인 후 입력해주세요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              <b>Q. 미국 주식과 국내 주식의 세금 계산 방식이 어떻게 다른가요?</b><br />
+              미국 주식은 15% 원천징수 후 남은 금액을 기준으로, 국내 주식은 15.4% 원천징수를 기준으로 세후 금액을 계산해요. 두 나라 모두 금융소득이 연 2,000만원을 넘으면 종합과세 대상이 될 수 있는데, 이 계산기는 그 초과 여부만 참고용으로 보여줄 뿐 실제 종합과세 세액까지 계산하지는 않아요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              <b>Q. 환율이 바뀌면 계산 결과도 바뀌나요?</b><br />
+              네. 달러 배당을 원화로 환산할 때 계산기에 표시된 참고 환율을 사용해요. 실제 환전 시점의 환율과는 차이가 있을 수 있어, 정확한 원화 수령액은 실제 환전 후 확인하는 게 정확해요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+              <b>Q. 월배당과 분기배당은 화면에 어떻게 다르게 표시되나요?</b><br />
+              보유 종목에 입력한 지급월(들)에 맞춰 연간 배당금을 나눠 월별 캘린더·그래프에 반영해요. 월배당 종목은 매달, 분기배당 종목은 입력하신 지급월 3~4곳에만 금액이 표시돼요.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
+              <b>Q. 종목분석에 나오는 배당수익률·배당금 숫자를 그대로 믿어도 되나요?</b><br />
+              종목분석 카드의 수치(운용보수, 상장연도 등 구조적 사실)는 확인 후 기재하지만, 배당수익률·주가처럼 매일 바뀌는 숫자는 의도적으로 싣지 않았어요. 그런 숫자는 각 카드에 안내된 공식 출처에서 최신 값을 확인하는 게 정확해요.
             </p>
           </Fold>
 
