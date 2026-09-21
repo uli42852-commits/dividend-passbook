@@ -70,10 +70,15 @@ function renderPage(template, { title, description, canonicalPath, bodyHtml }) {
   }
 
   // #root 안의 기존(로딩 문구) 콘텐츠를 이 페이지 전용 실제 콘텐츠로 교체
-  html = html.replace(
-    /<div id="root">[\s\S]*?<\/div>\s*(?=<script)/,
-    `<div id="root">${bodyHtml}</div>\n    `
-  );
+  // (div 중첩 구조에 의존하지 않고, "<div id="root">부터 실제 진입 스크립트 태그 시작 지점까지"를 통째로 교체)
+  if (html.includes('<div id="root">') && html.includes('<script type="module"')) {
+    html = html.replace(
+      /<div id="root">[\s\S]*?<script type="module"/,
+      `<div id="root">${bodyHtml}</div>\n    <script type="module"`
+    );
+  } else {
+    console.warn(`[prerender] 경고: #root 또는 진입 스크립트 태그를 찾지 못해 본문 치환을 건너뜀 (${canonicalUrl})`);
+  }
 
   return html;
 }
