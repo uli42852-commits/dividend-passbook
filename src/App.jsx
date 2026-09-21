@@ -28,7 +28,21 @@ const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','
 const STORAGE_KEY = 'dividend-passbook-v1';
 const FAVORITES_KEY = 'dividend-passbook-favorites-v1';
 const GOAL_KEY = 'dividend-passbook-goal-v1';
+const RECENT_KEY = 'dividend-passbook-recent-v1';
+const RECENT_MAX = 5;
 const THIS_MONTH = new Date().getMonth() + 1;
+
+/* ── 한글 초성 검색 ── */
+const CHOSUNG = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+function toChosung(str) {
+  let out = '';
+  for (const ch of String(str)) {
+    const code = ch.charCodeAt(0);
+    out += (code >= 0xAC00 && code <= 0xD7A3) ? CHOSUNG[Math.floor((code - 0xAC00) / 588)] : ch;
+  }
+  return out;
+}
+const isChosungQuery = (str) => /^[ㄱ-ㅎ]+$/.test(str);
 const TAX = { KRW: 0.154, USD: 0.15 };
 const FX_KRW_PER_USD = 1400; // 참고용 환산 환율, 실제 환율과 다를 수 있음
 
@@ -138,7 +152,8 @@ function Articles({ deepId, onNavigate }) {
   const filtered = query
     ? withIdx.filter(({ a }) =>
         a.t.toLowerCase().includes(query) ||
-        a.p.some((p) => p.toLowerCase().includes(query))
+        a.p.some((p) => p.toLowerCase().includes(query)) ||
+        (isChosungQuery(query) && toChosung(a.t).includes(query))
       )
     : withIdx;
 
@@ -493,7 +508,23 @@ function StockCards({ deepId, onNavigate }) {
   const [favLoaded, setFavLoaded] = useState(false);
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [copiedTicker, setCopiedTicker] = useState(null);
+  const [recent, setRecent] = useState([]);
   const query = q.trim().toLowerCase();
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RECENT_KEY);
+      if (raw) setRecent(JSON.parse(raw));
+    } catch (e) { /* first visit */ }
+  }, []);
+
+  const recordView = (ticker) => {
+    setRecent((prev) => {
+      const next = [ticker, ...prev.filter((t) => t !== ticker)].slice(0, RECENT_MAX);
+      try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch (e) { /* ignore */ }
+      return next;
+    });
+  };
 
   useEffect(() => {
     try {
@@ -521,7 +552,8 @@ function StockCards({ deepId, onNavigate }) {
     if (query && !(
       s.name.toLowerCase().includes(query) ||
       s.ticker.toLowerCase().includes(query) ||
-      s.typeTag.toLowerCase().includes(query)
+      s.typeTag.toLowerCase().includes(query) ||
+      (isChosungQuery(query) && toChosung(s.name).includes(query))
     )) return false;
     if (!chipTest(s)) return false;
     if (onlyFav && !favs.has(s.ticker)) return false;
@@ -545,6 +577,15 @@ function StockCards({ deepId, onNavigate }) {
   }, [deepId, filtered, visible]);
 
   const shown = filtered.slice(0, visible);
+
+  const jumpToStock = (ticker) => {
+    const idx = filtered.findIndex((s) => s.ticker === ticker);
+    if (idx >= 0 && idx >= visible) setVisible(idx + PAGE_SIZE);
+    setTimeout(() => {
+      const el = document.getElementById(`stock-${ticker}`);
+      if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    }, 60);
+  };
 
   const copyLink = (ticker) => {
     const url = `${window.location.origin}/stocks/${ticker}`;
@@ -587,6 +628,25 @@ function StockCards({ deepId, onNavigate }) {
           </button>
         )}
       </div>
+
+      {!query && recent.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', paddingBottom: 4, marginBottom: 4, WebkitOverflowScrolling: 'touch' }}>
+          <span style={{ fontSize: 10.5, color: C.inkSoft, flexShrink: 0 }}>최근 본 종목</span>
+          {recent.map((ticker) => {
+            const s = STOCKS.find((x) => x.ticker === ticker);
+            if (!s) return null;
+            return (
+              <button key={ticker} onClick={() => jumpToStock(ticker)} style={{
+                flexShrink: 0, padding: '5px 11px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                border: `1px solid ${C.lineStrong}`, background: 'transparent', color: C.inkSoft, whiteSpace: 'nowrap',
+              }}>
+                {s.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, marginBottom: 4, WebkitOverflowScrolling: 'touch' }}>
         {STOCK_FILTERS.map((f) => {
           const on = chip === f.v;
@@ -616,7 +676,7 @@ function StockCards({ deepId, onNavigate }) {
       {shown.map((s) => {
         const isFav = favs.has(s.ticker);
         return (
-          <details key={s.ticker} id={`stock-${s.ticker}`} style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 10, marginBottom: 8, padding: '0 16px', overflow: 'hidden' }}>
+          <details key={s.ticker} id={`stock-${s.ticker}`} onToggle={(e) => { if (e.target.open) recordView(s.ticker); }} style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 10, marginBottom: 8, padding: '0 16px', overflow: 'hidden' }}>
             <summary style={{ padding: '13px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, listStyle: 'none' }}>
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFav(s.ticker); }}
@@ -1427,6 +1487,16 @@ export default function App() {
   }, 0) / 12;
   const goalPct = goal > 0 ? Math.min(100, (totalMonthlyKRW / goal) * 100) : 0;
 
+  // 이번 달 배당 예정 종목 — 보유 종목 중 이번 달이 지급월인 것만 골라 종목별 금액 계산
+  const thisMonthDue = holdings
+    .filter((h) => h.months.includes(THIS_MONTH))
+    .map((h) => {
+      const cur = h.currency || 'KRW';
+      const amount = applyTax((h.shares * h.annualDiv) / h.months.length, cur);
+      return { name: h.name, ticker: h.ticker, cur, amount };
+    })
+    .sort((a, b) => b.amount - a.amount);
+
   const copySummary = async () => {
     const lines = stats.map((s) =>
       `[${s.cur}] 연 ${fmt(applyTax(s.annual, s.cur), s.cur)} · 월평균 ${fmt(applyTax(s.annual / 12, s.cur), s.cur)}${afterTax ? ' (세후)' : ' (세전)'}`
@@ -1807,6 +1877,26 @@ export default function App() {
                       </div>
                     </div>
                   ))}
+
+                  {thisMonthDue.length > 0 && (
+                    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
+                      <div style={{ fontSize: 11.5, fontWeight: 700, color: C.ink, marginBottom: 10 }}>
+                        📅 {MONTHS[THIS_MONTH - 1]} 배당 예정
+                      </div>
+                      {thisMonthDue.map((d) => (
+                        <div key={d.ticker} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: C.inkSoft, padding: '4px 0' }}>
+                          <span>{d.name}</span>
+                          <span style={{ fontWeight: 600, color: C.ink }}>{fmt(d.amount, d.cur)}</span>
+                        </div>
+                      ))}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 700, color: C.cover, borderTop: `1px solid ${C.line}`, marginTop: 6, paddingTop: 8 }}>
+                        <span>예상 합계</span>
+                        <span>
+                          {stats.filter((s) => s.thisMonth > 0).map((s) => fmt(applyTax(s.thisMonth, s.cur), s.cur)).join(' + ') || fmt(0, 'KRW')}
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                   <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '14px 16px', marginBottom: 18 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: goal > 0 ? 10 : 8 }}>
