@@ -226,6 +226,28 @@ function Articles({ deepId, onNavigate }) {
             {a.p.map((para, j) => (
               <p key={j} style={{ fontSize: 12, lineHeight: 1.8, color: C.inkSoft, margin: j === 0 ? '2px 0 9px' : '0 0 9px' }}>{para}</p>
             ))}
+            {a.cta && a.cta.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '4px 0 12px' }}>
+                {a.cta.map((c) => (
+                  <a key={c.href} href={c.href}
+                    onClick={(e) => { e.preventDefault(); onNavigate?.(c.href.startsWith('/stocks/') ? 'stocks' : 'calc', c.href.startsWith('/stocks/') ? c.href.replace('/stocks/', '') : null); }}
+                    style={{ display: 'block', textAlign: 'center', textDecoration: 'none', fontSize: 12, fontWeight: 700, color: C.foil, background: C.cover, borderRadius: 8, padding: '10px 12px' }}>
+                    {c.text}
+                  </a>
+                ))}
+              </div>
+            )}
+            {a.faq && a.faq.length > 0 && (
+              <div style={{ background: 'var(--pb-input-bg)', border: `1px solid ${C.line}`, borderRadius: 8, padding: '10px 12px', margin: '0 0 12px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, marginBottom: 7 }}>❓ 자주 묻는 질문</div>
+                {a.faq.map((f, i) => (
+                  <div key={i} style={{ marginBottom: i < a.faq.length - 1 ? 9 : 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: C.ink, margin: '0 0 3px' }}>Q. {f.q}</p>
+                    <p style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: 0 }}>{f.a}</p>
+                  </div>
+                ))}
+              </div>
+            )}
             <RelatedStocksForArticle article={a} onNavigate={onNavigate} />
             <button
               onClick={(e) => { e.preventDefault(); copyLink(a.id); }}
