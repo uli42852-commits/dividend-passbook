@@ -27,6 +27,7 @@ const C = {
 const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const STORAGE_KEY = 'dividend-passbook-v1';
 const FAVORITES_KEY = 'dividend-passbook-favorites-v1';
+const GOAL_KEY = 'dividend-passbook-goal-v1';
 const THIS_MONTH = new Date().getMonth() + 1;
 const TAX = { KRW: 0.154, USD: 0.15 };
 const FX_KRW_PER_USD = 1400; // 참고용 환산 환율, 실제 환율과 다를 수 있음
@@ -1088,7 +1089,9 @@ export default function App() {
   const [afterTax, setAfterTax] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [showTaxInfo, setShowTaxInfo] = useState(false);
   const [sharedBanner, setSharedBanner] = useState(false); // 공유 링크로 들어왔을 때만 true
+  const [goal, setGoal] = useState(0); // 월 배당 목표(원), 0이면 미설정
   const initial = typeof window !== 'undefined' ? parseHash() : { tab: null, deepId: null };
   const initialTab = initial.tab || (hasSavedHoldings() ? 'calc' : 'guide');
   const [tab, setTab] = useState(initialTab); // 'calc' | 'calendar' | 'find' | 'stocks' | 'guide'
@@ -1263,6 +1266,24 @@ export default function App() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch (e) { /* ignore */ }
   };
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(GOAL_KEY);
+      if (raw) {
+        const n = Number(raw);
+        if (Number.isFinite(n) && n > 0) setGoal(n);
+      }
+    } catch (e) { /* ignore */ }
+  }, []);
+
+  const setAndPersistGoal = (n) => {
+    setGoal(n);
+    try {
+      if (n > 0) localStorage.setItem(GOAL_KEY, String(n));
+      else localStorage.removeItem(GOAL_KEY);
+    } catch (e) { /* ignore */ }
+  };
+
   // 공유받은 결과를 실제로 내 배당 통장에 저장
   const acceptSharedHoldings = () => {
     persist(holdings);
@@ -1396,6 +1417,15 @@ export default function App() {
       return { cur, principal, annual, yieldPct, monthly, thisMonth };
     })
     .filter(Boolean);
+
+  // 월 배당 목표 달성률 계산용 — 통화가 섞여 있어도 참고 환율로 KRW 환산해 하나의 월평균으로 합산
+  const totalMonthlyKRW = holdings.reduce((sum, h) => {
+    const cur = h.currency || 'KRW';
+    const annualTaxed = applyTax(h.shares * h.annualDiv, cur);
+    const krw = cur === 'USD' ? annualTaxed * FX_KRW_PER_USD : annualTaxed;
+    return sum + krw;
+  }, 0) / 12;
+  const goalPct = goal > 0 ? Math.min(100, (totalMonthlyKRW / goal) * 100) : 0;
 
   const copySummary = async () => {
     const lines = stats.map((s) =>
@@ -1679,17 +1709,25 @@ export default function App() {
                       </div>
                     </div>
                   )}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                    <div style={{ display: 'flex', border: `1px solid ${C.lineStrong}`, borderRadius: 8, overflow: 'hidden' }}>
-                      {[{ v: false, t: '세전' }, { v: true, t: '세후' }].map((o) => (
-                        <button key={o.t} onClick={() => setAfterTax(o.v)} style={{
-                          padding: '7px 16px', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
-                          background: afterTax === o.v ? C.cover : 'transparent',
-                          color: afterTax === o.v ? C.foil : C.inkSoft,
-                        }}>
-                          {o.t}
-                        </button>
-                      ))}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, flexWrap: 'wrap', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ display: 'flex', border: `1px solid ${C.lineStrong}`, borderRadius: 8, overflow: 'hidden' }}>
+                        {[{ v: false, t: '세전' }, { v: true, t: '세후' }].map((o) => (
+                          <button key={o.t} onClick={() => setAfterTax(o.v)} style={{
+                            padding: '7px 16px', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
+                            background: afterTax === o.v ? C.cover : 'transparent',
+                            color: afterTax === o.v ? C.foil : C.inkSoft,
+                          }}>
+                            {o.t}
+                          </button>
+                        ))}
+                      </div>
+                      <button onClick={() => setShowTaxInfo((v) => !v)} aria-label="세후 배당금 설명 보기" style={{
+                        width: 22, height: 22, borderRadius: '50%', border: `1px solid ${C.lineStrong}`, background: 'transparent',
+                        color: C.inkSoft, fontSize: 11, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+                      }}>
+                        ?
+                      </button>
                     </div>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button onClick={copySummary} style={{
@@ -1710,6 +1748,12 @@ export default function App() {
                       </button>
                     </div>
                   </div>
+
+                  {showTaxInfo && (
+                    <p style={{ fontSize: 11, lineHeight: 1.6, color: C.inkSoft, background: 'var(--pb-input-bg)', borderRadius: 7, padding: '8px 10px', margin: '0 0 12px' }}>
+                      <b>세후 배당금이란?</b> 배당을 받을 때 국내 주식은 15.4%, 미국 주식은 15%가 자동으로 원천징수돼요. "세전"은 그 세금을 떼기 전 금액, "세후"는 뗀 뒤 실제로 받는 금액이에요. 금융소득이 연 2,000만원을 넘으면 종합과세 대상이 될 수 있어, 정확한 세금은 세무 전문가와 상담하는 게 안전해요.
+                    </p>
+                  )}
 
                   <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                     <button onClick={exportHoldings} style={{
@@ -1763,6 +1807,55 @@ export default function App() {
                       </div>
                     </div>
                   ))}
+
+                  <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '14px 16px', marginBottom: 18 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: goal > 0 ? 10 : 8 }}>
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: C.ink }}>월 배당 목표</span>
+                      {goal > 0 && (
+                        <button onClick={() => setAndPersistGoal(0)} style={{ fontSize: 10.5, color: C.inkSoft, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                          초기화
+                        </button>
+                      )}
+                    </div>
+                    {goal > 0 ? (
+                      <>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                          <span style={{ fontSize: 11, color: C.inkSoft }}>
+                            현재 월평균 {fmt(totalMonthlyKRW, 'KRW')} <span style={{ opacity: 0.7 }}>{afterTax ? '(세후·환산)' : '(세전·환산)'}</span>
+                          </span>
+                          <span style={{ fontSize: 11, color: C.inkSoft }}>목표 {fmt(goal, 'KRW')}</span>
+                        </div>
+                        <div style={{ height: 8, borderRadius: 999, background: 'var(--pb-input-bg)', overflow: 'hidden', marginBottom: 6 }}>
+                          <div style={{ height: '100%', width: `${goalPct}%`, background: C.cover, borderRadius: 999, transition: 'width 0.3s' }} />
+                        </div>
+                        <div style={{ fontSize: 12.5, fontWeight: 700, color: C.cover }}>
+                          달성률 {goalPct.toFixed(1)}%
+                          {goalPct < 100 && <span style={{ fontWeight: 500, color: C.inkSoft }}> · 남은 금액 {fmt(Math.max(0, goal - totalMonthlyKRW), 'KRW')}</span>}
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {[100000, 300000, 500000, 1000000].map((v) => (
+                          <button key={v} onClick={() => setAndPersistGoal(v)} style={{
+                            padding: '7px 12px', borderRadius: 999, border: `1px solid ${C.lineStrong}`, background: 'transparent',
+                            fontSize: 11.5, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
+                          }}>
+                            {v >= 1000000 ? `${v / 10000}만원` : `${v / 10000}만원`}
+                          </button>
+                        ))}
+                        <button onClick={() => {
+                          const v = window.prompt('월 배당 목표 금액(원)을 입력해주세요');
+                          const n = parseFloat(v);
+                          if (n > 0) setAndPersistGoal(n);
+                        }} style={{
+                          padding: '7px 12px', borderRadius: 999, border: `1px solid ${C.lineStrong}`, background: 'transparent',
+                          fontSize: 11.5, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
+                        }}>
+                          직접 입력
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   <PortfolioDiagnosis holdings={holdings} />
 
@@ -1866,6 +1959,16 @@ export default function App() {
                   <div style={{ flex: 1 }}>
                     <label style={label}>보유수량 (주)</label>
                     <input type="number" inputMode="decimal" min="0" value={form.shares} onChange={(e) => setForm({ ...form, shares: e.target.value })} placeholder="10" style={input} />
+                    <div style={{ display: 'flex', gap: 5, marginTop: 6 }}>
+                      {[10, 50, 100, 500].map((n) => (
+                        <button key={n} type="button" onClick={() => setForm((f) => ({ ...f, shares: String(n) }))} style={{
+                          flex: 1, padding: '7px 0', borderRadius: 7, border: `1px solid ${C.lineStrong}`, background: 'transparent',
+                          fontSize: 11, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
+                        }}>
+                          {n}주
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={label}>매입단가 ({form.currency === 'USD' ? '$' : '원'})</label>
