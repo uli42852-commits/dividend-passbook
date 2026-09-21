@@ -113,6 +113,13 @@ function stockBodyHtml(s) {
 
 function guideBodyHtml(a) {
   const bodyHtml = a.p.map((p) => `<p>${escapeHtml(p)}</p>`).join('\n');
+  const ctaHtml = (a.cta && a.cta.length)
+    ? a.cta.map((c) => `<p><a href="${escapeHtml(c.href)}" style="display:inline-block;font-weight:700;">${escapeHtml(c.text)}</a></p>`).join('\n')
+    : '';
+  const faqHtml = (a.faq && a.faq.length)
+    ? `<h2 style="font-size:15px;margin:18px 0 8px;">❓ 자주 묻는 질문</h2>` +
+      a.faq.map((f) => `<p><b>Q. ${escapeHtml(f.q)}</b><br>${escapeHtml(f.a)}</p>`).join('\n')
+    : '';
   // 이 글 본문에 언급된 티커를 역으로 찾아 "관련 종목"으로 연결
   const text = a.t + ' ' + a.p.join(' ');
   const mentioned = STOCKS.filter((s) => new RegExp(`\\b${s.ticker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(text)).slice(0, 4);
@@ -124,6 +131,8 @@ function guideBodyHtml(a) {
     <main style="max-width:720px;margin:40px auto;padding:0 20px;font-family:-apple-system,'Noto Sans KR',sans-serif;color:#22312a;line-height:1.75;">
       <h1 style="font-size:20px;margin:0 0 14px;">${escapeHtml(a.t)}</h1>
       ${bodyHtml}
+      ${ctaHtml}
+      ${faqHtml}
       ${relatedStocksHtml}
       <p style="font-size:12px;color:#5b6a61;margin-top:20px;">페이지를 불러오는 중입니다…</p>
     </main>`;
