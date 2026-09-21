@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Plus, Trash2, Pencil, X, BookOpen, Shield, Copy, Check, Sparkles, Star,
   Calculator, CalendarDays, Compass, LineChart, Sun, Moon, Download, Upload, Info,
-  FileText, AlertTriangle, Mail, HelpCircle,
+  FileText, AlertTriangle, Mail, HelpCircle, Share2,
 } from 'lucide-react';
 import { ARTICLES, STOCKS, getRelatedStocks, getRelatedArticles } from '../data.js';
 
@@ -30,6 +30,54 @@ const FAVORITES_KEY = 'dividend-passbook-favorites-v1';
 const THIS_MONTH = new Date().getMonth() + 1;
 const TAX = { KRW: 0.154, USD: 0.15 };
 const FX_KRW_PER_USD = 1400; // 참고용 환산 환율, 실제 환율과 다를 수 있음
+
+/* ── 계산 결과 공유 링크 인코딩/디코딩 ──────────────────────
+   holdings 배열을 짧은 키의 배열 형태로 압축한 뒤 URL-safe base64로 인코딩해요.
+   서버 저장 없이 URL 자체에 계산에 필요한 값만 담아서, 다른 브라우저·기기에서
+   그 링크를 열면 같은 계산 결과가 재현되게 해요. */
+function encodeShareState(holdings, afterTax) {
+  const h = holdings.map((x) => [
+    x.name, x.ticker || '', x.shares, x.avgPrice, x.annualDiv,
+    (x.months || []).join(','), x.currency || 'KRW',
+  ]);
+  const json = JSON.stringify({ h, x: afterTax ? 1 : 0 });
+  const b64 = btoa(unescape(encodeURIComponent(json)));
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function decodeShareState(b64) {
+  try {
+    const norm = String(b64).replace(/-/g, '+').replace(/_/g, '/');
+    const pad = norm.length % 4 === 0 ? '' : '='.repeat(4 - (norm.length % 4));
+    const json = decodeURIComponent(escape(atob(norm + pad)));
+    const payload = JSON.parse(json);
+    if (!payload || !Array.isArray(payload.h)) return null;
+
+    const holdings = payload.h.map((arr, i) => {
+      if (!Array.isArray(arr) || arr.length < 7) return null;
+      const [name, ticker, shares, avgPrice, annualDiv, monthsStr, currency] = arr;
+      if (typeof name !== 'string' || !name.trim()) return null;
+      const sharesN = Number(shares), avgPriceN = Number(avgPrice), annualDivN = Number(annualDiv);
+      if (!Number.isFinite(sharesN) || sharesN <= 0 || sharesN > 10_000_000) return null;
+      if (!Number.isFinite(avgPriceN) || avgPriceN < 0 || avgPriceN > 1_000_000_000) return null;
+      if (!Number.isFinite(annualDivN) || annualDivN < 0 || annualDivN > 100_000_000) return null;
+      const months = String(monthsStr || '').split(',').map(Number).filter((m) => Number.isInteger(m) && m >= 1 && m <= 12);
+      if (months.length === 0) return null;
+      return {
+        id: Date.now() + i,
+        name: String(name).slice(0, 60),
+        ticker: String(ticker || '').slice(0, 15),
+        shares: sharesN, avgPrice: avgPriceN, annualDiv: annualDivN,
+        months, currency: currency === 'USD' ? 'USD' : 'KRW',
+      };
+    }).filter(Boolean);
+
+    if (holdings.length === 0) return null;
+    return { holdings, afterTax: payload.x === 1 };
+  } catch (e) {
+    return null; // 잘못됐거나 변조된 URL — 조용히 무시하고 평소처럼 동작
+  }
+}
 
 function fmt(n, cur) {
   if (cur === 'USD') return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1039,6 +1087,8 @@ export default function App() {
   const [error, setError] = useState('');
   const [afterTax, setAfterTax] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [sharedBanner, setSharedBanner] = useState(false); // 공유 링크로 들어왔을 때만 true
   const initial = typeof window !== 'undefined' ? parseHash() : { tab: null, deepId: null };
   const initialTab = initial.tab || (hasSavedHoldings() ? 'calc' : 'guide');
   const [tab, setTab] = useState(initialTab); // 'calc' | 'calendar' | 'find' | 'stocks' | 'guide'
@@ -1180,6 +1230,25 @@ export default function App() {
   }, [tab, deepId]);
 
   useEffect(() => {
+    // 공유 링크(?s=...)로 들어온 경우: 내 저장된 포트폴리오를 곧바로 덮어쓰지 않고
+    // "공유받은 결과" 배너로만 보여줘요. 저장은 사용자가 버튼을 눌렀을 때만 해요.
+    let shared = null;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const s = params.get('s');
+      if (s) shared = decodeShareState(s);
+    } catch (e) { /* ignore */ }
+
+    if (shared) {
+      setHoldings(shared.holdings);
+      setAfterTax(shared.afterTax);
+      setSharedBanner(true);
+      idRef.current = shared.holdings.reduce((m, h) => Math.max(m, h.id || 0), 0) + 1;
+      // 주소창에서 파라미터는 지워서, 새로고침해도 같은 화면이 계속 뜨지 않게 함
+      try { window.history.replaceState({}, '', window.location.pathname); } catch (e) { /* ignore */ }
+      return;
+    }
+
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
@@ -1192,6 +1261,25 @@ export default function App() {
 
   const persist = (next) => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch (e) { /* ignore */ }
+  };
+
+  // 공유받은 결과를 실제로 내 배당 통장에 저장
+  const acceptSharedHoldings = () => {
+    persist(holdings);
+    setSharedBanner(false);
+  };
+
+  // 공유받은 결과를 무시하고 원래 내 포트폴리오(저장돼 있었다면)로 되돌림
+  const dismissSharedBanner = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const d = raw ? JSON.parse(raw) : [];
+      setHoldings(d);
+      idRef.current = d.reduce((m, h) => Math.max(m, h.id || 0), 0) + 1;
+    } catch (e) {
+      setHoldings([]);
+    }
+    setSharedBanner(false);
   };
 
   const exportHoldings = () => {
@@ -1316,6 +1404,32 @@ export default function App() {
     try {
       await navigator.clipboard.writeText(`내 배당 통장\n${lines.join('\n')}\n종목 ${holdings.length}개`);
       setCopied(true); setTimeout(() => setCopied(false), 1800);
+    } catch (e) { /* clipboard unavailable */ }
+  };
+
+  // 계산 결과 링크 공유 — 종목·수량 등 입력값을 URL에 담아서, 그 링크를 열면 같은 계산이 재현돼요.
+  // 서버에는 아무것도 저장하지 않고, 개인 식별 정보도 포함하지 않아요.
+  const shareResult = async () => {
+    if (holdings.length === 0) return;
+    const b64 = encodeShareState(holdings, afterTax);
+    const url = `${window.location.origin}/calc?s=${b64}`;
+    const lines = stats.map((s) =>
+      `[${s.cur}] 예상 연 배당금 ${fmt(applyTax(s.annual, s.cur), s.cur)}${afterTax ? ' (세후)' : ' (세전)'}`
+    );
+    const shareText = `내 배당 계산 결과\n${lines.join('\n')}\n종목 ${holdings.length}개\n\n배당 통장에서 확인하기`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: '배당 통장 — 계산 결과', text: shareText, url });
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return; // 사용자가 공유를 취소함 — 조용히 종료
+        // 그 외 실패 시 아래 링크 복사로 대체
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true); setTimeout(() => setShareCopied(false), 1800);
     } catch (e) { /* clipboard unavailable */ }
   };
 
@@ -1552,6 +1666,19 @@ export default function App() {
                 </Ruled>
               ) : (
                 <>
+                  {sharedBanner && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '10px 12px', marginBottom: 12, borderRadius: 8, background: 'var(--pb-stamp-06)', border: `1px solid ${C.lineStrong}` }}>
+                      <span style={{ fontSize: 11.5, color: C.inkSoft }}>🔗 다른 분이 공유한 계산 결과를 보고 있어요</span>
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                        <button onClick={acceptSharedHoldings} style={{ fontSize: 11, fontWeight: 700, color: C.foil, background: C.cover, border: 'none', borderRadius: 6, padding: '5px 9px', cursor: 'pointer' }}>
+                          내 배당 통장에 저장
+                        </button>
+                        <button onClick={dismissSharedBanner} style={{ fontSize: 11, fontWeight: 600, color: C.inkSoft, background: 'transparent', border: `1px solid ${C.lineStrong}`, borderRadius: 6, padding: '5px 9px', cursor: 'pointer' }}>
+                          닫기
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                     <div style={{ display: 'flex', border: `1px solid ${C.lineStrong}`, borderRadius: 8, overflow: 'hidden' }}>
                       {[{ v: false, t: '세전' }, { v: true, t: '세후' }].map((o) => (
@@ -1564,14 +1691,24 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-                    <button onClick={copySummary} style={{
-                      display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8,
-                      border: `1px solid ${C.lineStrong}`, background: 'transparent',
-                      fontSize: 11.5, fontWeight: 600, color: copied ? C.cover : C.inkSoft, cursor: 'pointer',
-                    }}>
-                      {copied ? <Check size={12} /> : <Copy size={12} />}
-                      {copied ? '복사됨' : '요약 복사'}
-                    </button>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={copySummary} style={{
+                        display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8,
+                        border: `1px solid ${C.lineStrong}`, background: 'transparent',
+                        fontSize: 11.5, fontWeight: 600, color: copied ? C.cover : C.inkSoft, cursor: 'pointer',
+                      }}>
+                        {copied ? <Check size={12} /> : <Copy size={12} />}
+                        {copied ? '복사됨' : '요약 복사'}
+                      </button>
+                      <button onClick={shareResult} style={{
+                        display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8,
+                        border: `1px solid ${C.lineStrong}`, background: 'transparent',
+                        fontSize: 11.5, fontWeight: 600, color: shareCopied ? C.cover : C.inkSoft, cursor: 'pointer',
+                      }}>
+                        {shareCopied ? <Check size={12} /> : <Share2 size={12} />}
+                        {shareCopied ? '링크 복사됨' : '결과 공유'}
+                      </button>
+                    </div>
                   </div>
 
                   <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
