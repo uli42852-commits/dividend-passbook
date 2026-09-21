@@ -130,16 +130,16 @@ function RelatedStocksForArticle({ article, onNavigate }) {
   }).slice(0, 4);
   if (!mentioned.length) return null;
   return (
-    <div style={{ fontSize: 11.5, margin: '0 0 9px' }}>
-      <span style={{ color: C.inkSoft, marginRight: 6 }}>관련 종목:</span>
-      {mentioned.map((s, i) => (
-        <span key={s.ticker}>
-          <a href={`/stocks/${s.ticker}`} style={{ color: C.cover, textDecoration: 'none' }} onClick={(e) => { e.preventDefault(); onNavigate?.('stocks', s.ticker); }}>
+    <div style={{ background: 'var(--pb-input-bg)', border: `1px solid ${C.line}`, borderRadius: 8, padding: '10px 12px', margin: '0 0 9px' }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, marginBottom: 7 }}>📈 관련 종목</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {mentioned.map((s) => (
+          <a key={s.ticker} href={`/stocks/${s.ticker}`} onClick={(e) => { e.preventDefault(); onNavigate?.('stocks', s.ticker); }}
+            style={{ textDecoration: 'none', fontSize: 11, fontWeight: 600, color: C.cover, border: `1px solid ${C.lineStrong}`, borderRadius: 999, padding: '4px 10px' }}>
             {s.name}({s.ticker})
           </a>
-          {i < mentioned.length - 1 ? ', ' : ''}
-        </span>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -467,33 +467,31 @@ function RelatedLinks({ stock, onNavigate }) {
   const relStocks = getRelatedStocks(stock.ticker, 4);
   const relArticles = getRelatedArticles(stock.ticker, stock.name, 3);
   if (!relStocks.length && !relArticles.length) return null;
-  const linkStyle = { color: C.cover, textDecoration: 'none', fontSize: 11.5 };
   return (
-    <div style={{ marginTop: 10, fontSize: 11.5 }}>
-      {relStocks.length > 0 && (
-        <div style={{ marginBottom: 6 }}>
-          <span style={{ color: C.inkSoft, marginRight: 6 }}>비슷한 종목:</span>
-          {relStocks.map((r, i) => (
-            <span key={r.ticker}>
-              <a href={`/stocks/${r.ticker}`} style={linkStyle} onClick={(e) => { e.preventDefault(); onNavigate?.('stocks', r.ticker); }}>
-                {r.name}({r.ticker})
-              </a>
-              {i < relStocks.length - 1 ? ', ' : ''}
-            </span>
+    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {relArticles.length > 0 && (
+        <div style={{ background: 'var(--pb-input-bg)', border: `1px solid ${C.line}`, borderRadius: 8, padding: '10px 12px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, marginBottom: 7 }}>📚 관련 가이드</div>
+          {relArticles.map((a) => (
+            <a key={a.id} href={`/guide/${a.id}`} onClick={(e) => { e.preventDefault(); onNavigate?.('guide', a.id); }}
+              style={{ display: 'block', textDecoration: 'none', padding: '5px 0' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.cover }}>{a.t}</div>
+              <div style={{ fontSize: 10.5, color: C.inkSoft, marginTop: 2, lineHeight: 1.5 }}>{a.p[0].slice(0, 60)}...</div>
+            </a>
           ))}
         </div>
       )}
-      {relArticles.length > 0 && (
-        <div>
-          <span style={{ color: C.inkSoft, marginRight: 6 }}>관련 가이드:</span>
-          {relArticles.map((a, i) => (
-            <span key={a.id}>
-              <a href={`/guide/${a.id}`} style={linkStyle} onClick={(e) => { e.preventDefault(); onNavigate?.('guide', a.id); }}>
-                {a.t}
+      {relStocks.length > 0 && (
+        <div style={{ background: 'var(--pb-input-bg)', border: `1px solid ${C.line}`, borderRadius: 8, padding: '10px 12px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, marginBottom: 7 }}>📈 비슷한 종목</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {relStocks.map((r) => (
+              <a key={r.ticker} href={`/stocks/${r.ticker}`} onClick={(e) => { e.preventDefault(); onNavigate?.('stocks', r.ticker); }}
+                style={{ textDecoration: 'none', fontSize: 11, fontWeight: 600, color: C.cover, border: `1px solid ${C.lineStrong}`, borderRadius: 999, padding: '4px 10px' }}>
+                {r.name}({r.ticker})
               </a>
-              {i < relArticles.length - 1 ? ', ' : ''}
-            </span>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
