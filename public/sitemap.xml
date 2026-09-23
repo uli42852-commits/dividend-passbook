@@ -400,6 +400,31 @@
   <url><loc>https://www.dividendpassbook.com/stocks/SON</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/stocks/GATX</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/stocks/GGG</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/BLK</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/MCO</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/AXP</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/RSG</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/AMAT</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/TJX</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/GILD</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/AMGN</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/CSX</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ADI</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/LHX</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/SBAC</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/WMB</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ALL</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/PRU</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/MMC</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/CME</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ROL</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/CMI</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/IEX</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/NDAQ</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ICE</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ROK</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/CAG</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/VMC</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/monthly-dividend-portfolio</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/schd-dividend</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/realty-income-o</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
@@ -471,4 +496,6 @@
   <url><loc>https://www.dividendpassbook.com/guide/first-time-dividend-companies</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/schd-vs-jepi</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/after-tax-dividend-calculation</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/guide/dividend-amount-by-share-count</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/guide/dividend-cut-real-cases-compilation</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
 </urlset>
