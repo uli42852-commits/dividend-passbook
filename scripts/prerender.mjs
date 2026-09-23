@@ -69,15 +69,23 @@ function renderPage(template, { title, description, canonicalPath, bodyHtml }) {
     html = html.includes(`property="${prop}"`) ? html.replace(re, tag) : html.replace('</head>', `  ${tag}\n  </head>`);
   }
 
-  // #root 안의 기존(로딩 문구) 콘텐츠를 이 페이지 전용 실제 콘텐츠로 교체
-  // (div 중첩 구조에 의존하지 않고, "<div id="root">부터 실제 진입 스크립트 태그 시작 지점까지"를 통째로 교체)
-  if (html.includes('<div id="root">') && html.includes('<script type="module"')) {
-    html = html.replace(
-      /<div id="root">[\s\S]*?<script type="module"/,
-      `<div id="root">${bodyHtml}</div>\n    <script type="module"`
+  // #root 안의 기존(정적 폴백) 콘텐츠를 이 페이지 전용 실제 콘텐츠로 교체
+  // 주의: 실제 프로덕션 dist/index.html에서는 <script type="module">이 <head> 안에 있을 수 있어
+  // (div#root보다 앞에 위치), "div#root 다음에 나오는 script 태그"를 기준으로 찾으면 매치가 실패한다.
+  // 그래서 script 태그 위치에 의존하지 않고, div#root 자신의 닫는 태그(뒤에 <script 또는 </body>가
+  // 오는 지점)까지를 통째로 교체하는 방식으로 처리한다.
+  if (html.includes('<div id="root">')) {
+    const newHtml = html.replace(
+      /<div id="root">[\s\S]*<\/div>(?=\s*(?:<script|<\/body>))/,
+      `<div id="root">${bodyHtml}</div>`
     );
+    if (newHtml !== html) {
+      html = newHtml;
+    } else {
+      console.warn(`[prerender] 경고: #root 닫는 태그 지점을 찾지 못해 본문 치환을 건너뜀 (${canonicalUrl})`);
+    }
   } else {
-    console.warn(`[prerender] 경고: #root 또는 진입 스크립트 태그를 찾지 못해 본문 치환을 건너뜀 (${canonicalUrl})`);
+    console.warn(`[prerender] 경고: #root를 찾지 못해 본문 치환을 건너뜀 (${canonicalUrl})`);
   }
 
   return html;
@@ -107,7 +115,6 @@ function stockBodyHtml(s) {
       ${relatedArticlesHtml}
       ${relatedStocksHtml}
       <p style="font-size:11px;color:#8a978f;margin-top:20px;">이 페이지의 배당 정책 설명은 최근 공개된 기업·운용사 자료를 바탕으로 정리했으며, 실시간으로 자동 갱신되지 않아요. 최신 배당수익률·배당금은 위 "주의할 점"에 안내된 공식 페이지에서 확인하세요.</p>
-      <p style="font-size:12px;color:#5b6a61;margin-top:8px;">페이지를 불러오는 중입니다…</p>
     </main>`;
 }
 
@@ -134,7 +141,6 @@ function guideBodyHtml(a) {
       ${ctaHtml}
       ${faqHtml}
       ${relatedStocksHtml}
-      <p style="font-size:12px;color:#5b6a61;margin-top:20px;">페이지를 불러오는 중입니다…</p>
     </main>`;
 }
 
