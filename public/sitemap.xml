@@ -415,7 +415,7 @@
   <url><loc>https://www.dividendpassbook.com/stocks/WMB</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/stocks/ALL</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/stocks/PRU</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://www.dividendpassbook.com/stocks/MMC</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/MRSH</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/stocks/CME</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/stocks/ROL</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/stocks/CMI</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
@@ -425,6 +425,79 @@
   <url><loc>https://www.dividendpassbook.com/stocks/ROK</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/stocks/CAG</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/stocks/VMC</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/AON</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/AJG</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/DTE</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/CMS</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/PPL</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ETN</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/JCI</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/XEL</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/PKG</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/AVY</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/CI</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ELV</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ZTS</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/DHR</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/COR</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/012330</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/028260</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/003690</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/AWK</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/PEG</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ORI</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/VLO</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/PSX</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/MPC</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/SBRA</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/D</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/AEE</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/LNT</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/PNW</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/EIX</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/FE</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/MCK</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/TFC</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/STT</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/BNY</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ORCL</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/KLAC</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/CRM</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/LRCX</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/SNA</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ROST</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/POOL</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/TSN</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/CPB</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/JBHT</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/LII</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/CARR</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/OTIS</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/EFX</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/J</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ODFL</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/MSCI</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/AMP</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/IVZ</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/STLD</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/LYB</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/PCAR</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/WSO</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/RPM</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/VMI</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/FLS</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/MAS</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ITT</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/EQR</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/MAA</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/CPT</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/INVH</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/AMH</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/ELS</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/DIS</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/TMUS</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/FR</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/MPW</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/monthly-dividend-portfolio</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/schd-dividend</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/realty-income-o</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
@@ -498,4 +571,10 @@
   <url><loc>https://www.dividendpassbook.com/guide/after-tax-dividend-calculation</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/dividend-amount-by-share-count</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/dividend-cut-real-cases-compilation</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/guide/monthly-dividend-portfolio-practical-example</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/guide/monthly-dividend-goal-setting</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/guide/healthcare-dividend-stocks</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/guide/korea-vs-us-dividend-stocks</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/guide/monthly-dividend-check-feature</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/guide/finding-related-stocks-guide</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
 </urlset>
