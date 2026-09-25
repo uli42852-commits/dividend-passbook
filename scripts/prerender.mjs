@@ -150,6 +150,26 @@ function writeFile(relDir, html) {
   fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf-8');
 }
 
+// data.js의 STOCKS·ARTICLES를 기준으로 sitemap.xml을 매 build마다 자동 생성.
+// public/sitemap.xml을 수동으로 고칠 필요가 없어짐 — vite build가 만든 dist/sitemap.xml을
+// 여기서 최신 데이터로 덮어씀. 홈/탭 5개 고정 경로 + 종목 전체 + 가이드 전체.
+function writeSitemap() {
+  const urls = [
+    { loc: `${SITE}/`, freq: 'daily', pri: '1.0' },
+    ...['calc', 'calendar', 'find', 'stocks', 'guide'].map((t) => ({
+      loc: `${SITE}/${t}`, freq: 'weekly', pri: '0.8',
+    })),
+    ...STOCKS.map((s) => ({ loc: `${SITE}/stocks/${s.ticker}`, freq: 'weekly', pri: '0.6' })),
+    ...ARTICLES.map((a) => ({ loc: `${SITE}/guide/${a.id}`, freq: 'monthly', pri: '0.6' })),
+  ];
+  const body = urls
+    .map((u) => `  <url><loc>${u.loc}</loc><changefreq>${u.freq}</changefreq><priority>${u.pri}</priority></url>`)
+    .join('\n');
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
+  fs.writeFileSync(path.join(DIST, 'sitemap.xml'), xml, 'utf-8');
+  return urls.length;
+}
+
 function main() {
   const template = readTemplate();
   let count = 0;
@@ -176,7 +196,10 @@ function main() {
     count++;
   }
 
+  const urlCount = writeSitemap();
+
   console.log(`[prerender] ${count}개 정적 페이지 생성 완료 (종목 ${STOCKS.length} + 가이드 ${ARTICLES.length})`);
+  console.log(`[sitemap] ${urlCount}개 URL로 sitemap.xml 자동 생성 완료`);
 }
 
 main();
