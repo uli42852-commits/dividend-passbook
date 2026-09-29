@@ -1221,6 +1221,11 @@
   <url><loc>https://www.dividendpassbook.com/stocks/AU</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/stocks/GGB</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/stocks/IX</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/CMA</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/FCNCA</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/PBA</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/LYG</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.dividendpassbook.com/stocks/BCS</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/monthly-dividend-portfolio</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/schd-dividend</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://www.dividendpassbook.com/guide/realty-income-o</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
