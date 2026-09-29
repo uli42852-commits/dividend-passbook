@@ -463,6 +463,16 @@ const NON_US_LETTER_TICKERS = new Set([
   'UL', 'NESN', 'BTI', 'HSBC', 'DEO', 'AZN', 'NVS', 'ROG', 'TTE', 'ALV',
   'BASFY', 'BHP', 'RIO', 'SIEGY', 'URW', 'ENB', 'RY', 'BCE', 'TRP', 'FTS',
   'D05', 'O39', 'U11', 'TSM',
+  // 아래는 이후 추가된 캐나다·유럽·일본·한국·중국·남미 등 외국계 개별주(ADR 포함) —
+  // 이 목록에 없으면 "미국" 필터에 잘못 잡히므로 새 외국 종목을 추가할 때 함께 넣어야 함.
+  'TD', 'BNS', 'BMO', 'CM', 'GRP.U', 'SU', 'CNQ', 'AEM', 'CNI', 'TFII',
+  'WCN', 'OVV', 'AQN', 'EMA', 'MFC', 'SLF', 'IMO',
+  'SNY', 'GSK', 'SHEL', 'BP', 'TU', 'TM', 'HMC', 'RACE', 'ASML', 'E', 'EQNR',
+  'VOD', 'NWG', 'KT', 'SKM', 'MUFG', 'CHT', 'TEF',
+  'CDUAF', 'TMTNF', 'ACLLF', 'SAPIF', 'EMLAF', 'BAM', 'ING', 'SAP',
+  'YUMC', 'CVE', 'RHHBY', 'SAN', 'BBVA', 'NGG', 'DB', 'VWAGY',
+  'KB', 'SHG', 'WF', 'SMFG', 'MFG', 'IX', 'AU', 'GGB',
+  'PBA', 'LYG', 'BCS',
 ]);
 
 function tagColorFor(typeTag) {
