@@ -1,13 +1,15 @@
 // scripts/prerender.mjs
 // "vite build" 이후에 실행되는 순수 Node 스크립트예요 (외부 패키지 의존성 없음).
-// dist/index.html(빌드가 끝난 실제 프로덕션 HTML, 해시된 JS 번들 경로 포함)을 템플릿으로 삼아서,
-// 종목 394개(/stocks/{ticker})·가이드 69개(/guide/{slug})마다 실제 내용이 담긴 정적 HTML을
-// dist/ 아래에 별도 파일로 생성해요.
+// dist/index.html(빌드가 끝난 실제 프로덕션 HTML, 해시된 JS 번들 경로 포함)을 템플릿으로 삼아서
+// 아래 페이지마다 실제 내용이 담긴 정적 HTML을 dist/ 아래에 별도 파일로 생성해요.
+//   - 홈(/)과 탭 페이지 5개(/calc, /calendar, /find, /stocks, /guide)
+//   - 종목 페이지 전체(/stocks/{ticker})와 가이드 글 전체(/guide/{slug})
+//   - 404.html (없는 주소는 Vercel이 이 파일을 404 상태로 보여줌)
 //
 // 핵심 아이디어: 크롤러가 JS를 실행하지 않아도, 이 정적 파일 자체에 실제 종목명·배당 정보·
 // 가이드 본문이 텍스트로 들어있어요. 사람이 방문했을 때는 파일 안의 <script type="module">
-// 태그가 그대로 살아있어서 React 앱이 정상적으로 부팅되고, 이후엔 지금까지와 동일하게
-// 상호작용 가능한 SPA로 동작해요(= "프로그레시브 인핸스먼트": 정적 콘텐츠 위에 JS가 덧씌워짐).
+// 태그가 그대로 살아있어서 React 앱이 정상적으로 부팅되고, 이후엔 상호작용 가능한 SPA로
+// 동작해요(= "프로그레시브 인핸스먼트": 정적 콘텐츠 위에 JS가 덧씌워짐).
 //
 // 사용법: package.json의 "build" 스크립트에서 "vite build" 다음에 이어서 실행돼요.
 //   "build": "vite build && node scripts/prerender.mjs"
@@ -16,10 +18,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARTICLES, STOCKS, getRelatedStocks, getRelatedArticles } from '../data.js';
+import {
+  SITE, SITE_NAME, HOME_META, TAB_META, TAB_ORDER, stockMeta, articleMeta,
+} from '../src/pageMeta.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(__dirname, '..', 'dist');
-const SITE = 'https://www.dividendpassbook.com';
+const OG_IMAGE = `${SITE}/og.png`;
+const BUILD_DATE = new Date().toISOString().slice(0, 10);
 
 function escapeHtml(s) {
   return String(s)
@@ -27,6 +33,11 @@ function escapeHtml(s) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// JSON-LD는 <script> 안에 들어가므로 "</script>"가 본문에 있으면 태그가 끊겨요 — "<"를 이스케이프
+function jsonLdString(obj) {
+  return JSON.stringify(obj).replace(/</g, '\\u003c');
 }
 
 function readTemplate() {
@@ -39,166 +50,314 @@ function readTemplate() {
   return fs.readFileSync(p, 'utf-8');
 }
 
-// 템플릿 HTML에서 title/description/canonical/og태그/#root 내부 콘텐츠를 교체
-function renderPage(template, { title, description, canonicalPath, bodyHtml }) {
+function replaceOrInsert(html, re, tag) {
+  return re.test(html) ? html.replace(re, tag) : html.replace('</head>', `  ${tag}\n  </head>`);
+}
+
+// 템플릿 HTML에서 title/description/canonical/og태그/JSON-LD/#root 내부 콘텐츠를 교체
+function renderPage(template, { title, description, canonicalPath, bodyHtml, jsonLd, noindex = false, withScripts = true }) {
   let html = template;
   const canonicalUrl = `${SITE}${canonicalPath}`;
 
   html = html.replace(/<title>.*?<\/title>/s, `<title>${escapeHtml(title)}</title>`);
+  html = replaceOrInsert(html, /<meta name="description"[^>]*>/, `<meta name="description" content="${escapeHtml(description)}" />`);
 
-  if (/<meta name="description"[^>]*>/.test(html)) {
-    html = html.replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${escapeHtml(description)}" />`);
+  if (noindex) {
+    html = html.replace(/\s*<link rel="canonical"[^>]*>/, '');
+    html = html.replace('</head>', '  <meta name="robots" content="noindex" />\n  </head>');
   } else {
-    html = html.replace('</head>', `  <meta name="description" content="${escapeHtml(description)}" />\n  </head>`);
+    html = replaceOrInsert(html, /<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${canonicalUrl}" />`);
   }
 
-  if (/<link rel="canonical"[^>]*>/.test(html)) {
-    html = html.replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${canonicalUrl}" />`);
-  } else {
-    html = html.replace('</head>', `  <link rel="canonical" href="${canonicalUrl}" />\n  </head>`);
-  }
-
-  const ogReplacements = {
+  const og = {
     'og:title': title,
     'og:description': description,
     'og:url': canonicalUrl,
+    'og:type': canonicalPath.startsWith('/guide/') ? 'article' : 'website',
+    'og:image': OG_IMAGE,
   };
-  for (const [prop, value] of Object.entries(ogReplacements)) {
-    const re = new RegExp(`<meta property="${prop}"[^>]*>`);
-    const tag = `<meta property="${prop}" content="${escapeHtml(value)}" />`;
-    html = html.includes(`property="${prop}"`) ? html.replace(re, tag) : html.replace('</head>', `  ${tag}\n  </head>`);
+  for (const [prop, value] of Object.entries(og)) {
+    html = replaceOrInsert(html, new RegExp(`<meta property="${prop}"[^>]*>`), `<meta property="${prop}" content="${escapeHtml(value)}" />`);
   }
 
-  // #root 안의 기존(정적 폴백) 콘텐츠를 이 페이지 전용 실제 콘텐츠로 교체
-  // 주의: 실제 프로덕션 dist/index.html에서는 <script type="module">이 <head> 안에 있을 수 있어
-  // (div#root보다 앞에 위치), "div#root 다음에 나오는 script 태그"를 기준으로 찾으면 매치가 실패한다.
-  // 그래서 script 태그 위치에 의존하지 않고, div#root 자신의 닫는 태그(뒤에 <script 또는 </body>가
-  // 오는 지점)까지를 통째로 교체하는 방식으로 처리한다.
-  if (html.includes('<div id="root">')) {
-    const newHtml = html.replace(
-      /<div id="root">[\s\S]*<\/div>(?=\s*(?:<script|<\/body>))/,
-      `<div id="root">${bodyHtml}</div>`
-    );
-    if (newHtml !== html) {
-      html = newHtml;
-    } else {
-      console.warn(`[prerender] 경고: #root 닫는 태그 지점을 찾지 못해 본문 치환을 건너뜀 (${canonicalUrl})`);
-    }
-  } else {
-    console.warn(`[prerender] 경고: #root를 찾지 못해 본문 치환을 건너뜀 (${canonicalUrl})`);
+  html = html.replace(
+    /<script type="application\/ld\+json" id="ld-json">[\s\S]*?<\/script>/,
+    jsonLd ? `<script type="application/ld+json" id="ld-json">${jsonLdString(jsonLd)}</script>` : ''
+  );
+
+  if (!withScripts) {
+    // 404 페이지: 앱을 띄우지 않고 정적 안내만 보여줌 (앱이 뜨면 기본 탭이 그려져 404 안내가 사라짐)
+    html = html.replace(/\s*<script type="module"[^>]*><\/script>/g, '');
+    html = html.replace(/\s*<link rel="modulepreload"[^>]*>/g, '');
   }
 
-  return html;
+  const newHtml = html.replace(/<div id="root">[\s\S]*?<\/div>(?=\s*(?:<script|<\/body>))/, `<div id="root">${bodyHtml}</div>`);
+  if (newHtml === html) {
+    throw new Error(`[prerender] #root를 찾지 못해 본문을 넣지 못했어요 (${canonicalUrl})`);
+  }
+  return newHtml;
 }
 
-function stockBodyHtml(s) {
-  const detailHtml = s.detail.map((p) => `<p>${escapeHtml(p)}</p>`).join('\n');
-  const cautionHtml = s.caution.map((p) => `<li>${escapeHtml(p)}</li>`).join('\n');
+/* ── 정적 본문 공통 틀 — 앱 화면과 비슷한 모양이라 JS가 붙을 때 화면이 크게 바뀌지 않아요 ── */
+const SHELL_CSS = `
+.s-wrap{--bg:#f2f4f6;--card:#fff;--ink:#191f28;--soft:#6b7684;--line:#e5e8eb;--pri:#0b7a53;
+  min-height:100vh;background:var(--bg);color:var(--ink);font-family:Pretendard,'Pretendard Variable',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;letter-spacing:-0.01em;line-height:1.7}
+@media (prefers-color-scheme:dark){.s-wrap{--bg:#0f1114;--card:#1a1d21;--ink:#e9ecef;--soft:#9aa3ad;--line:#2a2e33;--pri:#34c38f}}
+.s-wrap a{color:var(--pri)}
+.s-head{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line)}
+.s-in{max-width:640px;margin:0 auto;padding:0 16px;box-sizing:border-box}
+.s-wrap .s-brand{display:flex;align-items:center;gap:8px;height:56px;font-size:19px;font-weight:800;color:var(--ink);text-decoration:none}
+.s-nav{display:flex;gap:4px;overflow-x:auto;margin:0 -12px}
+.s-nav a{flex-shrink:0;padding:12px 12px 11px;font-size:15px;font-weight:600;color:var(--soft);text-decoration:none;border-bottom:2px solid transparent}
+.s-nav a[aria-current=page]{color:var(--ink);font-weight:700;border-bottom-color:var(--ink)}
+.s-main{padding:20px 16px 48px}
+.s-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:12px}
+.s-card h1{font-size:22px;line-height:1.4;margin:0 0 6px;letter-spacing:-0.02em}
+.s-card h2{font-size:17px;margin:22px 0 8px}
+.s-card p,.s-card li{font-size:15px}
+.s-meta{font-size:13px;color:var(--soft);margin:0 0 14px}
+.s-crumb{font-size:13px;color:var(--soft);margin:0 0 10px}
+.s-crumb a{color:var(--soft)}
+.s-list{padding-left:20px;margin:0}
+.s-list li{margin:4px 0}
+.s-note{font-size:13px;color:var(--soft)}
+`;
+
+const LOGO_SVG = '<svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0b7a53"/><rect x="8" y="17" width="4" height="7" rx="1" fill="#fff"/><rect x="14" y="13" width="4" height="11" rx="1" fill="#fff"/><rect x="20" y="8" width="4" height="16" rx="1" fill="#fff"/></svg>';
+
+function shell(activeTab, inner) {
+  const nav = TAB_ORDER.map((t) =>
+    `<a href="/${t}"${t === activeTab ? ' aria-current="page"' : ''}>${escapeHtml(TAB_META[t].label)}</a>`
+  ).join('');
+  return `<div class="s-wrap"><style>${SHELL_CSS}</style>
+<header class="s-head"><div class="s-in"><a class="s-brand" href="/">${LOGO_SVG}배당통장</a><nav class="s-nav" aria-label="주요 메뉴">${nav}</nav></div></header>
+<main class="s-in s-main">${inner}
+<p class="s-note">이 사이트의 정보는 일반적인 정보 제공 목적이며 투자 자문이나 특정 종목 추천이 아니에요. 문의: <a href="mailto:contact@dividendpassbook.com">contact@dividendpassbook.com</a></p>
+</main></div>`;
+}
+
+function crumbs(items) {
+  return `<p class="s-crumb">${items.map((it) => (it.href ? `<a href="${it.href}">${escapeHtml(it.name)}</a>` : escapeHtml(it.name))).join(' › ')}</p>`;
+}
+
+function breadcrumbLd(items) {
+  return {
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((it, i) => ({
+      '@type': 'ListItem', position: i + 1, name: it.name, ...(it.href ? { item: `${SITE}${it.href}` } : {}),
+    })),
+  };
+}
+
+function mentionedStocks(article) {
+  const text = article.t + ' ' + article.p.join(' ');
+  return STOCKS.filter((s) => new RegExp(`\\b${s.ticker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(text)).slice(0, 4);
+}
+
+/* ── 종목 페이지 ── */
+function stockPage(s) {
+  const meta = stockMeta(s);
+  const trail = [{ name: '홈', href: '/' }, { name: '종목분석', href: '/stocks' }, { name: `${s.name}(${s.ticker})` }];
   const relatedStocks = getRelatedStocks(s.ticker, 4);
   const relatedArticles = getRelatedArticles(s.ticker, s.name, 4);
-  const relatedArticlesHtml = relatedArticles.length
-    ? `<h2 style="font-size:15px;margin:18px 0 8px;">📚 관련 가이드</h2>
-       <ul style="font-size:13px;padding-left:20px;">${relatedArticles.map((a) => `<li><a href="/guide/${escapeHtml(a.id)}">${escapeHtml(a.t)}</a> — ${escapeHtml(a.p[0].slice(0, 60))}...</li>`).join('\n')}</ul>`
-    : '';
-  const relatedStocksHtml = relatedStocks.length
-    ? `<h2 style="font-size:15px;margin:18px 0 8px;">📈 비슷한 종목</h2>
-       <ul style="font-size:13px;padding-left:20px;">${relatedStocks.map((r) => `<li><a href="/stocks/${escapeHtml(r.ticker)}">${escapeHtml(r.name)}(${escapeHtml(r.ticker)})</a> — ${escapeHtml(r.typeTag)}</li>`).join('\n')}</ul>`
-    : '';
-  return `
-    <main style="max-width:720px;margin:40px auto;padding:0 20px;font-family:-apple-system,'Noto Sans KR',sans-serif;color:#22312a;line-height:1.75;">
-      <h1 style="font-size:20px;margin:0 0 4px;">${escapeHtml(s.name)} (${escapeHtml(s.ticker)}) 배당 정보</h1>
-      <p style="font-size:13px;color:#5b6a61;margin:0 0 14px;">${escapeHtml(s.typeTag)}</p>
-      <p style="font-size:14px;margin:0 0 16px;">${escapeHtml(s.basic)}</p>
-      ${detailHtml}
-      <h2 style="font-size:15px;margin:18px 0 8px;">주의할 점</h2>
-      <ul style="font-size:13px;padding-left:20px;">${cautionHtml}</ul>
-      ${relatedArticlesHtml}
-      ${relatedStocksHtml}
-      <p style="font-size:11px;color:#8a978f;margin-top:20px;">이 페이지의 배당 정책 설명은 최근 공개된 기업·운용사 자료를 바탕으로 정리했으며, 실시간으로 자동 갱신되지 않아요. 최신 배당수익률·배당금은 위 "주의할 점"에 안내된 공식 페이지에서 확인하세요.</p>
-    </main>`;
+  const inner = `<article class="s-card">
+${crumbs(trail)}
+<h1>${escapeHtml(s.name)} (${escapeHtml(s.ticker)}) 배당 정보</h1>
+<p class="s-meta">${escapeHtml(s.typeTag)}</p>
+<p>${escapeHtml(s.basic)}</p>
+${s.detail.map((p) => `<p>${escapeHtml(p)}</p>`).join('\n')}
+<h2>주의할 점</h2>
+<ul class="s-list">${s.caution.map((p) => `<li>${escapeHtml(p)}</li>`).join('\n')}</ul>
+${relatedArticles.length ? `<h2>관련 가이드</h2><ul class="s-list">${relatedArticles.map((a) => `<li><a href="/guide/${escapeHtml(a.id)}">${escapeHtml(a.t)}</a></li>`).join('\n')}</ul>` : ''}
+${relatedStocks.length ? `<h2>비슷한 종목</h2><ul class="s-list">${relatedStocks.map((r) => `<li><a href="/stocks/${escapeHtml(r.ticker)}">${escapeHtml(r.name)}(${escapeHtml(r.ticker)})</a> — ${escapeHtml(r.typeTag)}</li>`).join('\n')}</ul>` : ''}
+<p class="s-note">배당 정책 설명은 공개된 기업·운용사 자료를 바탕으로 정리했으며 실시간으로 갱신되지 않아요. 최신 배당금·배당수익률은 위 "주의할 점"에 안내된 공식 출처에서 확인하세요.</p>
+</article>
+<p><a href="/calc">이 종목으로 내 배당금 계산해 보기 →</a></p>`;
+  return {
+    ...meta,
+    bodyHtml: shell('stocks', inner),
+    jsonLd: { '@context': 'https://schema.org', '@graph': [breadcrumbLd(trail)] },
+  };
 }
 
-function guideBodyHtml(a) {
-  const bodyHtml = a.p.map((p) => `<p>${escapeHtml(p)}</p>`).join('\n');
-  const ctaHtml = (a.cta && a.cta.length)
-    ? a.cta.map((c) => `<p><a href="${escapeHtml(c.href)}" style="display:inline-block;font-weight:700;">${escapeHtml(c.text)}</a></p>`).join('\n')
-    : '';
-  const faqHtml = (a.faq && a.faq.length)
-    ? `<h2 style="font-size:15px;margin:18px 0 8px;">❓ 자주 묻는 질문</h2>` +
-      a.faq.map((f) => `<p><b>Q. ${escapeHtml(f.q)}</b><br>${escapeHtml(f.a)}</p>`).join('\n')
-    : '';
-  // 이 글 본문에 언급된 티커를 역으로 찾아 "관련 종목"으로 연결
-  const text = a.t + ' ' + a.p.join(' ');
-  const mentioned = STOCKS.filter((s) => new RegExp(`\\b${s.ticker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(text)).slice(0, 4);
-  const relatedStocksHtml = mentioned.length
-    ? `<h2 style="font-size:15px;margin:18px 0 8px;">📈 관련 종목</h2>
-       <ul style="font-size:13px;padding-left:20px;">${mentioned.map((s) => `<li><a href="/stocks/${escapeHtml(s.ticker)}">${escapeHtml(s.name)}(${escapeHtml(s.ticker)})</a></li>`).join('\n')}</ul>`
-    : '';
-  return `
-    <main style="max-width:720px;margin:40px auto;padding:0 20px;font-family:-apple-system,'Noto Sans KR',sans-serif;color:#22312a;line-height:1.75;">
-      <h1 style="font-size:20px;margin:0 0 14px;">${escapeHtml(a.t)}</h1>
-      ${bodyHtml}
-      ${ctaHtml}
-      ${faqHtml}
-      ${relatedStocksHtml}
-    </main>`;
+/* ── 가이드 글 페이지 ── */
+function articlePage(a) {
+  const meta = articleMeta(a);
+  const trail = [{ name: '홈', href: '/' }, { name: '공부방', href: '/guide' }, { name: a.t }];
+  const mentioned = mentionedStocks(a);
+  const inner = `<article class="s-card">
+${crumbs(trail)}
+<h1>${escapeHtml(a.t)}</h1>
+${a.p.map((p) => `<p>${escapeHtml(p)}</p>`).join('\n')}
+${(a.cta || []).map((c) => `<p><a href="${escapeHtml(c.href)}"><b>${escapeHtml(c.text)}</b></a></p>`).join('\n')}
+${(a.faq && a.faq.length) ? `<h2>자주 묻는 질문</h2>${a.faq.map((f) => `<p><b>Q. ${escapeHtml(f.q)}</b><br>${escapeHtml(f.a)}</p>`).join('\n')}` : ''}
+${mentioned.length ? `<h2>관련 종목</h2><ul class="s-list">${mentioned.map((s) => `<li><a href="/stocks/${escapeHtml(s.ticker)}">${escapeHtml(s.name)}(${escapeHtml(s.ticker)})</a></li>`).join('\n')}</ul>` : ''}
+</article>`;
+  const graph = [
+    {
+      '@type': 'Article',
+      headline: a.t,
+      description: meta.description,
+      inLanguage: 'ko-KR',
+      mainEntityOfPage: `${SITE}${meta.path}`,
+      image: OG_IMAGE,
+      dateModified: BUILD_DATE,
+      author: { '@type': 'Organization', name: SITE_NAME, url: `${SITE}/` },
+      publisher: { '@type': 'Organization', name: SITE_NAME, url: `${SITE}/` },
+    },
+    breadcrumbLd(trail),
+  ];
+  if (a.faq && a.faq.length) {
+    graph.push({
+      '@type': 'FAQPage',
+      mainEntity: a.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+    });
+  }
+  return { ...meta, bodyHtml: shell('guide', inner), jsonLd: { '@context': 'https://schema.org', '@graph': graph } };
 }
 
-function writeFile(relDir, html) {
-  const dir = path.join(DIST, relDir);
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf-8');
+/* ── 홈·탭 페이지 ── */
+const isKr = (s) => /^\d{6}$/.test(s.ticker);
+
+function stockLinks(list) {
+  return `<ul class="s-list">${list.map((s) => `<li><a href="/stocks/${escapeHtml(s.ticker)}">${escapeHtml(s.name)}(${escapeHtml(s.ticker)})</a> — ${escapeHtml(s.typeTag)}</li>`).join('\n')}</ul>`;
 }
 
-// data.js의 STOCKS·ARTICLES를 기준으로 sitemap.xml을 매 build마다 자동 생성.
-// public/sitemap.xml을 수동으로 고칠 필요가 없어짐 — vite build가 만든 dist/sitemap.xml을
-// 여기서 최신 데이터로 덮어씀. 홈/탭 5개 고정 경로 + 종목 전체 + 가이드 전체.
+function articleLinks(list) {
+  return `<ul class="s-list">${list.map((a) => `<li><a href="/guide/${escapeHtml(a.id)}">${escapeHtml(a.t)}</a></li>`).join('\n')}</ul>`;
+}
+
+function tabPage(tab, intro) {
+  const m = TAB_META[tab];
+  const trail = [{ name: '홈', href: '/' }, { name: m.label }];
+  return {
+    title: m.title,
+    description: m.description,
+    path: `/${tab}`,
+    bodyHtml: shell(tab, `<section class="s-card">${crumbs(trail)}${intro}</section>`),
+    jsonLd: { '@context': 'https://schema.org', '@graph': [breadcrumbLd(trail)] },
+  };
+}
+
+function homePage() {
+  const inner = `<section class="s-card">
+<h1>배당주 포트폴리오 계산기</h1>
+<p>보유한 국내·미국 배당주를 기입하면 연간 배당금, 월별 배당 흐름, 세후 실수령액까지 계산해주는 무료 배당 계산기예요. 회원가입 없이 쓰고, 입력한 내용은 내 브라우저에만 저장돼요.</p>
+<p><a href="/calc"><b>배당금 계산 시작하기 →</b></a></p>
+</section>
+<section class="s-card">
+<h2 style="margin-top:0">종목분석 — ${STOCKS.length.toLocaleString('ko-KR')}개 종목</h2>
+<p>국내·미국 배당주, 배당 ETF, 리츠, 폐쇄형펀드의 배당 정책과 지급 주기, 투자 전 주의할 점을 정리했어요.</p>
+${stockLinks(STOCKS.slice(0, 24))}
+<p><a href="/stocks">전체 종목 보기 →</a></p>
+</section>
+<section class="s-card">
+<h2 style="margin-top:0">공부방 — 배당 투자 가이드 ${ARTICLES.length}편</h2>
+${articleLinks(ARTICLES.slice(0, 20))}
+<p><a href="/guide">전체 가이드 보기 →</a></p>
+</section>`;
+  return {
+    ...HOME_META,
+    path: '/',
+    bodyHtml: shell(null, inner),
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'WebSite', name: SITE_NAME, url: `${SITE}/`, inLanguage: 'ko-KR', description: HOME_META.description },
+        {
+          '@type': 'WebApplication', name: `${SITE_NAME} 배당 계산기`, url: `${SITE}/calc`, applicationCategory: 'FinanceApplication',
+          operatingSystem: 'Web', inLanguage: 'ko-KR', offers: { '@type': 'Offer', price: '0', priceCurrency: 'KRW' },
+        },
+      ],
+    },
+  };
+}
+
+function tabPages() {
+  const kr = STOCKS.filter(isKr);
+  const other = STOCKS.filter((s) => !isKr(s));
+  return [
+    tabPage('calc', `<h1>배당금 계산기</h1>
+<p>종목명, 보유수량, 매입단가, 주당 연배당금, 배당 지급월을 기입하면 연간·월평균 배당금과 월별 배당 흐름을 계산해요. 세후 보기로 바꾸면 국내 주식은 15.4%, 미국 주식은 15% 원천징수를 뺀 금액을 보여줘요.</p>
+<h2>함께 볼 수 있는 것</h2>
+<ul class="s-list"><li>월 배당 목표 달성률</li><li>종목·통화·월별·자산군 분산도 진단</li><li>금융소득종합과세(연 2,000만원) 기준선 체크</li><li>계산 결과 공유 링크와 백업 파일 내보내기</li></ul>
+<h2>자주 묻는 질문</h2>
+<p><b>Q. 계산된 배당금이 실제 받는 금액과 다를 수 있나요?</b><br>네. 기업이 배당을 늘리거나 줄이면 실제 지급액이 달라져요. 최신 주당배당금은 기업 IR·DART·운용사 페이지에서 확인 후 입력하세요.</p>
+<p><b>Q. 달러 배당은 어떻게 원화로 바꿔 계산하나요?</b><br>계산기에 설정한 환율(기본 1달러 1,400원, 직접 변경 가능)로 환산한 근사치예요.</p>`),
+    tabPage('calendar', `<h1>배당 달력</h1>
+<p>계산기에 기입한 보유 종목이 몇 월에 배당을 주는지 달력으로 보여줘요. 배당이 비는 달을 찾아 다른 지급월의 종목을 더하면 매달 배당이 들어오는 포트폴리오를 만들 수 있어요.</p>
+<p>관련 가이드: <a href="/guide/monthly-dividend-portfolio">월배당 포트폴리오 만드는 법</a></p>`),
+    tabPage('find', `<h1>나에게 맞는 배당 투자 유형 찾기</h1>
+<p>질문 3개에 답하면 월배당 안정형, 배당성장형, 고배당 현금흐름형, 배당킹 안정형 중 어떤 유형이 맞는지와 그 유형에서 조심할 점을 알려드려요. 특정 종목 추천이 아닌 유형 안내예요.</p>`),
+    tabPage('stocks', `<h1>배당주 종목분석</h1>
+<p>${STOCKS.length.toLocaleString('ko-KR')}개 종목의 배당 정책, 지급 주기, 투자 전 주의할 점을 정리했어요. 배당수익률·주가처럼 매일 바뀌는 숫자는 싣지 않고 공식 출처를 안내해요.</p>
+<h2>국내 종목 (${kr.length})</h2>${stockLinks(kr)}
+<h2>미국·해외 종목 (${other.length})</h2>${stockLinks(other)}`),
+    tabPage('guide', `<h1>배당 투자 공부방</h1>
+<p>배당 투자를 시작하기 전에 알아두면 좋은 내용을 ${ARTICLES.length}편의 글로 정리했어요.</p>
+${articleLinks(ARTICLES)}`),
+  ];
+}
+
+function notFoundPage() {
+  return {
+    title: `페이지를 찾을 수 없어요 | ${SITE_NAME}`,
+    description: '요청하신 페이지를 찾을 수 없어요.',
+    path: '/404',
+    noindex: true,
+    withScripts: false,
+    bodyHtml: shell(null, `<section class="s-card"><h1>페이지를 찾을 수 없어요</h1>
+<p>주소가 바뀌었거나 없는 종목·글일 수 있어요.</p>
+<ul class="s-list"><li><a href="/">홈으로 가기</a></li><li><a href="/stocks">종목분석에서 찾아보기</a></li><li><a href="/guide">공부방 글 목록 보기</a></li></ul></section>`),
+  };
+}
+
+function writeFile(relPath, html) {
+  const file = path.join(DIST, relPath);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, html, 'utf-8');
+}
+
+// data.js의 STOCKS·ARTICLES를 기준으로 sitemap.xml을 매 build마다 자동 생성 (손으로 고칠 필요 없음)
 function writeSitemap() {
   const urls = [
     { loc: `${SITE}/`, freq: 'daily', pri: '1.0' },
-    ...['calc', 'calendar', 'find', 'stocks', 'guide'].map((t) => ({
-      loc: `${SITE}/${t}`, freq: 'weekly', pri: '0.8',
-    })),
-    ...STOCKS.map((s) => ({ loc: `${SITE}/stocks/${s.ticker}`, freq: 'weekly', pri: '0.6' })),
-    ...ARTICLES.map((a) => ({ loc: `${SITE}/guide/${a.id}`, freq: 'monthly', pri: '0.6' })),
+    ...TAB_ORDER.map((t) => ({ loc: `${SITE}/${t}`, freq: 'weekly', pri: '0.8' })),
+    ...STOCKS.map((s) => ({ loc: `${SITE}/stocks/${encodeURIComponent(s.ticker)}`, freq: 'weekly', pri: '0.6' })),
+    ...ARTICLES.map((a) => ({ loc: `${SITE}/guide/${encodeURIComponent(a.id)}`, freq: 'monthly', pri: '0.6' })),
   ];
   const body = urls
-    .map((u) => `  <url><loc>${u.loc}</loc><changefreq>${u.freq}</changefreq><priority>${u.pri}</priority></url>`)
+    .map((u) => `  <url><loc>${escapeHtml(u.loc)}</loc><lastmod>${BUILD_DATE}</lastmod><changefreq>${u.freq}</changefreq><priority>${u.pri}</priority></url>`)
     .join('\n');
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
   fs.writeFileSync(path.join(DIST, 'sitemap.xml'), xml, 'utf-8');
   return urls.length;
 }
 
+function render(template, page) {
+  return renderPage(template, {
+    title: page.title,
+    description: page.description,
+    canonicalPath: page.path,
+    bodyHtml: page.bodyHtml,
+    jsonLd: page.jsonLd,
+    noindex: page.noindex,
+    withScripts: page.withScripts !== false,
+  });
+}
+
 function main() {
   const template = readTemplate();
-  let count = 0;
 
-  for (const s of STOCKS) {
-    const html = renderPage(template, {
-      title: `${s.name}(${s.ticker}) 배당 정보 — ${s.typeTag} | 배당 통장`,
-      description: s.basic,
-      canonicalPath: `/stocks/${s.ticker}`,
-      bodyHtml: stockBodyHtml(s),
-    });
-    writeFile(path.join('stocks', s.ticker), html);
-    count++;
-  }
-
-  for (const a of ARTICLES) {
-    const html = renderPage(template, {
-      title: `${a.t} | 배당 통장 공부방`,
-      description: a.p[0].slice(0, 150),
-      canonicalPath: `/guide/${a.id}`,
-      bodyHtml: guideBodyHtml(a),
-    });
-    writeFile(path.join('guide', a.id), html);
-    count++;
-  }
+  for (const s of STOCKS) writeFile(path.join('stocks', s.ticker, 'index.html'), render(template, stockPage(s)));
+  for (const a of ARTICLES) writeFile(path.join('guide', a.id, 'index.html'), render(template, articlePage(a)));
+  for (const p of tabPages()) writeFile(path.join(p.path.slice(1), 'index.html'), render(template, p));
+  writeFile('404.html', render(template, notFoundPage()));
+  // 홈은 마지막에 덮어씀 — 위 페이지들이 모두 원본 dist/index.html을 템플릿으로 써야 하므로
+  writeFile('index.html', render(template, homePage()));
 
   const urlCount = writeSitemap();
-
-  console.log(`[prerender] ${count}개 정적 페이지 생성 완료 (종목 ${STOCKS.length} + 가이드 ${ARTICLES.length})`);
+  console.log(`[prerender] 정적 페이지 생성 완료 (홈 1 + 탭 ${TAB_ORDER.length} + 종목 ${STOCKS.length} + 가이드 ${ARTICLES.length} + 404)`);
   console.log(`[sitemap] ${urlCount}개 URL로 sitemap.xml 자동 생성 완료`);
 }
 
