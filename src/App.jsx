@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Plus, Trash2, Pencil, X, BookOpen, Shield, Copy, Check, Sparkles, Star,
-  Calculator, CalendarDays, Compass, LineChart, Sun, Moon, Download, Upload, Info,
+  Plus, Trash2, Pencil, X, BookOpen, Shield, Copy, Check, Star,
+  Sun, Moon, Download, Upload, Info,
   FileText, AlertTriangle, Mail, HelpCircle, Share2,
 } from 'lucide-react';
-import { ARTICLES, STOCKS, getRelatedStocks, getRelatedArticles } from '../data.js';
+import { loadData, getLoadedData } from './dataStore.js';
+import { SITE, HOME_META, TAB_META, TAB_ORDER, stockMeta, articleMeta } from './pageMeta.js';
+
+/* global __STOCK_COUNT__, __ARTICLE_COUNT__ */
+const STOCK_COUNT = typeof __STOCK_COUNT__ !== 'undefined' ? __STOCK_COUNT__ : 0;
+const ARTICLE_COUNT = typeof __ARTICLE_COUNT__ !== 'undefined' ? __ARTICLE_COUNT__ : 0;
 
 /* ── design tokens (CSS 변수로 연결 — prefers-color-scheme: dark 대응) ── */
 const C = {
@@ -12,7 +17,6 @@ const C = {
   coverEdge: 'var(--pb-cover-edge)',
   foil: 'var(--pb-foil)',
   paper: 'var(--pb-paper)',
-  paperLine: 'var(--pb-paper-line)',
   ink: 'var(--pb-ink)',
   inkSoft: 'var(--pb-ink-soft)',
   stamp: 'var(--pb-stamp)',
@@ -44,7 +48,8 @@ function toChosung(str) {
 }
 const isChosungQuery = (str) => /^[ㄱ-ㅎ]+$/.test(str);
 const TAX = { KRW: 0.154, USD: 0.15 };
-const FX_KRW_PER_USD = 1400; // 참고용 환산 환율, 실제 환율과 다를 수 있음
+const DEFAULT_FX = 1400; // 참고용 기본 환율 — 이용자가 계산기에서 직접 바꿀 수 있음
+const FX_KEY = 'dividend-passbook-fx-v1';
 
 /* ── 계산 결과 공유 링크 인코딩/디코딩 ──────────────────────
    holdings 배열을 짧은 키의 배열 형태로 압축한 뒤 URL-safe base64로 인코딩해요.
@@ -103,17 +108,18 @@ function emptyForm() {
   return { name: '', ticker: '', shares: '', avgPrice: '', annualDiv: '', months: [], currency: 'KRW' };
 }
 
+// 체험용 예시 값 (2025년 지급 기준 근사치) — 실제 최신 배당금은 공식 출처에서 확인
 const SAMPLE = [
-  { id: 1, name: '코카콜라', ticker: 'KO', shares: 3, avgPrice: 60, annualDiv: 1.94, months: [4, 7, 10, 12], currency: 'USD' },
-  { id: 2, name: '리얼티인컴', ticker: 'O', shares: 5, avgPrice: 55, annualDiv: 3.16, months: [1,2,3,4,5,6,7,8,9,10,11,12], currency: 'USD' },
+  { id: 1, name: '코카콜라', ticker: 'KO', shares: 3, avgPrice: 60, annualDiv: 2.04, months: [4, 7, 10, 12], currency: 'USD' },
+  { id: 2, name: '리얼티인컴', ticker: 'O', shares: 5, avgPrice: 55, annualDiv: 3.23, months: [1,2,3,4,5,6,7,8,9,10,11,12], currency: 'USD' },
   { id: 3, name: '삼성전자', ticker: '005930', shares: 10, avgPrice: 70000, annualDiv: 1444, months: [4, 5, 8, 11], currency: 'KRW' },
 ];
 
 /* ── dividend guide articles (SEO content) — 데이터는 data.js로 분리됨 ── */
 
 // deepId가 슬러그면 그대로, 예전 방식(숫자 인덱스, 예: 구 링크 #/guide/23)이면 그 인덱스의 글로 변환
-function resolveArticle(deepId) {
-  if (deepId == null) return null;
+function resolveArticle(deepId, ARTICLES) {
+  if (deepId == null || !ARTICLES) return null;
   const bySlug = ARTICLES.find((a) => a.id === deepId);
   if (bySlug) return bySlug;
   const idx = Number(deepId);
@@ -122,7 +128,8 @@ function resolveArticle(deepId) {
 }
 
 // 가이드 글 본문에 실제로 언급된 종목 티커를 찾아 링크로 보여줌
-function RelatedStocksForArticle({ article, onNavigate }) {
+function RelatedStocksForArticle({ article, onNavigate, data }) {
+  const { STOCKS } = data;
   const text = article.t + ' ' + article.p.join(' ');
   const mentioned = STOCKS.filter((s) => {
     const re = new RegExp(`\\b${s.ticker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
@@ -131,11 +138,11 @@ function RelatedStocksForArticle({ article, onNavigate }) {
   if (!mentioned.length) return null;
   return (
     <div style={{ background: 'var(--pb-input-bg)', border: `1px solid ${C.line}`, borderRadius: 8, padding: '10px 12px', margin: '0 0 9px' }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, marginBottom: 7 }}>📈 관련 종목</div>
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: C.ink, marginBottom: 7 }}>관련 종목</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {mentioned.map((s) => (
           <a key={s.ticker} href={`/stocks/${s.ticker}`} onClick={(e) => { e.preventDefault(); onNavigate?.('stocks', s.ticker); }}
-            style={{ textDecoration: 'none', fontSize: 11, fontWeight: 600, color: C.cover, border: `1px solid ${C.lineStrong}`, borderRadius: 999, padding: '4px 10px' }}>
+            style={{ textDecoration: 'none', fontSize: 12.5, fontWeight: 600, color: C.cover, border: `1px solid ${C.lineStrong}`, borderRadius: 999, padding: '4px 10px' }}>
             {s.name}({s.ticker})
           </a>
         ))}
@@ -144,7 +151,8 @@ function RelatedStocksForArticle({ article, onNavigate }) {
   );
 }
 
-function Articles({ deepId, onNavigate }) {
+function Articles({ deepId, onNavigate, data }) {
+  const { ARTICLES } = data;
   const [q, setQ] = useState('');
   const [copiedIdx, setCopiedIdx] = useState(null);
   const query = q.trim().toLowerCase();
@@ -159,7 +167,7 @@ function Articles({ deepId, onNavigate }) {
 
   useEffect(() => {
     if (!deepId) return;
-    const target = resolveArticle(deepId);
+    const target = resolveArticle(deepId, ARTICLES);
     if (!target) return;
     const t = setTimeout(() => {
       const el = document.getElementById(`article-${target.id}`);
@@ -182,10 +190,10 @@ function Articles({ deepId, onNavigate }) {
 
   return (
     <section style={{ marginTop: 6, marginBottom: 14 }}>
-      <h2 style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 17, color: C.ink, margin: '0 0 4px' }}>
+      <h2 style={{ fontWeight: 700, fontSize: 20, color: C.ink, margin: '0 0 4px' }}>
         배당 공부방
       </h2>
-      <p style={{ fontSize: 11.5, color: C.inkSoft, margin: '0 0 12px' }}>
+      <p style={{ fontSize: 13, color: C.inkSoft, margin: '0 0 12px' }}>
         배당 투자 전에 알아두면 좋은 내용을 정리했어요 (총 {ARTICLES.length}개 글)
       </p>
       <div style={{ position: 'relative', marginBottom: 12 }}>
@@ -195,8 +203,7 @@ function Articles({ deepId, onNavigate }) {
           placeholder="글 제목이나 키워드로 검색 (예: 세금, ISA, DRIP)"
           style={{
             width: '100%', background: 'var(--pb-input-bg)', borderRadius: 8, padding: '10px 34px 10px 12px',
-            fontSize: 13, color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box',
-            fontFamily: "'Noto Sans KR', sans-serif",
+            fontSize: 15, color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box',
           }}
         />
         {q && (
@@ -213,25 +220,25 @@ function Articles({ deepId, onNavigate }) {
         )}
       </div>
       {query && (
-        <p style={{ fontSize: 11, color: C.inkSoft, margin: '0 0 10px' }}>
+        <p style={{ fontSize: 12.5, color: C.inkSoft, margin: '0 0 10px' }}>
           {filtered.length > 0 ? `${filtered.length}개 글이 검색됐어요` : '검색 결과가 없어요. 다른 키워드로 찾아보세요'}
         </p>
       )}
       {filtered.map(({ a, i }) => (
-        <details key={i} id={`article-${a.id}`} style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 10, marginBottom: 8, padding: '0 16px', overflow: 'hidden' }}>
-          <summary style={{ padding: '13px 0', fontSize: 12.5, fontWeight: 700, color: C.ink, cursor: 'pointer' }}>
+        <details key={i} id={`article-${a.id}`} style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 14, marginBottom: 8, padding: '0 16px', overflow: 'hidden' }}>
+          <summary style={{ padding: '13px 0', fontSize: 14, fontWeight: 700, color: C.ink, cursor: 'pointer' }}>
             {a.t}
           </summary>
           <div style={{ paddingBottom: 14 }}>
             {a.p.map((para, j) => (
-              <p key={j} style={{ fontSize: 12, lineHeight: 1.8, color: C.inkSoft, margin: j === 0 ? '2px 0 9px' : '0 0 9px' }}>{para}</p>
+              <p key={j} style={{ fontSize: 14, lineHeight: 1.8, color: C.inkSoft, margin: j === 0 ? '2px 0 9px' : '0 0 9px' }}>{para}</p>
             ))}
             {a.cta && a.cta.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '4px 0 12px' }}>
                 {a.cta.map((c) => (
                   <a key={c.href} href={c.href}
                     onClick={(e) => { e.preventDefault(); onNavigate?.(c.href.startsWith('/stocks/') ? 'stocks' : 'calc', c.href.startsWith('/stocks/') ? c.href.replace('/stocks/', '') : null); }}
-                    style={{ display: 'block', textAlign: 'center', textDecoration: 'none', fontSize: 12, fontWeight: 700, color: C.foil, background: C.cover, borderRadius: 8, padding: '10px 12px' }}>
+                    style={{ display: 'block', textAlign: 'center', textDecoration: 'none', fontSize: 14, fontWeight: 700, color: C.foil, background: C.cover, borderRadius: 8, padding: '10px 12px' }}>
                     {c.text}
                   </a>
                 ))}
@@ -239,20 +246,20 @@ function Articles({ deepId, onNavigate }) {
             )}
             {a.faq && a.faq.length > 0 && (
               <div style={{ background: 'var(--pb-input-bg)', border: `1px solid ${C.line}`, borderRadius: 8, padding: '10px 12px', margin: '0 0 12px' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, marginBottom: 7 }}>❓ 자주 묻는 질문</div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: C.ink, marginBottom: 7 }}>자주 묻는 질문</div>
                 {a.faq.map((f, i) => (
                   <div key={i} style={{ marginBottom: i < a.faq.length - 1 ? 9 : 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: C.ink, margin: '0 0 3px' }}>Q. {f.q}</p>
-                    <p style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: 0 }}>{f.a}</p>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: C.ink, margin: '0 0 3px' }}>Q. {f.q}</p>
+                    <p style={{ fontSize: 13, lineHeight: 1.7, color: C.inkSoft, margin: 0 }}>{f.a}</p>
                   </div>
                 ))}
               </div>
             )}
-            <RelatedStocksForArticle article={a} onNavigate={onNavigate} />
+            <RelatedStocksForArticle article={a} onNavigate={onNavigate} data={data} />
             <button
               onClick={(e) => { e.preventDefault(); copyLink(a.id); }}
               style={{
-                marginTop: 4, display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5,
+                marginTop: 4, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12,
                 color: copiedIdx === a.id ? C.cover : C.inkSoft, background: 'transparent',
                 border: `1px solid ${C.lineStrong}`, borderRadius: 7, padding: '6px 10px', cursor: 'pointer',
               }}
@@ -263,7 +270,7 @@ function Articles({ deepId, onNavigate }) {
           </div>
         </details>
       ))}
-      <p style={{ fontSize: 10.5, color: C.inkSoft, opacity: 0.7, margin: '10px 0 0', lineHeight: 1.6 }}>
+      <p style={{ fontSize: 12, color: C.inkSoft, opacity: 0.7, margin: '10px 0 0', lineHeight: 1.6 }}>
         위 내용은 일반적인 정보 제공 목적이며 특정 종목 추천이 아닙니다. 배당금·수익률·세율은 변동될 수 있으니 투자 전 최신 공시를 확인하세요.
       </p>
     </section>
@@ -273,19 +280,20 @@ function Articles({ deepId, onNavigate }) {
 /* ── 종목 분석 (팩트체크된 구조적 정보, 변하는 수치 제외) ────── */
 
 function classifyAssetClass(ticker) {
-  const s = STOCKS.find((x) => x.ticker === ticker);
+  // 데이터 청크가 아직 안 왔으면 '알 수 없음'으로 두고, 도착하면 다시 그려질 때 반영돼요
+  const s = getLoadedData()?.STOCKS.find((x) => x.ticker === ticker);
   if (!s) return 'unknown';
   if (/ETF/i.test(s.typeTag)) return 'etf';
   if (/리츠|REIT/i.test(s.typeTag)) return 'reit';
   return 'stock';
 }
 
-function diagnosePortfolio(holdings) {
+function diagnosePortfolio(holdings, fx) {
   if (holdings.length === 0) return null;
 
   const weighted = holdings.map((h) => {
     const principal = h.shares * h.avgPrice;
-    const krwPrincipal = (h.currency || 'KRW') === 'USD' ? principal * FX_KRW_PER_USD : principal;
+    const krwPrincipal = (h.currency || 'KRW') === 'USD' ? principal * fx : principal;
     return { ...h, krwPrincipal };
   });
   const total = weighted.reduce((s, h) => s + h.krwPrincipal, 0) || 1;
@@ -347,23 +355,23 @@ function diagnosePortfolio(holdings) {
   return { score, grade, concentrationScore, monthScore, currencyScore, classScore, feedback };
 }
 
-function PortfolioDiagnosis({ holdings }) {
-  const d = diagnosePortfolio(holdings);
+function PortfolioDiagnosis({ holdings, fx }) {
+  const d = diagnosePortfolio(holdings, fx);
   if (!d) return null;
-  const gradeColor = { S: C.brass, A: C.cover, B: '#8a7a3f', C: C.stamp, D: C.stamp }[d.grade];
+  const gradeColor = { S: C.cover, A: C.cover, B: C.brass, C: C.stamp, D: C.stamp }[d.grade];
   return (
-    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: 16, marginBottom: 18 }}>
+    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: 16, marginBottom: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
         <div style={{
           width: 62, height: 62, borderRadius: '50%', border: `2.5px solid ${gradeColor}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          fontFamily: "'Noto Serif KR', serif", fontWeight: 900, fontSize: 26, color: gradeColor,
+          fontWeight: 900, fontSize: 28, color: gradeColor,
         }}>
           {d.grade}
         </div>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: C.ink }}>통장 분산도 진단</div>
-          <div style={{ fontSize: 20, fontWeight: 900, color: C.ink, fontFamily: "'IBM Plex Mono', monospace" }}>{d.score}점</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>통장 분산도 진단</div>
+          <div style={{ fontSize: 24, fontWeight: 900, color: C.ink, fontVariantNumeric: 'tabular-nums' }}>{d.score}점</div>
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8, marginBottom: 12 }}>
@@ -373,7 +381,7 @@ function PortfolioDiagnosis({ holdings }) {
           ['통화 분산', d.currencyScore],
           ['자산군 분산', d.classScore],
         ].map(([label, v]) => (
-          <div key={label} style={{ fontSize: 10.5, color: C.inkSoft }}>
+          <div key={label} style={{ fontSize: 12, color: C.inkSoft }}>
             {label}
             <div style={{ height: 5, borderRadius: 3, background: C.line, marginTop: 4, overflow: 'hidden' }}>
               <div style={{ width: `${Math.max(0, Math.min(100, v))}%`, height: '100%', background: C.cover }} />
@@ -382,7 +390,7 @@ function PortfolioDiagnosis({ holdings }) {
         ))}
       </div>
       {d.feedback.map((f, i) => (
-        <p key={i} style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 6px' }}>
+        <p key={i} style={{ fontSize: 13, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 6px' }}>
           · {f}
         </p>
       ))}
@@ -392,19 +400,19 @@ function PortfolioDiagnosis({ holdings }) {
 
 const FINANCIAL_INCOME_THRESHOLD = 20000000; // 금융소득종합과세 기준선 (연 2,000만원)
 
-function calcTotalAnnualDividendKRW(holdings) {
+function calcTotalAnnualDividendKRW(holdings, fx) {
   return holdings.reduce((sum, h) => {
     const annual = h.shares * h.annualDiv;
-    const krw = (h.currency || 'KRW') === 'USD' ? annual * FX_KRW_PER_USD : annual;
+    const krw = (h.currency || 'KRW') === 'USD' ? annual * fx : annual;
     return sum + krw;
   }, 0);
 }
 
-function TaxThresholdCheck({ holdings }) {
+function TaxThresholdCheck({ holdings, fx }) {
   const [otherIncome, setOtherIncome] = useState('');
   if (holdings.length === 0) return null;
 
-  const dividendKRW = calcTotalAnnualDividendKRW(holdings);
+  const dividendKRW = calcTotalAnnualDividendKRW(holdings, fx);
   const otherNum = parseFloat(otherIncome) || 0;
   const total = dividendKRW + otherNum;
   const pct = Math.min(100, (total / FINANCIAL_INCOME_THRESHOLD) * 100);
@@ -413,17 +421,16 @@ function TaxThresholdCheck({ holdings }) {
   const barColor = over ? C.stamp : near ? C.brass : C.cover;
 
   const inputStyle = {
-    width: '100%', background: 'var(--pb-input-bg)', borderRadius: 7, padding: '10px 11px', fontSize: 14,
-    color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box',
-    fontFamily: "'Noto Sans KR', sans-serif", marginBottom: 12,
+    width: '100%', background: 'var(--pb-input-bg)', borderRadius: 7, padding: '10px 11px', fontSize: 16,
+    color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box', marginBottom: 12,
   };
 
   return (
-    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: 16, marginBottom: 18 }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: C.ink, marginBottom: 10 }}>
+    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: 16, marginBottom: 18 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 10 }}>
         금융소득종합과세 체크
       </div>
-      <label style={{ display: 'block', fontSize: 11, color: C.inkSoft, marginBottom: 5, fontWeight: 600 }}>
+      <label style={{ display: 'block', fontSize: 12.5, color: C.inkSoft, marginBottom: 5, fontWeight: 600 }}>
         이 통장 밖의 다른 이자·배당소득 (연간, 세전, 원화)
       </label>
       <input
@@ -433,24 +440,24 @@ function TaxThresholdCheck({ holdings }) {
         placeholder="0"
         style={inputStyle}
       />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 11, color: C.inkSoft, marginBottom: 6 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 12.5, color: C.inkSoft, marginBottom: 6 }}>
         <span>합산 금융소득 (세전, 원화 환산)</span>
-        <span style={{ fontWeight: 700, color: C.ink, fontFamily: "'IBM Plex Mono', monospace", fontSize: 13 }}>
+        <span style={{ fontWeight: 700, color: C.ink, fontVariantNumeric: 'tabular-nums', fontSize: 15 }}>
           {Math.round(total).toLocaleString('ko-KR')}원
         </span>
       </div>
       <div style={{ height: 8, borderRadius: 4, background: C.line, overflow: 'hidden', marginBottom: 10 }}>
         <div style={{ width: `${pct}%`, height: '100%', background: barColor, transition: 'width .3s ease' }} />
       </div>
-      <p style={{ fontSize: 11.5, lineHeight: 1.7, color: over ? C.stamp : C.inkSoft, margin: 0, fontWeight: over ? 700 : 500 }}>
+      <p style={{ fontSize: 13, lineHeight: 1.7, color: over ? C.stamp : C.inkSoft, margin: 0, fontWeight: over ? 700 : 500 }}>
         {over
           ? '기준선(연 2,000만원)을 넘었어요. 다음 해 5월 종합소득세 신고 때 다른 소득과 합산해 신고해야 할 수 있어요.'
           : near
           ? '기준선(연 2,000만원)에 가까워지고 있어요. 배당이 더 늘어나면 종합과세 대상이 될 수 있어요.'
           : '연 2,000만원 기준선까지 아직 여유가 있어요.'}
       </p>
-      <p style={{ fontSize: 10, color: C.inkSoft, opacity: 0.7, marginTop: 8, lineHeight: 1.6 }}>
-        이미 원천징수된 세금은 기납부세액으로 인정돼요. 정확한 신고 여부는 세무 전문가와 상담하세요. 달러 배당은 참고 환율({FX_KRW_PER_USD.toLocaleString('ko-KR')}원/달러)로 환산한 근사치예요.
+      <p style={{ fontSize: 12, color: C.inkSoft, opacity: 0.7, marginTop: 8, lineHeight: 1.6 }}>
+        이미 원천징수된 세금은 기납부세액으로 인정돼요. 정확한 신고 여부는 세무 전문가와 상담하세요. 달러 배당은 계산기에 설정한 환율({fx.toLocaleString('ko-KR')}원/달러)로 환산한 근사치예요.
       </p>
     </div>
   );
@@ -495,31 +502,31 @@ const STOCK_FILTERS = [
 ];
 
 // 종목 카드 안에 보여주는 "비슷한 종목·관련 가이드" — 실제 <a href> 링크, 클릭하면 해당 상세로 이동
-function RelatedLinks({ stock, onNavigate }) {
-  const relStocks = getRelatedStocks(stock.ticker, 4);
-  const relArticles = getRelatedArticles(stock.ticker, stock.name, 3);
+function RelatedLinks({ stock, onNavigate, data }) {
+  const relStocks = data.getRelatedStocks(stock.ticker, 4);
+  const relArticles = data.getRelatedArticles(stock.ticker, stock.name, 3);
   if (!relStocks.length && !relArticles.length) return null;
   return (
     <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
       {relArticles.length > 0 && (
         <div style={{ background: 'var(--pb-input-bg)', border: `1px solid ${C.line}`, borderRadius: 8, padding: '10px 12px' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, marginBottom: 7 }}>📚 관련 가이드</div>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: C.ink, marginBottom: 7 }}>관련 가이드</div>
           {relArticles.map((a) => (
             <a key={a.id} href={`/guide/${a.id}`} onClick={(e) => { e.preventDefault(); onNavigate?.('guide', a.id); }}
               style={{ display: 'block', textDecoration: 'none', padding: '5px 0' }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: C.cover }}>{a.t}</div>
-              <div style={{ fontSize: 10.5, color: C.inkSoft, marginTop: 2, lineHeight: 1.5 }}>{a.p[0].slice(0, 60)}...</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.cover }}>{a.t}</div>
+              <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2, lineHeight: 1.5 }}>{a.p[0].slice(0, 60)}...</div>
             </a>
           ))}
         </div>
       )}
       {relStocks.length > 0 && (
         <div style={{ background: 'var(--pb-input-bg)', border: `1px solid ${C.line}`, borderRadius: 8, padding: '10px 12px' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, marginBottom: 7 }}>📈 비슷한 종목</div>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: C.ink, marginBottom: 7 }}>비슷한 종목</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {relStocks.map((r) => (
               <a key={r.ticker} href={`/stocks/${r.ticker}`} onClick={(e) => { e.preventDefault(); onNavigate?.('stocks', r.ticker); }}
-                style={{ textDecoration: 'none', fontSize: 11, fontWeight: 600, color: C.cover, border: `1px solid ${C.lineStrong}`, borderRadius: 999, padding: '4px 10px' }}>
+                style={{ textDecoration: 'none', fontSize: 12.5, fontWeight: 600, color: C.cover, border: `1px solid ${C.lineStrong}`, borderRadius: 999, padding: '4px 10px' }}>
                 {r.name}({r.ticker})
               </a>
             ))}
@@ -530,7 +537,8 @@ function RelatedLinks({ stock, onNavigate }) {
   );
 }
 
-function StockCards({ deepId, onNavigate }) {
+function StockCards({ deepId, onNavigate, data }) {
+  const { STOCKS } = data;
   const [q, setQ] = useState('');
   const [chip, setChip] = useState('all');
   const [onlyFav, setOnlyFav] = useState(false);
@@ -628,10 +636,10 @@ function StockCards({ deepId, onNavigate }) {
 
   return (
     <section style={{ marginTop: 6, marginBottom: 14 }}>
-      <h2 style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 17, color: C.ink, margin: '0 0 4px' }}>
+      <h2 style={{ fontWeight: 700, fontSize: 20, color: C.ink, margin: '0 0 4px' }}>
         종목 분석
       </h2>
-      <p style={{ fontSize: 11.5, color: C.inkSoft, margin: '0 0 12px' }}>
+      <p style={{ fontSize: 13, color: C.inkSoft, margin: '0 0 12px' }}>
         변하지 않는 구조적 사실 위주로 정리했어요. 배당수익률·주가는 매일 바뀌니 공식 출처에서 최신 수치를 확인하세요 (총 {STOCKS.length}종목)
       </p>
       <div style={{ position: 'relative', marginBottom: 10 }}>
@@ -641,8 +649,7 @@ function StockCards({ deepId, onNavigate }) {
           placeholder="종목명, 티커, 유형으로 검색 (예: 리츠, SCHD, 배당킹)"
           style={{
             width: '100%', background: 'var(--pb-input-bg)', borderRadius: 8, padding: '10px 34px 10px 12px',
-            fontSize: 13, color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box',
-            fontFamily: "'Noto Sans KR', sans-serif",
+            fontSize: 15, color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box',
           }}
         />
         {q && (
@@ -661,13 +668,13 @@ function StockCards({ deepId, onNavigate }) {
 
       {!query && recent.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto', paddingBottom: 4, marginBottom: 4, WebkitOverflowScrolling: 'touch' }}>
-          <span style={{ fontSize: 10.5, color: C.inkSoft, flexShrink: 0 }}>최근 본 종목</span>
+          <span style={{ fontSize: 12, color: C.inkSoft, flexShrink: 0 }}>최근 본 종목</span>
           {recent.map((ticker) => {
             const s = STOCKS.find((x) => x.ticker === ticker);
             if (!s) return null;
             return (
               <button key={ticker} onClick={() => jumpToStock(ticker)} style={{
-                flexShrink: 0, padding: '5px 11px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                flexShrink: 0, padding: '5px 11px', borderRadius: 999, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
                 border: `1px solid ${C.lineStrong}`, background: 'transparent', color: C.inkSoft, whiteSpace: 'nowrap',
               }}>
                 {s.name}
@@ -682,7 +689,7 @@ function StockCards({ deepId, onNavigate }) {
           const on = chip === f.v;
           return (
             <button key={f.v} onClick={() => setChip(f.v)} style={{
-              flexShrink: 0, padding: '6px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              flexShrink: 0, padding: '6px 12px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
               border: `1px solid ${on ? C.cover : C.lineStrong}`,
               background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft, whiteSpace: 'nowrap',
             }}>
@@ -691,7 +698,7 @@ function StockCards({ deepId, onNavigate }) {
           );
         })}
         <button onClick={() => setOnlyFav((v) => !v)} style={{
-          flexShrink: 0, padding: '6px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+          flexShrink: 0, padding: '6px 12px', borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
           display: 'flex', alignItems: 'center', gap: 4,
           border: `1px solid ${onlyFav ? C.brass : C.lineStrong}`,
           background: onlyFav ? C.brass : 'transparent', color: onlyFav ? '#fff' : C.inkSoft, whiteSpace: 'nowrap',
@@ -699,14 +706,14 @@ function StockCards({ deepId, onNavigate }) {
           <Star size={11} fill={onlyFav ? '#fff' : 'none'} /> 즐겨찾기{favs.size > 0 ? ` (${favs.size})` : ''}
         </button>
       </div>
-      <p style={{ fontSize: 11, color: C.inkSoft, margin: '6px 0 10px' }}>
+      <p style={{ fontSize: 12.5, color: C.inkSoft, margin: '6px 0 10px' }}>
         {filtered.length}개 종목{query || chip !== 'all' || onlyFav ? ' 표시 중' : ''}
         {filtered.length === 0 && ' · 다른 조건으로 찾아보세요'}
       </p>
       {shown.map((s) => {
         const isFav = favs.has(s.ticker);
         return (
-          <details key={s.ticker} id={`stock-${s.ticker}`} onToggle={(e) => { if (e.target.open) recordView(s.ticker); }} style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 10, marginBottom: 8, padding: '0 16px', overflow: 'hidden' }}>
+          <details key={s.ticker} id={`stock-${s.ticker}`} onToggle={(e) => { if (e.target.open) recordView(s.ticker); }} style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 14, marginBottom: 8, padding: '0 16px', overflow: 'hidden' }}>
             <summary style={{ padding: '13px 0', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, listStyle: 'none' }}>
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFav(s.ticker); }}
@@ -715,30 +722,30 @@ function StockCards({ deepId, onNavigate }) {
               >
                 <Star size={14} color={isFav ? C.brass : C.inkSoft} fill={isFav ? C.brass : 'none'} />
               </button>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: C.ink }}>{s.name}</span>
-              <span style={{ fontSize: 10, color: C.inkSoft }}>{s.ticker}</span>
-              <span style={{ marginLeft: 'auto', fontSize: 9.5, fontWeight: 700, color: tagColorFor(s.typeTag), border: `1px solid ${tagColorFor(s.typeTag)}`, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{s.name}</span>
+              <span style={{ fontSize: 12, color: C.inkSoft }}>{s.ticker}</span>
+              <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: tagColorFor(s.typeTag), border: `1px solid ${tagColorFor(s.typeTag)}`, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
                 {s.typeTag}
               </span>
             </summary>
             <div style={{ paddingBottom: 15 }}>
-              <p style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '2px 0 10px', fontFamily: "'IBM Plex Mono', monospace" }}>
+              <p style={{ fontSize: 13, lineHeight: 1.7, color: C.inkSoft, margin: '2px 0 10px', fontVariantNumeric: 'tabular-nums' }}>
                 {s.basic}
               </p>
               {s.detail.map((p, i) => (
-                <p key={i} style={{ fontSize: 12, lineHeight: 1.8, color: C.inkSoft, margin: '0 0 9px' }}>{p}</p>
+                <p key={i} style={{ fontSize: 14, lineHeight: 1.8, color: C.inkSoft, margin: '0 0 9px' }}>{p}</p>
               ))}
               <div style={{ marginTop: 10, padding: '10px 12px', background: 'var(--pb-stamp-06)', borderRadius: 8 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.stamp, marginBottom: 5 }}>주의할 점</div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: C.stamp, marginBottom: 5 }}>주의할 점</div>
                 {s.caution.map((c, i) => (
-                  <p key={i} style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 5px' }}>· {c}</p>
+                  <p key={i} style={{ fontSize: 13, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 5px' }}>· {c}</p>
                 ))}
               </div>
-              <RelatedLinks stock={s} onNavigate={onNavigate} />
+              <RelatedLinks stock={s} onNavigate={onNavigate} data={data} />
               <button
                 onClick={(e) => { e.preventDefault(); copyLink(s.ticker); }}
                 style={{
-                  marginTop: 10, display: 'flex', alignItems: 'center', gap: 5, fontSize: 10.5,
+                  marginTop: 10, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12,
                   color: copiedTicker === s.ticker ? C.cover : C.inkSoft, background: 'transparent',
                   border: `1px solid ${C.lineStrong}`, borderRadius: 7, padding: '6px 10px', cursor: 'pointer',
                 }}
@@ -754,14 +761,14 @@ function StockCards({ deepId, onNavigate }) {
         <button
           onClick={() => setVisible((v) => v + PAGE_SIZE)}
           style={{
-            width: '100%', padding: '12px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+            width: '100%', padding: '12px', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer',
             background: 'transparent', color: C.cover, border: `1px solid ${C.cover}`, marginTop: 4, marginBottom: 4,
           }}
         >
           {filtered.length - visible}개 더보기 ({visible}/{filtered.length})
         </button>
       )}
-      <p style={{ fontSize: 10.5, color: C.inkSoft, opacity: 0.7, margin: '10px 0 0', lineHeight: 1.6 }}>
+      <p style={{ fontSize: 12, color: C.inkSoft, opacity: 0.7, margin: '10px 0 0', lineHeight: 1.6 }}>
         위 내용은 일반적인 정보 제공 목적이며 특정 종목에 대한 매수·매도 추천이 아니에요. 배당수익률·주가·최근 공시는 각 운용사·기업 공식 출처에서 확인하세요.
       </p>
     </section>
@@ -865,21 +872,21 @@ function DividendCalendar({ holdings }) {
 
   const navBtn = {
     width: 30, height: 30, borderRadius: 8, border: `1px solid ${C.lineStrong}`, background: 'transparent',
-    color: C.ink, fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: C.ink, fontSize: 17, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
   };
 
   return (
     <section style={{ marginTop: 6, marginBottom: 14 }}>
-      <h2 style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 17, color: C.ink, margin: '0 0 4px' }}>
+      <h2 style={{ fontWeight: 700, fontSize: 20, color: C.ink, margin: '0 0 4px' }}>
         배당 달력
       </h2>
-      <p style={{ fontSize: 11.5, color: C.inkSoft, margin: '0 0 14px' }}>
+      <p style={{ fontSize: 13, color: C.inkSoft, margin: '0 0 14px' }}>
         보유 종목이 이 달에 배당을 지급하는지 한눈에 확인하세요
       </p>
 
       {holdings.length === 0 ? (
-        <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '28px 16px', textAlign: 'center' }}>
-          <p style={{ fontSize: 12.5, color: C.inkSoft, margin: 0, lineHeight: 1.7 }}>
+        <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: '28px 16px', textAlign: 'center' }}>
+          <p style={{ fontSize: 14, color: C.inkSoft, margin: 0, lineHeight: 1.7 }}>
             계산기 탭에서 종목을 먼저 기입하면<br />이 달력에 배당 예정 종목이 표시돼요
           </p>
         </div>
@@ -890,7 +897,7 @@ function DividendCalendar({ holdings }) {
             marginBottom: 12,
           }}>
             <button onClick={() => setMonthOffset((v) => v - 1)} aria-label="이전 달" style={navBtn}>‹</button>
-            <div style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 15, color: C.ink }}>
+            <div style={{ fontWeight: 700, fontSize: 17, color: C.ink }}>
               {year}년 {monthNum}월
             </div>
             <button onClick={() => setMonthOffset((v) => v + 1)} aria-label="다음 달" style={navBtn}>›</button>
@@ -903,13 +910,13 @@ function DividendCalendar({ holdings }) {
           }}>
             {payers.length > 0 ? (
               <>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.stamp, marginBottom: 7 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: C.stamp, marginBottom: 7 }}>
                   이 달 배당 예정 · {payers.length}종목
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {payers.map((h) => (
                     <span key={h.id} style={{
-                      fontSize: 11, fontWeight: 700, color: C.ink, background: C.cardBg,
+                      fontSize: 12.5, fontWeight: 700, color: C.ink, background: C.cardBg,
                       border: `1px solid ${C.lineStrong}`, borderRadius: 999, padding: '4px 10px',
                     }}>
                       {h.name}{h.ticker ? ` · ${h.ticker}` : ''}
@@ -918,14 +925,14 @@ function DividendCalendar({ holdings }) {
                 </div>
               </>
             ) : (
-              <p style={{ fontSize: 11.5, color: C.inkSoft, margin: 0 }}>이 달엔 예정된 배당이 없어요.</p>
+              <p style={{ fontSize: 13, color: C.inkSoft, margin: 0 }}>이 달엔 예정된 배당이 없어요.</p>
             )}
           </div>
 
-          <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '12px 10px' }}>
+          <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: '12px 10px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 6 }}>
               {WEEKDAY_LABELS.map((w) => (
-                <div key={w} style={{ textAlign: 'center', fontSize: 10.5, fontWeight: 700, color: C.inkSoft }}>{w}</div>
+                <div key={w} style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: C.inkSoft }}>{w}</div>
               ))}
             </div>
             {weeks.map((week, wi) => (
@@ -934,7 +941,7 @@ function DividendCalendar({ holdings }) {
                   const isToday = d === todayDate;
                   return (
                     <div key={di} style={{
-                      textAlign: 'center', padding: '7px 0', fontSize: 11.5,
+                      textAlign: 'center', padding: '7px 0', fontSize: 13,
                       color: d === null ? 'transparent' : (isToday ? C.foil : C.ink),
                       fontWeight: isToday ? 700 : 500,
                     }}>
@@ -952,7 +959,7 @@ function DividendCalendar({ holdings }) {
             ))}
           </div>
 
-          <p style={{ fontSize: 10.5, color: C.inkSoft, opacity: 0.7, margin: '10px 0 0', lineHeight: 1.6 }}>
+          <p style={{ fontSize: 12, color: C.inkSoft, opacity: 0.7, margin: '10px 0 0', lineHeight: 1.6 }}>
             정확한 지급일(며칠)은 종목마다 달라요. 이 달력은 "몇 월에 배당이 있는지"만 알려드리며, 정확한 배당락일·지급일은 각 기업 IR이나 증권사 앱에서 확인하세요.
           </p>
         </>
@@ -987,10 +994,10 @@ function TypeFinder() {
 
   return (
     <section style={{ marginTop: 6, marginBottom: 14 }}>
-      <h2 style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 17, color: C.ink, margin: '0 0 4px' }}>
+      <h2 style={{ fontWeight: 700, fontSize: 20, color: C.ink, margin: '0 0 4px' }}>
         배당 유형 찾기
       </h2>
-      <p style={{ fontSize: 11.5, color: C.inkSoft, margin: '0 0 14px' }}>
+      <p style={{ fontSize: 13, color: C.inkSoft, margin: '0 0 14px' }}>
         질문 3개에 답하면 나한테 맞는 배당 유형을 알려드려요
       </p>
 
@@ -998,13 +1005,13 @@ function TypeFinder() {
         <>
           {TYPE_QUESTIONS.map((q, qi) => (
             <div key={qi} style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: C.ink, marginBottom: 8 }}>{qi + 1}. {q.q}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 8 }}>{qi + 1}. {q.q}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {q.options.map((o, oi) => {
                   const on = answers[qi] === oi;
                   return (
                     <button key={oi} onClick={() => pick(qi, oi)} style={{
-                      textAlign: 'left', padding: '10px 12px', borderRadius: 8, fontSize: 12.5,
+                      textAlign: 'left', padding: '10px 12px', borderRadius: 8, fontSize: 14,
                       border: `1px solid ${on ? C.cover : C.lineStrong}`,
                       background: on ? C.cover : C.cardBg, color: on ? C.foil : C.ink,
                       cursor: 'pointer', fontWeight: on ? 700 : 500,
@@ -1017,7 +1024,7 @@ function TypeFinder() {
             </div>
           ))}
           <button disabled={!canSee} onClick={() => setDone(true)} style={{
-            width: '100%', padding: '12px', borderRadius: 8, fontSize: 14, fontWeight: 700,
+            width: '100%', padding: '12px', borderRadius: 8, fontSize: 16, fontWeight: 700,
             cursor: canSee ? 'pointer' : 'default',
             background: canSee ? C.cover : C.line, color: canSee ? C.foil : C.inkSoft,
             border: 'none', marginTop: 4,
@@ -1028,20 +1035,20 @@ function TypeFinder() {
       )}
 
       {done && (
-        <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: 18 }}>
-          <div style={{ fontSize: 11, color: C.brass, fontWeight: 700, letterSpacing: 1, marginBottom: 6 }}>내 배당 유형</div>
-          <h3 style={{ margin: '0 0 10px', fontFamily: "'Noto Serif KR', serif", fontSize: 19, color: C.ink }}>{result.title}</h3>
-          <p style={{ fontSize: 12.5, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 12px' }}>{result.desc}</p>
-          <p style={{ fontSize: 11.5, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 14px', padding: '10px 12px', background: 'var(--pb-stamp-06)', borderRadius: 8 }}>
+        <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: 18 }}>
+          <div style={{ fontSize: 12.5, color: C.brass, fontWeight: 700, letterSpacing: 1, marginBottom: 6 }}>내 배당 유형</div>
+          <h3 style={{ margin: '0 0 10px', fontSize: 22, color: C.ink }}>{result.title}</h3>
+          <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 12px' }}>{result.desc}</p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 14px', padding: '10px 12px', background: 'var(--pb-stamp-06)', borderRadius: 8 }}>
             <b style={{ color: C.stamp }}>주의할 점.</b> {result.watch}
           </p>
-          <button onClick={reset} style={{ fontSize: 11.5, color: C.inkSoft, background: 'transparent', border: `1px solid ${C.lineStrong}`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer' }}>
+          <button onClick={reset} style={{ fontSize: 13, color: C.inkSoft, background: 'transparent', border: `1px solid ${C.lineStrong}`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer' }}>
             다시 답하기
           </button>
         </div>
       )}
 
-      <p style={{ fontSize: 10.5, color: C.inkSoft, opacity: 0.7, margin: '14px 0 0', lineHeight: 1.6 }}>
+      <p style={{ fontSize: 12, color: C.inkSoft, opacity: 0.7, margin: '14px 0 0', lineHeight: 1.6 }}>
         이 결과는 배당 유형을 이해하기 위한 참고용 안내이며 특정 종목이나 상품에 대한 매수 추천이 아니에요. '종목분석' 탭에서 각 유형에 해당하는 예시를 살펴보실 수 있어요.
       </p>
     </section>
@@ -1051,10 +1058,7 @@ function TypeFinder() {
 /* ── small pieces ──────────────────────────────────────────── */
 function Ruled({ children, style }) {
   return (
-    <div style={{
-      background: `repeating-linear-gradient(${C.cardBg}, ${C.cardBg} 27px, ${C.paperLine} 27px, ${C.paperLine} 28px)`,
-      border: `1px solid ${C.line}`, borderRadius: 10, boxSizing: 'border-box', ...style,
-    }}>
+    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, boxSizing: 'border-box', ...style }}>
       {children}
     </div>
   );
@@ -1062,17 +1066,11 @@ function Ruled({ children, style }) {
 
 function Stamp({ value, sub }) {
   return (
-    <div aria-label={`연간 예상 배당 ${value}`} style={{
-      width: 132, height: 132, borderRadius: '50%', border: `3px solid ${C.stamp}`,
-      color: C.stamp, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      transform: 'rotate(-6deg)', flexShrink: 0, background: 'var(--pb-stamp-04)',
-      boxShadow: 'inset 0 0 0 1px var(--pb-stamp-35)',
-    }}>
-      <span style={{ fontSize: 10, letterSpacing: 3, fontWeight: 700 }}>연간 배당</span>
-      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: value.length > 11 ? 14 : 17, fontWeight: 700, marginTop: 4, textAlign: 'center', lineHeight: 1.25, padding: '0 8px', wordBreak: 'keep-all' }}>
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ fontSize: 14, color: C.inkSoft, fontWeight: 600 }}>연간 예상 배당금{sub ? ` · ${sub}` : ''}</div>
+      <div style={{ fontSize: 30, fontWeight: 800, color: C.ink, letterSpacing: '-0.03em', marginTop: 2, wordBreak: 'keep-all' }}>
         {value}
-      </span>
-      {sub && <span style={{ fontSize: 9.5, marginTop: 3, opacity: 0.85 }}>{sub}</span>}
+      </div>
     </div>
   );
 }
@@ -1080,9 +1078,9 @@ function Stamp({ value, sub }) {
 function CurrencyBadge({ cur }) {
   return (
     <span style={{
-      fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: '2px 7px', borderRadius: 999,
-      background: cur === 'USD' ? 'rgba(31,61,46,0.10)' : 'rgba(184,134,60,0.14)',
-      color: cur === 'USD' ? C.cover : C.brass,
+      fontSize: 12, fontWeight: 700, letterSpacing: 0.5, padding: '2px 7px', borderRadius: 999,
+      background: cur === 'USD' ? 'rgba(59,111,212,0.12)' : 'var(--pb-cover-soft)',
+      color: cur === 'USD' ? C.etf : C.cover,
     }}>
       {cur === 'USD' ? 'USD' : 'KRW'}
     </span>
@@ -1112,7 +1110,7 @@ function Bars({ data, cur }) {
       <div style={{ display: 'flex', gap: 5, marginTop: 5 }}>
         {MONTHS.map((_, i) => (
           <div key={i} style={{
-            flex: 1, textAlign: 'center', fontSize: 9,
+            flex: 1, textAlign: 'center', fontSize: 11,
             color: i + 1 === THIS_MONTH ? C.stamp : C.inkSoft,
             fontWeight: i + 1 === THIS_MONTH ? 700 : 400,
           }}>
@@ -1127,13 +1125,13 @@ function Bars({ data, cur }) {
 function Fold({ icon: Icon, title, children }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 10, marginBottom: 12, overflow: 'hidden' }}>
+    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 14, marginBottom: 12, overflow: 'hidden' }}>
       <button onClick={() => setOpen(!open)} style={{
         width: '100%', padding: '13px 16px', background: 'transparent', border: 'none', cursor: 'pointer',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, color: C.ink,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 15, fontWeight: 700, color: C.ink,
       }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Icon size={13} color={C.cover} /> {title}</span>
-        <span style={{ color: C.inkSoft, fontSize: 10.5, fontWeight: 500 }}>{open ? '접기' : '펼치기'}</span>
+        <span style={{ color: C.inkSoft, fontSize: 12, fontWeight: 500 }}>{open ? '접기' : '펼치기'}</span>
       </button>
       {open && <div style={{ padding: '0 16px 15px' }}>{children}</div>}
     </div>
@@ -1186,6 +1184,14 @@ export default function App() {
   const initialTab = initial.tab || (hasSavedHoldings() ? 'calc' : 'guide');
   const [tab, setTab] = useState(initialTab); // 'calc' | 'calendar' | 'find' | 'stocks' | 'guide'
   const [deepId, setDeepId] = useState(initial.deepId);
+  const [data, setData] = useState(getLoadedData); // 종목·가이드 데이터 (별도 청크, 지연 로딩)
+  const [fx, setFx] = useState(() => {
+    try {
+      const n = Number(window.localStorage.getItem(FX_KEY));
+      if (Number.isFinite(n) && n >= 500 && n <= 5000) return n;
+    } catch (e) { /* ignore */ }
+    return DEFAULT_FX;
+  });
   const idRef = useRef(1);
   const formRef = useRef(null);
   const importInputRef = useRef(null);
@@ -1225,6 +1231,13 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const goHome = () => {
+    setTab(hasSavedHoldings() ? 'calc' : 'guide');
+    setDeepId(null);
+    window.history.pushState({}, '', '/');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // 관련 종목·관련 가이드 링크 클릭 시 해당 상세로 바로 이동
   const goDeep = (targetTab, id) => {
     setTab(targetTab);
@@ -1233,71 +1246,42 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  /* ── schema.org 구조화 데이터 (FAQPage + WebSite) ── */
+  /* ── 종목·가이드 데이터 지연 로딩: 해당 탭이면 바로, 아니면 첫 화면이 뜬 뒤 한가할 때 미리 받아둠 ── */
   useEffect(() => {
-    const faqEntities = ARTICLES.map((a) => ({
-      '@type': 'Question',
-      name: a.t,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: a.p[0],
-      },
-    }));
-
-    const jsonLd = {
-      '@context': 'https://schema.org',
-      '@graph': [
-        {
-          '@type': 'WebSite',
-          name: '배당 통장',
-          url: 'https://www.dividendpassbook.com',
-          description: '보유한 국내·미국 배당주를 기입하면 연간 배당금, 월별 배당 흐름, 세후 실수령액까지 계산해주는 무료 배당 계산기',
-          inLanguage: 'ko-KR',
-        },
-        {
-          '@type': 'FAQPage',
-          mainEntity: faqEntities,
-        },
-      ],
-    };
-
-    let script = document.getElementById('ld-json-main');
-    if (!script) {
-      script = document.createElement('script');
-      script.type = 'application/ld+json';
-      script.id = 'ld-json-main';
-      document.head.appendChild(script);
+    if (data) return undefined;
+    let cancelled = false;
+    const fetchData = () => loadData().then((m) => { if (!cancelled) setData(m); }, () => {});
+    if (tab === 'stocks' || tab === 'guide') {
+      fetchData();
+      return () => { cancelled = true; };
     }
-    script.textContent = JSON.stringify(jsonLd);
-  }, []);
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500));
+    const cancelIdle = window.cancelIdleCallback || clearTimeout;
+    const handle = idle(fetchData);
+    return () => { cancelled = true; cancelIdle(handle); };
+  }, [tab, data]);
+
+  const updateFx = (n) => {
+    setFx(n);
+    try { window.localStorage.setItem(FX_KEY, String(n)); } catch (e) { /* ignore */ }
+  };
 
   /* ── 탭·종목·글에 따라 title/meta description을 동적으로 갱신 (개별 URL마다 고유한 제목을 갖게 함) ── */
   useEffect(() => {
-    const DEFAULT_TITLE = '배당 통장 — 배당주 포트폴리오 계산기 · 월배당 계산';
-    const DEFAULT_DESC = '보유한 국내·미국 배당주를 기입하면 연간 배당금, 월별 배당 흐름, 세후 실수령액까지 계산해주는 무료 배당 계산기. SCHD, 리얼티인컴, 코카콜라 등 배당주 가이드 포함.';
-    const TAB_LABEL = { calc: '배당 계산기', calendar: '배당 캘린더', find: '유형 찾기', stocks: '종목분석', guide: '공부방' };
-
-    let title = DEFAULT_TITLE;
-    let desc = DEFAULT_DESC;
+    let { title, description: desc } = HOME_META;
     let path = '/';
+    // 루트(/)로 들어온 경우엔 기본 탭을 보여주더라도 대표 주소는 홈으로 유지
+    const onHome = window.location.pathname === '/';
 
+    const setFrom = (m) => { title = m.title; desc = m.description; path = m.path; };
     if (tab === 'stocks' && deepId) {
-      const s = STOCKS.find((x) => x.ticker === deepId);
-      if (s) {
-        title = `${s.name}(${s.ticker}) 배당 정보 — ${s.typeTag} | 배당 통장`;
-        desc = s.basic;
-        path = `/stocks/${s.ticker}`;
-      }
+      const s = data?.STOCKS.find((x) => x.ticker === deepId);
+      if (s) setFrom(stockMeta(s));
     } else if (tab === 'guide' && deepId != null) {
-      const a = resolveArticle(deepId);
-      if (a) {
-        title = `${a.t} | 배당 통장 공부방`;
-        desc = a.p[0].slice(0, 150);
-        path = `/guide/${a.id}`;
-      }
-    } else if (TAB_LABEL[tab]) {
-      title = `${TAB_LABEL[tab]} | 배당 통장`;
-      path = `/${tab}`;
+      const a = resolveArticle(deepId, data?.ARTICLES);
+      if (a) setFrom(articleMeta(a));
+    } else if (!onHome && TAB_META[tab]) {
+      setFrom({ ...TAB_META[tab], path: `/${tab}` });
     }
 
     document.title = title;
@@ -1314,13 +1298,13 @@ export default function App() {
       el.setAttribute(attr, value);
     };
 
-    const canonicalUrl = `https://www.dividendpassbook.com${path}`;
+    const canonicalUrl = `${SITE}${path}`;
     setMeta('meta[name="description"]', 'content', desc);
     setMeta('link[rel="canonical"]', 'href', canonicalUrl);
     setMeta('meta[property="og:title"]', 'content', title);
     setMeta('meta[property="og:description"]', 'content', desc);
     setMeta('meta[property="og:url"]', 'content', canonicalUrl);
-  }, [tab, deepId]);
+  }, [tab, deepId, data]);
 
   useEffect(() => {
     // 공유 링크(?s=...)로 들어온 경우: 내 저장된 포트폴리오를 곧바로 덮어쓰지 않고
@@ -1512,7 +1496,7 @@ export default function App() {
   const totalMonthlyKRW = holdings.reduce((sum, h) => {
     const cur = h.currency || 'KRW';
     const annualTaxed = applyTax(h.shares * h.annualDiv, cur);
-    const krw = cur === 'USD' ? annualTaxed * FX_KRW_PER_USD : annualTaxed;
+    const krw = cur === 'USD' ? annualTaxed * fx : annualTaxed;
     return sum + krw;
   }, 0) / 12;
   const goalPct = goal > 0 ? Math.min(100, (totalMonthlyKRW / goal) * 100) : 0;
@@ -1563,205 +1547,144 @@ export default function App() {
     } catch (e) { /* clipboard unavailable */ }
   };
 
-  const input = { width: '100%', background: 'var(--pb-input-bg)', borderRadius: 7, padding: '10px 11px', fontSize: 14, color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box', fontFamily: "'Noto Sans KR', sans-serif" };
-  const label = { display: 'block', fontSize: 11, color: C.inkSoft, marginBottom: 5, fontWeight: 600 };
+  const input = { width: '100%', background: 'var(--pb-input-bg)', borderRadius: 7, padding: '10px 11px', fontSize: 16, color: C.ink, border: `1px solid ${C.lineStrong}`, boxSizing: 'border-box' };
+  const label = { display: 'block', fontSize: 12.5, color: C.inkSoft, marginBottom: 5, fontWeight: 600 };
 
   return (
-    <div style={{ minHeight: '100vh', width: '100%', background: 'var(--pb-page)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '26px 14px 44px', boxSizing: 'border-box', fontFamily: "'Noto Sans KR', -apple-system, sans-serif" }}>
+    <div className="pb-app" style={{ minHeight: '100vh', width: '100%', background: 'var(--pb-page)', boxSizing: 'border-box' }}>
       <style>{`
         :root {
-          --pb-cover: #1f3d2e;
-          --pb-cover-edge: #17301f;
-          --pb-foil: #d9b36a;
-          --pb-paper: #f7f3e8;
-          --pb-paper-line: rgba(31,61,46,0.10);
-          --pb-ink: #22312a;
-          --pb-ink-soft: #5b6a61;
-          --pb-stamp: #c03a2b;
-          --pb-brass: #b8863c;
-          --pb-card-bg: #fdfaf1;
-          --pb-line: rgba(34,49,42,0.12);
-          --pb-line-strong: rgba(34,49,42,0.24);
-          --pb-etf: #3f6f8f;
-          --pb-reit: #2f8f74;
-          --pb-input-bg: #fffef9;
-          --pb-page: #ece6d6;
-          --pb-stamp-04: rgba(192,58,43,0.04);
-          --pb-stamp-06: rgba(192,58,43,0.06);
-          --pb-stamp-25: rgba(192,58,43,0.25);
-          --pb-stamp-35: rgba(192,58,43,0.35);
+          --pb-page: #f2f4f6;
+          --pb-card-bg: #ffffff;
+          --pb-cover: #0b7a53;
+          --pb-cover-edge: #096645;
+          --pb-cover-soft: #e7f4ee;
+          --pb-foil: #ffffff;
+          --pb-ink: #191f28;
+          --pb-ink-soft: #6b7684;
+          --pb-stamp: #e03e3e;
+          --pb-brass: #d98b00;
+          --pb-line: #e5e8eb;
+          --pb-line-strong: #d1d6db;
+          --pb-etf: #3b6fd4;
+          --pb-reit: #0a8f7f;
+          --pb-input-bg: #f9fafb;
+          --pb-header: rgba(255,255,255,0.92);
+          --pb-stamp-04: rgba(224,62,62,0.04);
+          --pb-stamp-06: rgba(224,62,62,0.06);
+          --pb-stamp-25: rgba(224,62,62,0.25);
+          --pb-stamp-35: rgba(224,62,62,0.35);
+          color-scheme: light;
         }
         @media (prefers-color-scheme: dark) {
-          :root {
-            --pb-cover: #1b2f22;
-            --pb-cover-edge: #142419;
-            --pb-foil: #dcbb7e;
-            --pb-paper: #1c2921;
-            --pb-paper-line: rgba(220,187,126,0.05);
-            --pb-ink: #e4ddc9;
-            --pb-ink-soft: #99a696;
-            --pb-stamp: #d8654f;
-            --pb-brass: #c99c5f;
-            --pb-card-bg: #24352b;
-            --pb-line: rgba(228,221,201,0.09);
-            --pb-line-strong: rgba(228,221,201,0.17);
-            --pb-etf: #7fb2d6;
-            --pb-reit: #5ecba6;
-            --pb-input-bg: #24352b;
-            --pb-page: #142018;
-            --pb-stamp-04: rgba(216,101,79,0.09);
-            --pb-stamp-06: rgba(216,101,79,0.13);
-            --pb-stamp-25: rgba(216,101,79,0.32);
-            --pb-stamp-35: rgba(216,101,79,0.42);
+          :root:not([data-theme="light"]) {
+            --pb-page: #0f1114;
+            --pb-card-bg: #1a1d21;
+            --pb-cover: #34c38f;
+            --pb-cover-edge: #2aa678;
+            --pb-cover-soft: rgba(52,195,143,0.12);
+            --pb-foil: #06150f;
+            --pb-ink: #e9ecef;
+            --pb-ink-soft: #9aa3ad;
+            --pb-stamp: #ff6b6b;
+            --pb-brass: #f0b429;
+            --pb-line: #2a2e33;
+            --pb-line-strong: #3a3f45;
+            --pb-etf: #7aa7ff;
+            --pb-reit: #4fd1c1;
+            --pb-input-bg: #202328;
+            --pb-header: rgba(15,17,20,0.92);
+            --pb-stamp-04: rgba(255,107,107,0.08);
+            --pb-stamp-06: rgba(255,107,107,0.11);
+            --pb-stamp-25: rgba(255,107,107,0.3);
+            --pb-stamp-35: rgba(255,107,107,0.4);
+            color-scheme: dark;
           }
         }
         :root[data-theme="dark"] {
-          --pb-cover: #1b2f22;
-          --pb-cover-edge: #142419;
-          --pb-foil: #dcbb7e;
-          --pb-paper: #1c2921;
-          --pb-paper-line: rgba(220,187,126,0.05);
-          --pb-ink: #e4ddc9;
-          --pb-ink-soft: #99a696;
-          --pb-stamp: #d8654f;
-          --pb-brass: #c99c5f;
-          --pb-card-bg: #24352b;
-          --pb-line: rgba(228,221,201,0.09);
-          --pb-line-strong: rgba(228,221,201,0.17);
-          --pb-etf: #7fb2d6;
-          --pb-reit: #5ecba6;
-          --pb-input-bg: #24352b;
-          --pb-page: #142018;
-          --pb-stamp-04: rgba(216,101,79,0.09);
-          --pb-stamp-06: rgba(216,101,79,0.13);
-          --pb-stamp-25: rgba(216,101,79,0.32);
-          --pb-stamp-35: rgba(216,101,79,0.42);
+          --pb-page: #0f1114;
+          --pb-card-bg: #1a1d21;
+          --pb-cover: #34c38f;
+          --pb-cover-edge: #2aa678;
+          --pb-cover-soft: rgba(52,195,143,0.12);
+          --pb-foil: #06150f;
+          --pb-ink: #e9ecef;
+          --pb-ink-soft: #9aa3ad;
+          --pb-stamp: #ff6b6b;
+          --pb-brass: #f0b429;
+          --pb-line: #2a2e33;
+          --pb-line-strong: #3a3f45;
+          --pb-etf: #7aa7ff;
+          --pb-reit: #4fd1c1;
+          --pb-input-bg: #202328;
+          --pb-header: rgba(15,17,20,0.92);
+          --pb-stamp-04: rgba(255,107,107,0.08);
+          --pb-stamp-06: rgba(255,107,107,0.11);
+          --pb-stamp-25: rgba(255,107,107,0.3);
+          --pb-stamp-35: rgba(255,107,107,0.4);
+          color-scheme: dark;
         }
-        :root[data-theme="light"] {
-          --pb-cover: #1f3d2e;
-          --pb-cover-edge: #17301f;
-          --pb-foil: #d9b36a;
-          --pb-paper: #f7f3e8;
-          --pb-paper-line: rgba(31,61,46,0.10);
-          --pb-ink: #22312a;
-          --pb-ink-soft: #5b6a61;
-          --pb-stamp: #c03a2b;
-          --pb-brass: #b8863c;
-          --pb-card-bg: #fdfaf1;
-          --pb-line: rgba(34,49,42,0.12);
-          --pb-line-strong: rgba(34,49,42,0.24);
-          --pb-etf: #3f6f8f;
-          --pb-reit: #2f8f74;
-          --pb-input-bg: #fffef9;
-          --pb-page: #ece6d6;
-          --pb-stamp-04: rgba(192,58,43,0.04);
-          --pb-stamp-06: rgba(192,58,43,0.06);
-          --pb-stamp-25: rgba(192,58,43,0.25);
-          --pb-stamp-35: rgba(192,58,43,0.35);
-        }
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;900&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
-        * { -webkit-tap-highlight-color: transparent; }
-        input::placeholder { color: rgba(34,49,42,0.35); }
-        input:focus { outline: none; border-color: ${C.cover}; }
-        button { font-family: inherit; }
-        summary { list-style: none; }
-        summary::-webkit-details-marker { display: none; }
-        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+        body { margin: 0; background: var(--pb-page); }
+        .pb-app { font-family: Pretendard, 'Pretendard Variable', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: var(--pb-ink); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; -webkit-font-smoothing: antialiased; }
+        .pb-app * { -webkit-tap-highlight-color: transparent; }
+        .pb-app input::placeholder { color: var(--pb-ink-soft); opacity: 0.55; }
+        .pb-app input:focus { outline: none; border-color: var(--pb-cover); box-shadow: 0 0 0 3px var(--pb-cover-soft); }
+        .pb-app button, .pb-app input { font-family: inherit; }
+        .pb-app button:focus-visible, .pb-app a:focus-visible, .pb-app summary:focus-visible { outline: 2px solid var(--pb-cover); outline-offset: 2px; }
+        .pb-app summary { list-style: none; }
+        .pb-app details { scroll-margin-top: 112px; }
+        .pb-app summary::-webkit-details-marker { display: none; }
+        .pb-tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+        .pb-tabs::-webkit-scrollbar { display: none; }
+        .pb-tab { flex-shrink: 0; padding: 12px 12px 11px; font-size: 15px; font-weight: 600; color: var(--pb-ink-soft); text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap; }
+        .pb-tab:hover { color: var(--pb-ink); }
+        .pb-tab[aria-current="page"] { color: var(--pb-ink); font-weight: 700; border-bottom-color: var(--pb-ink); }
+        @media (prefers-reduced-motion: reduce) { .pb-app * { transition: none !important; animation: none !important; } }
       `}</style>
-      <div style={{ width: '100%', maxWidth: 470 }}>
-        {/* ── passbook cover ── */}
-        <div style={{
-          background: `linear-gradient(160deg, ${C.cover} 0%, ${C.coverEdge} 100%)`,
-          borderRadius: '14px 14px 0 0', padding: '26px 24px 22px',
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: 10, letterSpacing: 4, color: C.foil, fontWeight: 700, marginBottom: 8, opacity: 0.9 }}>
-                DIVIDEND PASSBOOK
-              </div>
-              <h1 style={{ margin: 0, fontFamily: "'Noto Serif KR', serif", fontWeight: 900, fontSize: 30, color: C.foil, letterSpacing: 1 }}>
-                배당 통장
-              </h1>
-              <p style={{ margin: '8px 0 0', fontSize: 12, color: 'rgba(217,179,106,0.75)', lineHeight: 1.5 }}>
-                보유 배당주를 기입하면 연간·월별 배당 흐름을 정리해 드립니다
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 13 }}>
-                {[
-                  { n: STOCKS.length, l: '종목분석' },
-                  { n: ARTICLES.length, l: '가이드' },
-                  { n: null, l: '무료' },
-                ].map((s, i) => (
-                  <React.Fragment key={s.l}>
-                    {i > 0 && <span style={{ width: 1, height: 11, background: 'rgba(217,179,106,0.3)' }} />}
-                    <span style={{ fontSize: 11, color: 'rgba(217,179,106,0.8)' }}>
-                      {s.l}
-                      {s.n !== null && (
-                        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, marginLeft: 4 }}>{s.n}개</span>
-                      )}
-                    </span>
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-              <button
-                onClick={() => setDark((d) => !d)}
-                aria-label={dark ? '라이트 모드로 전환' : '다크 모드로 전환'}
-                style={{
-                  width: 26, height: 26, borderRadius: '50%', border: '1px solid rgba(217,179,106,0.4)',
-                  background: 'transparent', color: C.foil, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.85,
-                }}
-              >
-                {dark ? <Moon size={13} /> : <Sun size={13} />}
-              </button>
-              <div aria-hidden style={{
-              width: 46, height: 46, borderRadius: '50%', border: `1.5px solid ${C.foil}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              opacity: 0.9, flexShrink: 0,
-            }}>
-              <svg width="30" height="30" viewBox="0 0 100 100">
-                <rect x="27" y="42" width="46" height="32" rx="4" fill="none" stroke={C.foil} strokeWidth="3" />
-                <line x1="33" y1="52" x2="63" y2="52" stroke={C.foil} strokeWidth="1.6" />
-                <line x1="33" y1="61" x2="63" y2="61" stroke={C.foil} strokeWidth="1.6" />
-                <rect x="54" y="35" width="5" height="7" fill={C.foil} />
-                <rect x="60" y="30" width="5" height="12" fill={C.foil} />
-                <rect x="66" y="25" width="5" height="17" fill={C.foil} />
+
+      <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--pb-header)', backdropFilter: 'saturate(180%) blur(12px)', WebkitBackdropFilter: 'saturate(180%) blur(12px)', borderBottom: `1px solid ${C.line}` }}>
+        <div style={{ maxWidth: 640, margin: '0 auto', padding: '0 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56 }}>
+            <a href="/" onClick={(e) => { e.preventDefault(); goHome(); }} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+              <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden>
+                <rect width="32" height="32" rx="8" fill={C.cover} />
+                <rect x="8" y="17" width="4" height="7" rx="1" fill={C.foil} />
+                <rect x="14" y="13" width="4" height="11" rx="1" fill={C.foil} />
+                <rect x="20" y="8" width="4" height="16" rx="1" fill={C.foil} />
               </svg>
-              </div>
-            </div>
+              <h1 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: C.ink, letterSpacing: '-0.03em' }}>배당통장</h1>
+            </a>
+            <button
+              onClick={() => setDark((d) => !d)}
+              aria-label={dark ? '라이트 모드로 전환' : '다크 모드로 전환'}
+              style={{
+                width: 36, height: 36, borderRadius: 10, border: 'none',
+                background: 'transparent', color: C.inkSoft, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              {dark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
           </div>
+          <nav className="pb-tabs" aria-label="주요 메뉴" style={{ margin: '0 -12px' }}>
+            {TAB_ORDER.map((v) => (
+              <a key={v} className="pb-tab" href={`/${v}`} aria-current={tab === v ? 'page' : undefined}
+                onClick={(e) => { e.preventDefault(); goTab(v); }}>
+                {TAB_META[v].label}
+              </a>
+            ))}
+          </nav>
         </div>
+      </header>
 
-        {/* ── paper body ── */}
-        <div style={{ background: C.paper, borderRadius: '0 0 14px 14px', border: `1px solid ${C.line}`, borderTop: 'none', padding: '20px 16px 24px', boxSizing: 'border-box' }}>
-          <div style={{ border: `1px dashed ${C.lineStrong}`, borderRadius: 8, padding: '9px 14px', textAlign: 'center', fontSize: 10.5, color: C.inkSoft, opacity: 0.6, marginBottom: 16 }}>
-            광고 영역 · AdSense 승인 후 스크립트 삽입
-          </div>
-
-          {/* ── 탭바 ── */}
-          <div style={{ display: 'flex', gap: 5, marginBottom: 18, background: 'rgba(34,49,42,0.05)', padding: 4, borderRadius: 10 }}>
-            {[
-              { v: 'calc', t: '계산기', Icon: Calculator },
-              { v: 'calendar', t: '달력', Icon: CalendarDays },
-              { v: 'find', t: '유형찾기', Icon: Compass },
-              { v: 'stocks', t: '종목분석', Icon: LineChart },
-              { v: 'guide', t: '공부방', Icon: BookOpen },
-            ].map((o) => {
-              const on = tab === o.v;
-              return (
-                <a key={o.v} href={`/${o.v}`} onClick={(e) => { e.preventDefault(); goTab(o.v); }} style={{
-                  flex: 1, padding: '8px 0 7px', borderRadius: 7, fontSize: 10.5, fontWeight: 700, cursor: 'pointer',
-                  border: 'none', background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none',
-                }}>
-                  <o.Icon size={14} />
-                  {o.t}
-                </a>
-              );
-            })}
-          </div>
+      <main style={{ maxWidth: 640, margin: '0 auto', padding: '20px 16px 48px', boxSizing: 'border-box' }}>
+        {tab === 'calc' && (
+          <p style={{ fontSize: 14, color: C.inkSoft, margin: '0 0 16px', lineHeight: 1.6 }}>
+            보유 배당주를 기입하면 연간·월별 배당금과 세후 실수령액을 계산해요.
+            <span style={{ whiteSpace: 'nowrap' }}> 종목분석 {STOCK_COUNT.toLocaleString('ko-KR')}개 · 가이드 {ARTICLE_COUNT}편</span>
+          </p>
+        )}
+        <div>
 
           {tab === 'calc' && (
             <>
@@ -1771,24 +1694,24 @@ export default function App() {
               />
               {holdings.length === 0 ? (
                 <Ruled style={{ padding: '34px 20px', textAlign: 'center', marginBottom: 18 }}>
-                  <p style={{ margin: '0 0 6px', fontFamily: "'Noto Serif KR', serif", fontWeight: 700, fontSize: 17, color: C.ink }}>
-                    첫 페이지가 비어 있어요
+                  <p style={{ margin: '0 0 6px', fontWeight: 700, fontSize: 18, color: C.ink }}>
+                    아직 기입한 종목이 없어요
                   </p>
-                  <p style={{ margin: '0 0 16px', fontSize: 12.5, color: C.inkSoft, lineHeight: 1.6 }}>
-                    아래에서 보유 종목을 기입하면<br />이 자리에 배당 내역이 인쇄됩니다
+                  <p style={{ margin: '0 0 16px', fontSize: 14, color: C.inkSoft, lineHeight: 1.6 }}>
+                    아래에서 보유 종목을 기입하면<br />여기에 배당 내역이 정리돼요
                   </p>
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button onClick={loadSample} style={{
                       display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8,
                       border: `1px solid ${C.cover}`, background: 'transparent', color: C.cover,
-                      fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                      fontSize: 14, fontWeight: 700, cursor: 'pointer',
                     }}>
-                      <Sparkles size={13} /> 샘플로 미리 체험하기
+                      예시 포트폴리오로 보기
                     </button>
                     <button onClick={triggerImport} style={{
                       display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 8,
                       border: `1px solid ${C.lineStrong}`, background: 'transparent', color: C.inkSoft,
-                      fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                      fontSize: 14, fontWeight: 700, cursor: 'pointer',
                     }}>
                       <Upload size={13} /> 백업 불러오기
                     </button>
@@ -1798,12 +1721,12 @@ export default function App() {
                 <>
                   {sharedBanner && (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '10px 12px', marginBottom: 12, borderRadius: 8, background: 'var(--pb-stamp-06)', border: `1px solid ${C.lineStrong}` }}>
-                      <span style={{ fontSize: 11.5, color: C.inkSoft }}>🔗 다른 분이 공유한 계산 결과를 보고 있어요</span>
+                      <span style={{ fontSize: 13, color: C.inkSoft }}>다른 분이 공유한 계산 결과를 보고 있어요</span>
                       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                        <button onClick={acceptSharedHoldings} style={{ fontSize: 11, fontWeight: 700, color: C.foil, background: C.cover, border: 'none', borderRadius: 6, padding: '5px 9px', cursor: 'pointer' }}>
+                        <button onClick={acceptSharedHoldings} style={{ fontSize: 12.5, fontWeight: 700, color: C.foil, background: C.cover, border: 'none', borderRadius: 6, padding: '5px 9px', cursor: 'pointer' }}>
                           내 배당 통장에 저장
                         </button>
-                        <button onClick={dismissSharedBanner} style={{ fontSize: 11, fontWeight: 600, color: C.inkSoft, background: 'transparent', border: `1px solid ${C.lineStrong}`, borderRadius: 6, padding: '5px 9px', cursor: 'pointer' }}>
+                        <button onClick={dismissSharedBanner} style={{ fontSize: 12.5, fontWeight: 600, color: C.inkSoft, background: 'transparent', border: `1px solid ${C.lineStrong}`, borderRadius: 6, padding: '5px 9px', cursor: 'pointer' }}>
                           닫기
                         </button>
                       </div>
@@ -1814,7 +1737,7 @@ export default function App() {
                       <div style={{ display: 'flex', border: `1px solid ${C.lineStrong}`, borderRadius: 8, overflow: 'hidden' }}>
                         {[{ v: false, t: '세전' }, { v: true, t: '세후' }].map((o) => (
                           <button key={o.t} onClick={() => setAfterTax(o.v)} style={{
-                            padding: '7px 16px', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer',
+                            padding: '7px 16px', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
                             background: afterTax === o.v ? C.cover : 'transparent',
                             color: afterTax === o.v ? C.foil : C.inkSoft,
                           }}>
@@ -1824,7 +1747,7 @@ export default function App() {
                       </div>
                       <button onClick={() => setShowTaxInfo((v) => !v)} aria-label="세후 배당금 설명 보기" style={{
                         width: 22, height: 22, borderRadius: '50%', border: `1px solid ${C.lineStrong}`, background: 'transparent',
-                        color: C.inkSoft, fontSize: 11, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+                        color: C.inkSoft, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', flexShrink: 0,
                       }}>
                         ?
                       </button>
@@ -1833,7 +1756,7 @@ export default function App() {
                       <button onClick={copySummary} style={{
                         display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8,
                         border: `1px solid ${C.lineStrong}`, background: 'transparent',
-                        fontSize: 11.5, fontWeight: 600, color: copied ? C.cover : C.inkSoft, cursor: 'pointer',
+                        fontSize: 13, fontWeight: 600, color: copied ? C.cover : C.inkSoft, cursor: 'pointer',
                       }}>
                         {copied ? <Check size={12} /> : <Copy size={12} />}
                         {copied ? '복사됨' : '요약 복사'}
@@ -1841,7 +1764,7 @@ export default function App() {
                       <button onClick={shareResult} style={{
                         display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8,
                         border: `1px solid ${C.lineStrong}`, background: 'transparent',
-                        fontSize: 11.5, fontWeight: 600, color: shareCopied ? C.cover : C.inkSoft, cursor: 'pointer',
+                        fontSize: 13, fontWeight: 600, color: shareCopied ? C.cover : C.inkSoft, cursor: 'pointer',
                       }}>
                         {shareCopied ? <Check size={12} /> : <Share2 size={12} />}
                         {shareCopied ? '링크 복사됨' : '결과 공유'}
@@ -1850,7 +1773,7 @@ export default function App() {
                   </div>
 
                   {showTaxInfo && (
-                    <p style={{ fontSize: 11, lineHeight: 1.6, color: C.inkSoft, background: 'var(--pb-input-bg)', borderRadius: 7, padding: '8px 10px', margin: '0 0 12px' }}>
+                    <p style={{ fontSize: 12.5, lineHeight: 1.6, color: C.inkSoft, background: 'var(--pb-input-bg)', borderRadius: 7, padding: '8px 10px', margin: '0 0 12px' }}>
                       <b>세후 배당금이란?</b> 배당을 받을 때 국내 주식은 15.4%, 미국 주식은 15%가 자동으로 원천징수돼요. "세전"은 그 세금을 떼기 전 금액, "세후"는 뗀 뒤 실제로 받는 금액이에요. 금융소득이 연 2,000만원을 넘으면 종합과세 대상이 될 수 있어, 정확한 세금은 세무 전문가와 상담하는 게 안전해요.
                     </p>
                   )}
@@ -1859,21 +1782,34 @@ export default function App() {
                     <button onClick={exportHoldings} style={{
                       display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 7,
                       border: `1px solid ${C.lineStrong}`, background: 'transparent',
-                      fontSize: 10.5, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
+                      fontSize: 12, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
                     }}>
                       <Download size={11} /> 백업 내보내기
                     </button>
                     <button onClick={triggerImport} style={{
                       display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 7,
                       border: `1px solid ${C.lineStrong}`, background: 'transparent',
-                      fontSize: 10.5, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
+                      fontSize: 12, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
                     }}>
                       <Upload size={11} /> 백업 가져오기
                     </button>
                   </div>
 
+                  {holdings.some((h) => h.currency === 'USD') && (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: C.inkSoft, margin: '0 0 14px' }}>
+                      원화 환산 환율 1달러 =
+                      <input
+                        type="number" inputMode="numeric" min="500" max="5000" step="1"
+                        value={fx}
+                        onChange={(e) => { const n = Number(e.target.value); if (Number.isFinite(n) && n >= 500 && n <= 5000) updateFx(n); }}
+                        style={{ width: 84, background: 'var(--pb-input-bg)', borderRadius: 8, padding: '6px 8px', fontSize: 14, color: C.ink, border: `1px solid ${C.lineStrong}`, textAlign: 'right' }}
+                      />
+                      원
+                    </label>
+                  )}
+
                   {afterTax && (
-                    <p style={{ margin: '0 0 14px', fontSize: 10.5, color: C.inkSoft, opacity: 0.8 }}>
+                    <p style={{ margin: '0 0 14px', fontSize: 12, color: C.inkSoft, opacity: 0.8 }}>
                       세후: 원화 15.4% · 달러 15% 원천징수 간이 적용 (참고용)
                     </p>
                   )}
@@ -1882,13 +1818,13 @@ export default function App() {
                     <div key={s.cur} style={{ marginBottom: 18 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
                         <CurrencyBadge cur={s.cur} />
-                        <span style={{ fontSize: 12, fontWeight: 700, color: C.ink }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
                           {s.cur === 'USD' ? '달러 종목' : '원화 종목'}
                         </span>
                         <span style={{ flex: 1, height: 1, background: C.line }} />
-                        <span style={{ fontSize: 10.5, color: C.inkSoft }}>수익률 {s.yieldPct.toFixed(2)}%</span>
+                        <span style={{ fontSize: 12, color: C.inkSoft }}>수익률 {s.yieldPct.toFixed(2)}%</span>
                       </div>
-                      <div style={{ display: 'flex', gap: 14, alignItems: 'center', background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '16px 16px' }}>
+                      <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: '20px 20px 14px' }}>
                         <Stamp
                           value={fmt(applyTax(s.annual, s.cur), s.cur)}
                           sub={afterTax ? '세후' : '세전'}
@@ -1899,8 +1835,8 @@ export default function App() {
                           <Row k="투자 원금" v={fmt(s.principal, s.cur)} />
                         </div>
                       </div>
-                      <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '14px 14px 10px', marginTop: 10 }}>
-                        <div style={{ fontSize: 11, color: C.inkSoft, fontWeight: 600, marginBottom: 10 }}>
+                      <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: '14px 14px 10px', marginTop: 10 }}>
+                        <div style={{ fontSize: 12.5, color: C.inkSoft, fontWeight: 600, marginBottom: 10 }}>
                           월별 배당 흐름 <span style={{ color: C.stamp }}>■</span> 이번 달
                         </div>
                         <Bars data={s.monthly.map((v) => applyTax(v, s.cur))} cur={s.cur} />
@@ -1909,17 +1845,17 @@ export default function App() {
                   ))}
 
                   {thisMonthDue.length > 0 && (
-                    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
-                      <div style={{ fontSize: 11.5, fontWeight: 700, color: C.ink, marginBottom: 10 }}>
-                        📅 {MONTHS[THIS_MONTH - 1]} 배당 예정
+                    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: '14px 16px', marginBottom: 14 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 10 }}>
+                        {MONTHS[THIS_MONTH - 1]} 배당 예정
                       </div>
                       {thisMonthDue.map((d) => (
-                        <div key={d.ticker} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: C.inkSoft, padding: '4px 0' }}>
+                        <div key={d.ticker} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: C.inkSoft, padding: '4px 0' }}>
                           <span>{d.name}</span>
                           <span style={{ fontWeight: 600, color: C.ink }}>{fmt(d.amount, d.cur)}</span>
                         </div>
                       ))}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 700, color: C.cover, borderTop: `1px solid ${C.line}`, marginTop: 6, paddingTop: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, color: C.cover, borderTop: `1px solid ${C.line}`, marginTop: 6, paddingTop: 8 }}>
                         <span>예상 합계</span>
                         <span>
                           {stats.filter((s) => s.thisMonth > 0).map((s) => fmt(applyTax(s.thisMonth, s.cur), s.cur)).join(' + ') || fmt(0, 'KRW')}
@@ -1928,11 +1864,11 @@ export default function App() {
                     </div>
                   )}
 
-                  <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: '14px 16px', marginBottom: 18 }}>
+                  <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: '14px 16px', marginBottom: 18 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: goal > 0 ? 10 : 8 }}>
-                      <span style={{ fontSize: 11.5, fontWeight: 700, color: C.ink }}>월 배당 목표</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>월 배당 목표</span>
                       {goal > 0 && (
-                        <button onClick={() => setAndPersistGoal(0)} style={{ fontSize: 10.5, color: C.inkSoft, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                        <button onClick={() => setAndPersistGoal(0)} style={{ fontSize: 12, color: C.inkSoft, background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
                           초기화
                         </button>
                       )}
@@ -1940,15 +1876,15 @@ export default function App() {
                     {goal > 0 ? (
                       <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                          <span style={{ fontSize: 11, color: C.inkSoft }}>
+                          <span style={{ fontSize: 12.5, color: C.inkSoft }}>
                             현재 월평균 {fmt(totalMonthlyKRW, 'KRW')} <span style={{ opacity: 0.7 }}>{afterTax ? '(세후·환산)' : '(세전·환산)'}</span>
                           </span>
-                          <span style={{ fontSize: 11, color: C.inkSoft }}>목표 {fmt(goal, 'KRW')}</span>
+                          <span style={{ fontSize: 12.5, color: C.inkSoft }}>목표 {fmt(goal, 'KRW')}</span>
                         </div>
                         <div style={{ height: 8, borderRadius: 999, background: 'var(--pb-input-bg)', overflow: 'hidden', marginBottom: 6 }}>
                           <div style={{ height: '100%', width: `${goalPct}%`, background: C.cover, borderRadius: 999, transition: 'width 0.3s' }} />
                         </div>
-                        <div style={{ fontSize: 12.5, fontWeight: 700, color: C.cover }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: C.cover }}>
                           달성률 {goalPct.toFixed(1)}%
                           {goalPct < 100 && <span style={{ fontWeight: 500, color: C.inkSoft }}> · 남은 금액 {fmt(Math.max(0, goal - totalMonthlyKRW), 'KRW')}</span>}
                         </div>
@@ -1958,7 +1894,7 @@ export default function App() {
                         {[100000, 300000, 500000, 1000000].map((v) => (
                           <button key={v} onClick={() => setAndPersistGoal(v)} style={{
                             padding: '7px 12px', borderRadius: 999, border: `1px solid ${C.lineStrong}`, background: 'transparent',
-                            fontSize: 11.5, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
+                            fontSize: 13, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
                           }}>
                             {v >= 1000000 ? `${v / 10000}만원` : `${v / 10000}만원`}
                           </button>
@@ -1969,7 +1905,7 @@ export default function App() {
                           if (n > 0) setAndPersistGoal(n);
                         }} style={{
                           padding: '7px 12px', borderRadius: 999, border: `1px solid ${C.lineStrong}`, background: 'transparent',
-                          fontSize: 11.5, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
+                          fontSize: 13, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
                         }}>
                           직접 입력
                         </button>
@@ -1977,9 +1913,9 @@ export default function App() {
                     )}
                   </div>
 
-                  <PortfolioDiagnosis holdings={holdings} />
+                  <PortfolioDiagnosis holdings={holdings} fx={fx} />
 
-                  <TaxThresholdCheck holdings={holdings} />
+                  <TaxThresholdCheck holdings={holdings} fx={fx} />
 
                   <Ruled style={{ padding: '2px 14px', marginBottom: 18 }}>
                     {holdings.map((h, i) => {
@@ -1990,20 +1926,20 @@ export default function App() {
                         <div key={h.id} style={{
                           display: 'flex', alignItems: 'center', gap: 8, padding: '11px 0',
                           borderBottom: i < holdings.length - 1 ? `1px solid ${C.line}` : 'none',
-                          background: editingId === h.id ? 'rgba(184,134,60,0.10)' : 'transparent',
+                          background: editingId === h.id ? 'var(--pb-cover-soft)' : 'transparent',
                         }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontSize: 13.5, fontWeight: 700, color: C.ink }}>{h.name}</span>
-                              {h.ticker && <span style={{ fontSize: 10.5, color: C.inkSoft }}>{h.ticker}</span>}
+                              <span style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{h.name}</span>
+                              {h.ticker && <span style={{ fontSize: 12, color: C.inkSoft }}>{h.ticker}</span>}
                               <CurrencyBadge cur={cur} />
                               {paysNow && (
-                                <span style={{ fontSize: 9.5, fontWeight: 700, color: C.stamp, border: `1px solid ${C.stamp}`, borderRadius: 999, padding: '1px 6px' }}>
+                                <span style={{ fontSize: 11, fontWeight: 700, color: C.stamp, border: `1px solid ${C.stamp}`, borderRadius: 999, padding: '1px 6px' }}>
                                   이번 달 지급
                                 </span>
                               )}
                             </div>
-                            <div style={{ fontSize: 11, color: C.inkSoft, marginTop: 3, fontFamily: "'IBM Plex Mono', monospace" }}>
+                            <div style={{ fontSize: 12.5, color: C.inkSoft, marginTop: 3, fontVariantNumeric: 'tabular-nums' }}>
                               {h.shares}주 × {fmt(h.annualDiv, cur)} = 연 {fmt(applyTax(annual, cur), cur)}
                             </div>
                           </div>
@@ -2022,14 +1958,14 @@ export default function App() {
 
               <form ref={formRef} onSubmit={submit} style={{
                 background: C.cardBg, border: `1.5px solid ${editingId !== null ? C.brass : C.line}`,
-                borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18,
+                borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>
                     {editingId !== null ? '기입 내용 수정' : '새 종목 기입'}
                   </span>
                   {editingId !== null && (
-                    <button type="button" onClick={cancelEdit} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.inkSoft, display: 'flex', alignItems: 'center', gap: 3, fontSize: 11 }}>
+                    <button type="button" onClick={cancelEdit} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.inkSoft, display: 'flex', alignItems: 'center', gap: 3, fontSize: 12.5 }}>
                       <X size={12} /> 취소
                     </button>
                   )}
@@ -2042,13 +1978,13 @@ export default function App() {
                       value={form.name}
                       onChange={(e) => {
                         const v = e.target.value;
-                        const match = STOCKS.find((s) => s.name === v);
+                        const match = data?.STOCKS.find((s) => s.name === v);
                         setForm((f) => ({ ...f, name: v, ticker: match && !f.ticker ? match.ticker : f.ticker }));
                       }}
                       placeholder="예: 코카콜라" list="stock-name-list" style={input}
                     />
                     <datalist id="stock-name-list">
-                      {STOCKS.map((s) => <option key={s.ticker} value={s.name} />)}
+                      {(data?.STOCKS || []).map((s) => <option key={s.ticker} value={s.name} />)}
                     </datalist>
                   </div>
                   <div style={{ flex: 1 }}>
@@ -2060,11 +1996,11 @@ export default function App() {
                 <div>
                   <label style={label}>통화</label>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    {[{ v: 'KRW', t: '🇰🇷 원화' }, { v: 'USD', t: '🇺🇸 달러' }].map((o) => {
+                    {[{ v: 'KRW', t: '원화' }, { v: 'USD', t: '달러' }].map((o) => {
                       const on = form.currency === o.v;
                       return (
                         <button type="button" key={o.v} onClick={() => setForm({ ...form, currency: o.v })} style={{
-                          flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                          flex: 1, padding: '9px 0', borderRadius: 7, fontSize: 14, fontWeight: 700, cursor: 'pointer',
                           border: `1px solid ${on ? C.cover : C.lineStrong}`,
                           background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
                         }}>
@@ -2083,7 +2019,7 @@ export default function App() {
                       {[10, 50, 100, 500].map((n) => (
                         <button key={n} type="button" onClick={() => setForm((f) => ({ ...f, shares: String(n) }))} style={{
                           flex: 1, padding: '7px 0', borderRadius: 7, border: `1px solid ${C.lineStrong}`, background: 'transparent',
-                          fontSize: 11, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
+                          fontSize: 12.5, fontWeight: 600, color: C.inkSoft, cursor: 'pointer',
                         }}>
                           {n}주
                         </button>
@@ -2109,7 +2045,7 @@ export default function App() {
                       const on = form.months.includes(v);
                       return (
                         <button type="button" key={v} onClick={() => toggleMonth(v)} style={{
-                          padding: '7px 0', borderRadius: 6, fontSize: 11.5, cursor: 'pointer', fontWeight: on ? 700 : 500,
+                          padding: '7px 0', borderRadius: 6, fontSize: 13, cursor: 'pointer', fontWeight: on ? 700 : 500,
                           border: `1px solid ${on ? C.cover : C.lineStrong}`,
                           background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
                         }}>
@@ -2120,10 +2056,10 @@ export default function App() {
                   </div>
                 </div>
 
-                {error && <p style={{ fontSize: 12, color: C.stamp, margin: 0, fontWeight: 600 }}>{error}</p>}
+                {error && <p style={{ fontSize: 14, color: C.stamp, margin: 0, fontWeight: 600 }}>{error}</p>}
 
                 <button type="submit" style={{
-                  padding: '12px', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                  padding: '12px', borderRadius: 8, fontSize: 16, fontWeight: 700, cursor: 'pointer',
                   background: C.cover, color: C.foil, border: 'none',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 }}>
@@ -2135,130 +2071,132 @@ export default function App() {
 
           {tab === 'calendar' && <DividendCalendar holdings={holdings} />}
           {tab === 'find' && <TypeFinder />}
-          {tab === 'stocks' && <StockCards deepId={deepId} onNavigate={goDeep} />}
-          {tab === 'guide' && <Articles deepId={deepId} onNavigate={goDeep} />}
+          {tab === 'stocks' && (data ? <StockCards deepId={deepId} onNavigate={goDeep} data={data} /> : <Loading />)}
+          {tab === 'guide' && (data ? <Articles deepId={deepId} onNavigate={goDeep} data={data} /> : <Loading />)}
 
           <Fold icon={Info} title="이 사이트는요">
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               배당 통장은 배당 투자를 하거나 시작하려는 분들을 위해 만든 개인 프로젝트예요. 보유 배당주를 기입하면 연간·월별 배당 흐름을 계산해주는 무료 도구와, 종목분석·배당 상식을 정리한 글을 함께 제공하고 있어요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               사이트에 담긴 종목·배당 정보는 공개된 자료를 바탕으로 최대한 사실 확인을 거쳐 작성하고 있지만, 투자 자문이나 특정 종목 추천이 아니라 일반적인 정보 제공을 목적으로 해요. 실제 투자 결정 전에는 반드시 공식 출처에서 최신 정보를 다시 확인해주세요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               종목분석·가이드 콘텐츠는 사람이 직접 조사해서 정리·검토하는 방식으로 관리하고 있고, 실시간 시세·배당 공시를 자동으로 가져와 반영하는 시스템은 아니에요. 그래서 배당수익률처럼 매일 바뀌는 수치는 이 사이트에 고정 숫자로 적어두지 않고, 각 종목 카드의 "주의할 점"에 안내된 공식 페이지(기업 IR·DART·운용사 사이트 등)에서 확인하도록 링크만 제공해요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
               오탈자·잘못된 정보 제보나 문의는 <a href="mailto:contact@dividendpassbook.com" style={{ color: C.cover, fontWeight: 700 }}>contact@dividendpassbook.com</a>으로 보내주시면 확인 후 반영할게요.
             </p>
           </Fold>
 
           <Fold icon={BookOpen} title="배당 투자 알아두면 좋은 것들">
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               <b>배당수익률</b>은 매입가 대비 연간 배당금 비율이에요. 이 통장의 수익률은 매입단가 기준이라 시가 기준과는 다를 수 있어요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               <b>세금</b>은 원화 배당 15.4%, 미국 주식 15%가 원천징수돼요. 세후 토글은 이 간이율을 적용한 참고치예요. 금융소득 연 2,000만원 초과 시 종합과세 대상이 될 수 있어요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
               <b>지급월</b>이 서로 다른 종목을 섞으면 매달 배당이 들어오는 포트폴리오를 만들 수 있어요. 정확한 지급월은 DART 공시나 기업 IR에서 확인하세요.
             </p>
           </Fold>
 
           <Fold icon={HelpCircle} title="자주 묻는 질문">
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               <b>Q. 계산된 배당금이 실제로 받는 금액과 왜 다를 수 있나요?</b><br />
               기업이 배당금을 늘리거나 줄이면 실제 지급액이 달라져요. 이 계산기는 입력하신 "연간 배당금(주당)" 값을 그대로 곱해서 보여주는 방식이라, 그 값 자체가 최신이 아니면 결과도 어긋나요. 최신 주당배당금은 기업 IR·DART·운용사 페이지에서 확인 후 입력해주세요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               <b>Q. 미국 주식과 국내 주식의 세금 계산 방식이 어떻게 다른가요?</b><br />
               미국 주식은 15% 원천징수 후 남은 금액을 기준으로, 국내 주식은 15.4% 원천징수를 기준으로 세후 금액을 계산해요. 두 나라 모두 금융소득이 연 2,000만원을 넘으면 종합과세 대상이 될 수 있는데, 이 계산기는 그 초과 여부만 참고용으로 보여줄 뿐 실제 종합과세 세액까지 계산하지는 않아요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               <b>Q. 환율이 바뀌면 계산 결과도 바뀌나요?</b><br />
               네. 달러 배당을 원화로 환산할 때 계산기에 표시된 참고 환율을 사용해요. 실제 환전 시점의 환율과는 차이가 있을 수 있어, 정확한 원화 수령액은 실제 환전 후 확인하는 게 정확해요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               <b>Q. 월배당과 분기배당은 화면에 어떻게 다르게 표시되나요?</b><br />
               보유 종목에 입력한 지급월(들)에 맞춰 연간 배당금을 나눠 월별 캘린더·그래프에 반영해요. 월배당 종목은 매달, 분기배당 종목은 입력하신 지급월 3~4곳에만 금액이 표시돼요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
               <b>Q. 종목분석에 나오는 배당수익률·배당금 숫자를 그대로 믿어도 되나요?</b><br />
               종목분석 카드의 수치(운용보수, 상장연도 등 구조적 사실)는 확인 후 기재하지만, 배당수익률·주가처럼 매일 바뀌는 숫자는 의도적으로 싣지 않았어요. 그런 숫자는 각 카드에 안내된 공식 출처에서 최신 값을 확인하는 게 정확해요.
             </p>
           </Fold>
 
           <Fold icon={Shield} title="개인정보처리방침">
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               배당 통장은 회원가입 없이 이용하며 이름·이메일 등 개인 식별 정보를 수집하지 않아요. 기입하신 종목 정보는 서버로 전송되지 않고 이용자의 브라우저(localStorage)에만 저장돼요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               본 사이트는 Google AdSense 광고를 게재할 수 있어요. Google 등 제3자 광고 사업자는 쿠키를 사용해 관심 기반 광고를 제공할 수 있으며, Google 광고 설정에서 맞춤 광고를 해제할 수 있어요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
               브라우저 사이트 데이터를 삭제하면 저장된 내용도 함께 삭제돼요.
             </p>
           </Fold>
 
           <Fold icon={FileText} title="이용약관">
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               배당 통장은 누구나 무료로 이용할 수 있는 개인 프로젝트예요. 회원가입 절차 없이 배당 계산기·종목분석·배당 가이드 콘텐츠를 자유롭게 이용하실 수 있어요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               이 사이트에서 제공하는 계산 결과와 종목 정보는 참고용이며, 그 정확성·완전성·최신성을 보장하지 않아요. 운영자는 사이트 이용 과정에서 발생한 직접·간접적인 손해에 대해 법적 책임을 지지 않아요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               운영자는 서비스 내용을 사전 고지 없이 변경·중단할 수 있고, 안정적인 서비스 제공을 위해 노력하지만 서버 사정 등으로 일시적으로 접속이 어려울 수 있어요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
               사이트의 콘텐츠(종목분석·가이드 글 등)를 무단으로 복제하거나, 자동화된 방식(크롤링·스크래핑 등)으로 대량 수집해 재배포하는 행위는 허용하지 않아요.
             </p>
           </Fold>
 
           <Fold icon={AlertTriangle} title="투자 유의사항 (면책조항)">
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               이 사이트에서 제공하는 모든 정보는 <b>투자 자문이나 특정 종목의 매수·매도 권유가 아니에요.</b> 투자 판단과 그 결과에 대한 책임은 전적으로 투자자 본인에게 있어요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               배당금·배당수익률·주가는 계속 변동해요. 종목분석에 담긴 배당 이력·정책은 작성 시점 기준 공개 자료를 바탕으로 정리한 것이라, 실제 최신 배당금·배당일과 다를 수 있어요. 매수·매도 결정 전에는 반드시 기업 IR·DART 전자공시 등 공식 출처에서 최신 정보를 다시 확인해주세요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               세후 배당금·세금 계산 결과는 원화 15.4%, 미국 주식 15% 원천징수를 적용한 간이 추정치예요. 실제 과세는 개인의 종합소득 구간, 금융소득종합과세 여부 등에 따라 달라질 수 있어, 정확한 세금은 세무 전문가와 상담하시는 게 안전해요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
               과거 배당 지급 이력이 미래의 배당 지급을 보장하지 않아요. 기업은 실적·경영 상황에 따라 배당을 축소하거나 중단할 수 있어요.
             </p>
           </Fold>
 
           <Fold icon={Mail} title="문의하기">
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: '0 0 9px' }}>
               종목 정보의 오탈자나 잘못된 내용을 발견하셨거나, 다뤘으면 하는 종목·주제가 있으시면 언제든 알려주세요. 확인 후 반영하고 있어요.
             </p>
-            <p style={{ fontSize: 12, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: C.inkSoft, margin: 0 }}>
               이메일: <a href="mailto:contact@dividendpassbook.com" style={{ color: C.cover, fontWeight: 700 }}>contact@dividendpassbook.com</a><br />
               오류 제보, 데이터 정정 요청, 기능 제안, 제휴 문의 모두 이 이메일로 받고 있어요.
             </p>
           </Fold>
 
-          <p style={{ fontSize: 10.5, color: C.inkSoft, opacity: 0.7, textAlign: 'center', lineHeight: 1.7, margin: '16px 0 0' }}>
+          <p style={{ fontSize: 12, color: C.inkSoft, opacity: 0.7, textAlign: 'center', lineHeight: 1.7, margin: '16px 0 0' }}>
             본 계산기는 참고용이며 투자 자문이 아니에요.<br />실제 배당금은 기업 정책·환율에 따라 달라질 수 있어요.
           </p>
         </div>
-
-        <div style={{ border: `1px dashed ${C.lineStrong}`, borderRadius: 8, padding: '9px 14px', textAlign: 'center', fontSize: 10.5, color: C.inkSoft, opacity: 0.55, marginTop: 14 }}>
-          광고 영역 · AdSense 승인 후 스크립트 삽입
-        </div>
-      </div>
+      </main>
     </div>
+  );
+}
+
+function Loading() {
+  return (
+    <p role="status" style={{ fontSize: 14, color: C.inkSoft, textAlign: 'center', padding: '48px 0' }}>불러오는 중…</p>
   );
 }
 
 function Row({ k, v, strong, hot }) {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px dashed ${C.line}` }}>
-      <span style={{ fontSize: 11, color: hot ? C.stamp : C.inkSoft, fontWeight: hot ? 700 : 500 }}>{k}</span>
+      <span style={{ fontSize: 12.5, color: hot ? C.stamp : C.inkSoft, fontWeight: hot ? 700 : 500 }}>{k}</span>
       <span style={{
-        fontFamily: "'IBM Plex Mono', monospace",
+        fontVariantNumeric: 'tabular-nums',
         fontSize: strong ? 15 : 12.5, fontWeight: strong ? 700 : 600,
         color: hot ? C.stamp : C.ink,
       }}>
