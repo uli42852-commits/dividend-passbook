@@ -832,19 +832,22 @@ const TYPE_RESULTS = {
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 const PAYER_FILTERS = [
-  { v: 'all', t: '전체' },
   { v: 'fixed', t: '정기 지급월' },
   { v: 'monthly', t: '월배당' },
   { v: 'weekly', t: '주배당' },
 ];
+// 지역 필터는 종목분석 탭의 한국·미국 필터와 같은 기준을 써요
+const PAYER_REGIONS = STOCK_FILTERS.filter((f) => f.v === 'kr' || f.v === 'us');
 const FREQ_LABEL = { fixed: '정기', monthly: '월배당', weekly: '주배당' };
 const PAYER_PAGE = 30;
 
 // 이 달에 배당을 주는 종목분석 DB 종목 — 지급월이 확실한 종목만 (src/payMonths.js 참고)
 function MonthPayers({ monthNum, data, onNavigate }) {
+  // 지역(한국·미국)과 지급 방식은 서로 독립적으로 고를 수 있고, '전체'는 둘 다 해제해요
   const [filter, setFilter] = useState('all');
+  const [region, setRegion] = useState('all');
   const [visible, setVisible] = useState(PAYER_PAGE);
-  useEffect(() => { setVisible(PAYER_PAGE); }, [monthNum, filter]);
+  useEffect(() => { setVisible(PAYER_PAGE); }, [monthNum, filter, region]);
 
   if (!data) return <Loading />;
 
@@ -853,28 +856,33 @@ function MonthPayers({ monthNum, data, onNavigate }) {
     .map((s) => ({ s, sch: payScheduleOf(s.ticker) }))
     .filter(({ sch }) => sch && sch.months.includes(monthNum))
     .sort((a, b) => order[a.sch.freq] - order[b.sch.freq]);
-  const list = filter === 'all' ? all : all.filter(({ sch }) => sch.freq === filter);
+  const regionTest = PAYER_REGIONS.find((r) => r.v === region)?.test;
+  const list = all.filter(({ s, sch }) => (filter === 'all' || sch.freq === filter) && (!regionTest || regionTest(s)));
   const unknownCount = data.STOCKS.filter((s) => !payScheduleOf(s.ticker)).length;
 
   return (
     <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 16px 12px', marginTop: 12 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
         <span style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{monthNum}월 배당 지급 종목</span>
-        <span style={{ fontSize: 13, color: C.inkSoft }}>{all.length}개</span>
+        <span style={{ fontSize: 13, color: C.inkSoft }}>{list.length}개</span>
       </div>
-      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 6 }}>
-        {PAYER_FILTERS.map((f) => {
-          const on = filter === f.v;
-          return (
-            <button key={f.v} onClick={() => setFilter(f.v)} style={{
-              flexShrink: 0, padding: '6px 12px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              border: `1px solid ${on ? C.cover : C.lineStrong}`,
-              background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
-            }}>
-              {f.t}
-            </button>
-          );
-        })}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+        {[
+          { key: 'all', t: '전체', on: filter === 'all' && region === 'all', onClick: () => { setFilter('all'); setRegion('all'); } },
+          ...PAYER_REGIONS.map((r) => ({ key: r.v, t: r.t, on: region === r.v, onClick: () => setRegion((v) => (v === r.v ? 'all' : r.v)) })),
+          { key: 'sep' },
+          ...PAYER_FILTERS.map((f) => ({ key: f.v, t: f.t, on: filter === f.v, onClick: () => setFilter((v) => (v === f.v ? 'all' : f.v)) })),
+        ].map((c) => (c.key === 'sep' ? (
+          <span key="sep" aria-hidden style={{ flexShrink: 0, width: 1, alignSelf: 'stretch', margin: '4px 2px', background: C.line }} />
+        ) : (
+          <button key={c.key} onClick={c.onClick} aria-pressed={c.on} style={{
+            flexShrink: 0, padding: '6px 12px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            border: `1px solid ${c.on ? C.cover : C.lineStrong}`,
+            background: c.on ? C.cover : 'transparent', color: c.on ? C.foil : C.inkSoft,
+          }}>
+            {c.t}
+          </button>
+        )))}
       </div>
       {list.length === 0 && (
         <p style={{ fontSize: 13, color: C.inkSoft, margin: '10px 0' }}>이 조건에 해당하는 종목이 없어요.</p>
