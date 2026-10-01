@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { loadData, getLoadedData } from './dataStore.js';
 import { MONTHLY_TICKERS, WEEKLY_TICKERS, payScheduleOf } from './payMonths.js';
+import { GUIDE_CATEGORIES, guideCategoryOf } from './guideCategories.js';
 import { SITE, HOME_META, TAB_META, TAB_ORDER, stockMeta, articleMeta } from './pageMeta.js';
 
 /* global __STOCK_COUNT__, __ARTICLE_COUNT__ */
@@ -155,19 +156,22 @@ function RelatedStocksForArticle({ article, onNavigate, data }) {
 function Articles({ deepId, onNavigate, data }) {
   const { ARTICLES } = data;
   const [q, setQ] = useState('');
+  const [cat, setCat] = useState('all');
   const [copiedIdx, setCopiedIdx] = useState(null);
   const query = q.trim().toLowerCase();
   const withIdx = ARTICLES.map((a, i) => ({ a, i }));
-  const filtered = query
-    ? withIdx.filter(({ a }) =>
-        a.t.toLowerCase().includes(query) ||
-        a.p.some((p) => p.toLowerCase().includes(query)) ||
-        (isChosungQuery(query) && toChosung(a.t).includes(query))
-      )
-    : withIdx;
+  const filtered = withIdx.filter(({ a }) =>
+    (cat === 'all' || guideCategoryOf(a.id) === cat) &&
+    (!query ||
+      a.t.toLowerCase().includes(query) ||
+      a.p.some((p) => p.toLowerCase().includes(query)) ||
+      (isChosungQuery(query) && toChosung(a.t).includes(query)))
+  );
+  const countOf = (v) => (v === 'all' ? ARTICLES.length : ARTICLES.filter((a) => guideCategoryOf(a.id) === v).length);
 
   useEffect(() => {
     if (!deepId) return;
+    setCat('all'); // 다른 글로 이동할 때 카테고리 필터 때문에 대상 글이 숨지 않도록
     const target = resolveArticle(deepId, ARTICLES);
     if (!target) return;
     const t = setTimeout(() => {
@@ -220,9 +224,23 @@ function Articles({ deepId, onNavigate, data }) {
           </button>
         )}
       </div>
-      {query && (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+        {[{ v: 'all', t: '전체' }, ...GUIDE_CATEGORIES].map((c) => {
+          const on = cat === c.v;
+          return (
+            <button key={c.v} onClick={() => setCat(c.v)} aria-pressed={on} style={{
+              flexShrink: 0, padding: '6px 12px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              border: `1px solid ${on ? C.cover : C.lineStrong}`,
+              background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
+            }}>
+              {c.t} <span style={{ fontWeight: 500, opacity: 0.75 }}>{countOf(c.v)}</span>
+            </button>
+          );
+        })}
+      </div>
+      {(query || cat !== 'all') && (
         <p style={{ fontSize: 12.5, color: C.inkSoft, margin: '0 0 10px' }}>
-          {filtered.length > 0 ? `${filtered.length}개 글이 검색됐어요` : '검색 결과가 없어요. 다른 키워드로 찾아보세요'}
+          {filtered.length > 0 ? `${filtered.length}개 글` : '조건에 맞는 글이 없어요. 다른 키워드나 카테고리로 찾아보세요'}
         </p>
       )}
       {filtered.map(({ a, i }) => (
