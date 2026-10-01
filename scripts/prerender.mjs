@@ -21,6 +21,7 @@ import { ARTICLES, STOCKS, getRelatedStocks, getRelatedArticles } from '../data.
 import {
   SITE, SITE_NAME, HOME_META, TAB_META, TAB_ORDER, stockMeta, articleMeta,
 } from '../src/pageMeta.js';
+import { GUIDE_CATEGORIES, guideCategoryOf } from '../src/guideCategories.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(__dirname, '..', 'dist');
@@ -295,7 +296,10 @@ function tabPages() {
 <h2>미국·해외 종목 (${other.length})</h2>${stockLinks(other)}`),
     tabPage('guide', `<h1>배당 투자 공부방</h1>
 <p>배당 투자를 시작하기 전에 알아두면 좋은 내용을 ${ARTICLES.length}편의 글로 정리했어요.</p>
-${articleLinks(ARTICLES)}`),
+${GUIDE_CATEGORIES.map((c) => {
+  const list = ARTICLES.filter((x) => guideCategoryOf(x.id) === c.v);
+  return list.length ? `<h2>${escapeHtml(c.t)} (${list.length})</h2>${articleLinks(list)}` : '';
+}).join('\n')}`),
   ];
 }
 
