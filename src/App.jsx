@@ -5,6 +5,7 @@ import {
   FileText, AlertTriangle, Mail, HelpCircle, Share2,
 } from 'lucide-react';
 import { loadData, getLoadedData } from './dataStore.js';
+import { MONTHLY_TICKERS, WEEKLY_TICKERS, payScheduleOf } from './payMonths.js';
 import { SITE, HOME_META, TAB_META, TAB_ORDER, stockMeta, articleMeta } from './pageMeta.js';
 
 /* global __STOCK_COUNT__, __ARTICLE_COUNT__ */
@@ -775,24 +776,7 @@ function StockCards({ deepId, onNavigate, data }) {
   );
 }
 
-// 월배당 지급 종목 티커 (종목분석 탭의 "월배당" 필터 칩에서 사용)
-const MONTHLY_TICKERS = new Set([
-  'O', 'JEPI', '458730', '458760', '429000', '329200', '472150', '402970',
-  '489250', '446720', '452360', '441640', 'ADC', 'STAG',
-  'AGNC', 'MAIN', 'EPR', 'PSEC', 'GLAD', 'GAIN', 'LAND', 'GOOD', 'LTC',
-  'APLE', 'ORC', 'DX', 'HRZN', 'PFLT', 'EFC', 'ARR', 'PVL',
-  'JEPQ', 'QYLD', 'XYLD', 'DIVO', 'PDI', 'RYLD',
-  'SPHD', 'PFF', 'SPYI', 'QQQI', 'GPIQ',
-  'PFFA', 'UTG', 'PTY', 'CLM', 'GOF',
-  'CRF', 'ECC', 'OXLC', 'EIC', 'PDO',
-  'DOC', 'UDR', 'CSWC', 'TRIN', 'GRP.U',
-  'BST', 'RQI', 'FFC', 'PDT',
-  'PFD', 'PFO', 'FLC', 'DFP',
-  'NCV', 'NCZ', 'JQC', 'EVV', 'EFT',
-]);
 
-// 주배당(매주) 지급 종목 티커 (종목분석 탭의 "주배당" 필터 칩에서 사용)
-const WEEKLY_TICKERS = new Set(['MSTY', 'PLTY', 'TSLY', 'NVDY', 'CONY', 'YMAX', 'YMAG', 'ULTY', 'AMZY', 'AMDY', 'APLY', 'GOOY', 'CVNY', 'NFLY', 'MSFO', 'SNOY', 'GMEY', 'HOOY', 'RBLY', 'BABO', 'PYPY', 'MARO', 'JPMO', 'OARK', 'DISO', 'XOMO', 'BRKC', 'YBIT', 'RDYY', 'MRNY', 'SHOY', 'PDDY', 'JDY', 'DRAY', 'GPTY', 'GDXY', 'CHPY', 'SMCY', 'LFGY', 'MINY', 'AIYY', 'CRSH', 'DIPS', 'WNTR', 'SLTY', 'FIAT', 'YQQQ', 'QDTY']);
 
 
 /* ── 유형 찾기 (3문항 점수제, 종목 추천 아닌 유형 안내) ───────── */
@@ -847,7 +831,83 @@ const TYPE_RESULTS = {
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
-function DividendCalendar({ holdings }) {
+const PAYER_FILTERS = [
+  { v: 'all', t: '전체' },
+  { v: 'fixed', t: '정기 지급월' },
+  { v: 'monthly', t: '월배당' },
+  { v: 'weekly', t: '주배당' },
+];
+const FREQ_LABEL = { fixed: '정기', monthly: '월배당', weekly: '주배당' };
+const PAYER_PAGE = 30;
+
+// 이 달에 배당을 주는 종목분석 DB 종목 — 지급월이 확실한 종목만 (src/payMonths.js 참고)
+function MonthPayers({ monthNum, data, onNavigate }) {
+  const [filter, setFilter] = useState('all');
+  const [visible, setVisible] = useState(PAYER_PAGE);
+  useEffect(() => { setVisible(PAYER_PAGE); }, [monthNum, filter]);
+
+  if (!data) return <Loading />;
+
+  const order = { fixed: 0, monthly: 1, weekly: 2 };
+  const all = data.STOCKS
+    .map((s) => ({ s, sch: payScheduleOf(s.ticker) }))
+    .filter(({ sch }) => sch && sch.months.includes(monthNum))
+    .sort((a, b) => order[a.sch.freq] - order[b.sch.freq]);
+  const list = filter === 'all' ? all : all.filter(({ sch }) => sch.freq === filter);
+  const unknownCount = data.STOCKS.filter((s) => !payScheduleOf(s.ticker)).length;
+
+  return (
+    <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: '16px 16px 12px', marginTop: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{monthNum}월 배당 지급 종목</span>
+        <span style={{ fontSize: 13, color: C.inkSoft }}>{all.length}개</span>
+      </div>
+      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 6 }}>
+        {PAYER_FILTERS.map((f) => {
+          const on = filter === f.v;
+          return (
+            <button key={f.v} onClick={() => setFilter(f.v)} style={{
+              flexShrink: 0, padding: '6px 12px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              border: `1px solid ${on ? C.cover : C.lineStrong}`,
+              background: on ? C.cover : 'transparent', color: on ? C.foil : C.inkSoft,
+            }}>
+              {f.t}
+            </button>
+          );
+        })}
+      </div>
+      {list.length === 0 && (
+        <p style={{ fontSize: 13, color: C.inkSoft, margin: '10px 0' }}>이 조건에 해당하는 종목이 없어요.</p>
+      )}
+      {list.slice(0, visible).map(({ s, sch }) => (
+        <a key={s.ticker} href={`/stocks/${s.ticker}`} onClick={(e) => { e.preventDefault(); onNavigate('stocks', s.ticker); }}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: `1px solid ${C.line}`, textDecoration: 'none' }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+          <span style={{ fontSize: 12, color: C.inkSoft, flexShrink: 0 }}>{s.ticker}</span>
+          <span style={{
+            marginLeft: 'auto', flexShrink: 0, fontSize: 11, fontWeight: 700, borderRadius: 999, padding: '2px 8px',
+            color: sch.freq === 'fixed' ? C.cover : C.inkSoft, background: sch.freq === 'fixed' ? 'var(--pb-cover-soft)' : 'var(--pb-input-bg)',
+          }}>
+            {sch.freq === 'fixed' ? sch.months.map((m) => `${m}`).join('·') + '월' : FREQ_LABEL[sch.freq]}
+          </span>
+        </a>
+      ))}
+      {visible < list.length && (
+        <button onClick={() => setVisible((v) => v + PAYER_PAGE)} style={{
+          width: '100%', padding: '11px', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+          background: 'transparent', color: C.cover, border: `1px solid ${C.lineStrong}`, marginTop: 10,
+        }}>
+          {list.length - visible}개 더보기
+        </button>
+      )}
+      <p style={{ fontSize: 12, color: C.inkSoft, margin: '10px 0 0', lineHeight: 1.6 }}>
+        지급월이 확인된 종목만 보여드려요. 분기·반기 배당 종목 {unknownCount.toLocaleString('ko-KR')}개는 지급월을 확인하는 대로 추가할게요. 정확한 지급일은 각 기업 IR·운용사 공지에서 확인하세요.
+      </p>
+    </div>
+  );
+}
+
+function DividendCalendar({ holdings, data, onNavigate }) {
   const [monthOffset, setMonthOffset] = useState(0);
 
   const now = new Date();
@@ -871,7 +931,7 @@ function DividendCalendar({ holdings }) {
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
 
   const navBtn = {
-    width: 30, height: 30, borderRadius: 8, border: `1px solid ${C.lineStrong}`, background: 'transparent',
+    width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.lineStrong}`, background: C.cardBg,
     color: C.ink, fontSize: 17, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
   };
 
@@ -881,89 +941,82 @@ function DividendCalendar({ holdings }) {
         배당 달력
       </h2>
       <p style={{ fontSize: 13, color: C.inkSoft, margin: '0 0 14px' }}>
-        보유 종목이 이 달에 배당을 지급하는지 한눈에 확인하세요
+        내 보유 종목과, 이 달에 배당을 주는 종목을 함께 확인하세요
       </p>
 
-      {holdings.length === 0 ? (
-        <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: '28px 16px', textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: C.inkSoft, margin: 0, lineHeight: 1.7 }}>
-            계산기 탭에서 종목을 먼저 기입하면<br />이 달력에 배당 예정 종목이 표시돼요
-          </p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <button onClick={() => setMonthOffset((v) => v - 1)} aria-label="이전 달" style={navBtn}>‹</button>
+        <div style={{ fontWeight: 700, fontSize: 17, color: C.ink }}>
+          {year}년 {monthNum}월
         </div>
-      ) : (
-        <>
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: 12,
-          }}>
-            <button onClick={() => setMonthOffset((v) => v - 1)} aria-label="이전 달" style={navBtn}>‹</button>
-            <div style={{ fontWeight: 700, fontSize: 17, color: C.ink }}>
-              {year}년 {monthNum}월
+        <button onClick={() => setMonthOffset((v) => v + 1)} aria-label="다음 달" style={navBtn}>›</button>
+      </div>
+
+      <div style={{
+        background: payers.length > 0 ? 'var(--pb-stamp-06)' : C.cardBg,
+        border: `1px solid ${payers.length > 0 ? 'var(--pb-stamp-25)' : C.line}`,
+        borderRadius: 14, padding: '12px 14px', marginBottom: 12,
+      }}>
+        {holdings.length === 0 ? (
+          <p style={{ fontSize: 13, color: C.inkSoft, margin: 0, lineHeight: 1.6 }}>
+            계산기 탭에서 보유 종목을 기입하면 내 종목의 배당 예정도 여기에 표시돼요.
+          </p>
+        ) : payers.length > 0 ? (
+          <>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: C.stamp, marginBottom: 7 }}>
+              내 보유 종목 배당 예정 · {payers.length}종목
             </div>
-            <button onClick={() => setMonthOffset((v) => v + 1)} aria-label="다음 달" style={navBtn}>›</button>
-          </div>
-
-          <div style={{
-            background: payers.length > 0 ? 'var(--pb-stamp-06)' : C.cardBg,
-            border: `1px solid ${payers.length > 0 ? 'var(--pb-stamp-25)' : C.line}`,
-            borderRadius: 10, padding: '12px 14px', marginBottom: 12,
-          }}>
-            {payers.length > 0 ? (
-              <>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: C.stamp, marginBottom: 7 }}>
-                  이 달 배당 예정 · {payers.length}종목
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {payers.map((h) => (
-                    <span key={h.id} style={{
-                      fontSize: 12.5, fontWeight: 700, color: C.ink, background: C.cardBg,
-                      border: `1px solid ${C.lineStrong}`, borderRadius: 999, padding: '4px 10px',
-                    }}>
-                      {h.name}{h.ticker ? ` · ${h.ticker}` : ''}
-                    </span>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p style={{ fontSize: 13, color: C.inkSoft, margin: 0 }}>이 달엔 예정된 배당이 없어요.</p>
-            )}
-          </div>
-
-          <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: '12px 10px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 6 }}>
-              {WEEKDAY_LABELS.map((w) => (
-                <div key={w} style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: C.inkSoft }}>{w}</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {payers.map((h) => (
+                <span key={h.id} style={{
+                  fontSize: 12.5, fontWeight: 700, color: C.ink, background: C.cardBg,
+                  border: `1px solid ${C.lineStrong}`, borderRadius: 999, padding: '4px 10px',
+                }}>
+                  {h.name}{h.ticker ? ` · ${h.ticker}` : ''}
+                </span>
               ))}
             </div>
-            {weeks.map((week, wi) => (
-              <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
-                {week.map((d, di) => {
-                  const isToday = d === todayDate;
-                  return (
-                    <div key={di} style={{
-                      textAlign: 'center', padding: '7px 0', fontSize: 13,
-                      color: d === null ? 'transparent' : (isToday ? C.foil : C.ink),
-                      fontWeight: isToday ? 700 : 500,
-                    }}>
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        width: 22, height: 22, borderRadius: '50%',
-                        background: isToday ? C.cover : 'transparent',
-                      }}>
-                        {d ?? '·'}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+          </>
+        ) : (
+          <p style={{ fontSize: 13, color: C.inkSoft, margin: 0 }}>이 달엔 내 보유 종목의 배당 예정이 없어요.</p>
+        )}
+      </div>
 
-          <p style={{ fontSize: 12, color: C.inkSoft, opacity: 0.7, margin: '10px 0 0', lineHeight: 1.6 }}>
-            정확한 지급일(며칠)은 종목마다 달라요. 이 달력은 "몇 월에 배당이 있는지"만 알려드리며, 정확한 배당락일·지급일은 각 기업 IR이나 증권사 앱에서 확인하세요.
-          </p>
-        </>
-      )}
+      <div style={{ background: C.cardBg, border: `1px solid ${C.line}`, borderRadius: 16, padding: '12px 10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 6 }}>
+          {WEEKDAY_LABELS.map((w) => (
+            <div key={w} style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: C.inkSoft }}>{w}</div>
+          ))}
+        </div>
+        {weeks.map((week, wi) => (
+          <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+            {week.map((d, di) => {
+              const isToday = d === todayDate;
+              return (
+                <div key={di} style={{
+                  textAlign: 'center', padding: '7px 0', fontSize: 13,
+                  color: d === null ? 'transparent' : (isToday ? C.foil : C.ink),
+                  fontWeight: isToday ? 700 : 500,
+                }}>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: 24, height: 24, borderRadius: '50%',
+                    background: isToday ? C.cover : 'transparent',
+                  }}>
+                    {d ?? '·'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      <MonthPayers monthNum={monthNum} data={data} onNavigate={onNavigate} />
+
+      <p style={{ fontSize: 12, color: C.inkSoft, opacity: 0.7, margin: '10px 0 0', lineHeight: 1.6 }}>
+        정확한 지급일(며칠)은 종목마다 달라요. 이 달력은 "몇 월에 배당이 있는지"만 알려드리며, 정확한 배당락일·지급일은 각 기업 IR이나 증권사 앱에서 확인하세요.
+      </p>
     </section>
   );
 }
@@ -1251,7 +1304,7 @@ export default function App() {
     if (data) return undefined;
     let cancelled = false;
     const fetchData = () => loadData().then((m) => { if (!cancelled) setData(m); }, () => {});
-    if (tab === 'stocks' || tab === 'guide') {
+    if (tab === 'stocks' || tab === 'guide' || tab === 'calendar') {
       fetchData();
       return () => { cancelled = true; };
     }
@@ -2069,7 +2122,7 @@ export default function App() {
             </>
           )}
 
-          {tab === 'calendar' && <DividendCalendar holdings={holdings} />}
+          {tab === 'calendar' && <DividendCalendar holdings={holdings} data={data} onNavigate={goDeep} />}
           {tab === 'find' && <TypeFinder />}
           {tab === 'stocks' && (data ? <StockCards deepId={deepId} onNavigate={goDeep} data={data} /> : <Loading />)}
           {tab === 'guide' && (data ? <Articles deepId={deepId} onNavigate={goDeep} data={data} /> : <Loading />)}
