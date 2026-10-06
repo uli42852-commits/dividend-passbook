@@ -7,6 +7,7 @@ import {
 import { loadData, getLoadedData } from './dataStore.js';
 import { MONTHLY_TICKERS, WEEKLY_TICKERS, payScheduleOf } from './payMonths.js';
 import { GUIDE_CATEGORIES, guideCategoryOf } from './guideCategories.js';
+import Payback from './Payback.jsx';
 import { SITE, HOME_META, TAB_META, TAB_ORDER, stockMeta, articleMeta } from './pageMeta.js';
 
 /* global __STOCK_COUNT__, __ARTICLE_COUNT__ */
@@ -1220,7 +1221,7 @@ function Fold({ icon: Icon, title, children }) {
 /* ── 라우팅 (URL: /calc, /find, /stocks, /stocks/TICKER, /guide, /guide/N — 예전 해시 링크 #/guide/N 등도 하위호환으로 계속 인식) ── */
 function parseHash() {
   if (typeof window === 'undefined') return { tab: null, deepId: null };
-  const validTabs = ['calc', 'calendar', 'find', 'stocks', 'guide'];
+  const validTabs = TAB_ORDER;
 
   const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
   if (path) {
@@ -1649,6 +1650,8 @@ export default function App() {
           --pb-reit: #0a8f7f;
           --pb-input-bg: #f9fafb;
           --pb-header: rgba(255,255,255,0.92);
+          --pb-series-1: #0b7a53;
+          --pb-series-2: #3b6fd4;
           --pb-stamp-04: rgba(224,62,62,0.04);
           --pb-stamp-06: rgba(224,62,62,0.06);
           --pb-stamp-25: rgba(224,62,62,0.25);
@@ -1673,6 +1676,8 @@ export default function App() {
             --pb-reit: #4fd1c1;
             --pb-input-bg: #202328;
             --pb-header: rgba(15,17,20,0.92);
+            --pb-series-1: #29a674;
+            --pb-series-2: #5f8ee8;
             --pb-stamp-04: rgba(255,107,107,0.08);
             --pb-stamp-06: rgba(255,107,107,0.11);
             --pb-stamp-25: rgba(255,107,107,0.3);
@@ -1697,6 +1702,8 @@ export default function App() {
           --pb-reit: #4fd1c1;
           --pb-input-bg: #202328;
           --pb-header: rgba(15,17,20,0.92);
+            --pb-series-1: #29a674;
+            --pb-series-2: #5f8ee8;
           --pb-stamp-04: rgba(255,107,107,0.08);
           --pb-stamp-06: rgba(255,107,107,0.11);
           --pb-stamp-25: rgba(255,107,107,0.3);
@@ -1715,7 +1722,7 @@ export default function App() {
         .pb-app summary::-webkit-details-marker { display: none; }
         .pb-tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
         .pb-tabs::-webkit-scrollbar { display: none; }
-        .pb-tab { flex-shrink: 0; padding: 12px 12px 11px; font-size: 15px; font-weight: 600; color: var(--pb-ink-soft); text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap; }
+        .pb-tab { flex-shrink: 0; padding: 12px 10px 11px; font-size: 15px; font-weight: 600; color: var(--pb-ink-soft); text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap; }
         .pb-tab:hover { color: var(--pb-ink); }
         .pb-tab[aria-current="page"] { color: var(--pb-ink); font-weight: 700; border-bottom-color: var(--pb-ink); }
         @media (prefers-reduced-motion: reduce) { .pb-app * { transition: none !important; animation: none !important; } }
@@ -2149,6 +2156,7 @@ export default function App() {
           )}
 
           {tab === 'calendar' && <DividendCalendar holdings={holdings} data={data} onNavigate={goDeep} />}
+          {tab === 'payback' && <Payback data={data} onNavigate={goDeep} />}
           {tab === 'find' && <TypeFinder />}
           {tab === 'stocks' && (data ? <StockCards deepId={deepId} onNavigate={goDeep} data={data} /> : <Loading />)}
           {tab === 'guide' && (data ? <Articles deepId={deepId} onNavigate={goDeep} data={data} /> : <Loading />)}
