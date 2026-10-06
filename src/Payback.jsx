@@ -1,6 +1,22 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { simulatePayback, formatMonths, FREQUENCIES, MAX_YEARS } from './payback.js';
-import { WEEKLY_TICKERS } from './payMonths.js';
+import { WEEKLY_TICKERS, MONTHLY_TICKERS } from './payMonths.js';
+import { inferPerYear, averageRecent, trailingTotal, loadDistributions } from './distributions.js';
+
+// 분배금 기준: 주배당은 매주 금액이 크게 달라서 기본값을 '최근 3개월 평균'으로 둠
+const BASES = [
+  { v: 'last', t: '최근 1회' },
+  { v: 'quarter', t: '최근 3개월 평균' },
+  { v: 'year', t: '최근 1년 평균' },
+];
+function basisAmount(entry, basis) {
+  const perYear = inferPerYear(entry);
+  if (basis === 'last') return entry.distributions[0]?.amount ?? null;
+  if (basis === 'quarter') return averageRecent(entry, Math.max(1, Math.round(perYear / 4)));
+  return averageRecent(entry, entry.distributions.length);
+}
+const pct = (g) => `${g > 0 ? '+' : ''}${(g * 100).toFixed(1)}%`;
+const fmtPrice = (n, cur) => (cur === 'USD' ? String(Math.round(n * 10000) / 10000) : String(Math.round(n)));
 
 const INPUT_KEY = 'dividend-passbook-payback-v1';
 const TAX = { USD: 0.15, KRW: 0.154 };
@@ -120,9 +136,37 @@ function PaybackChart({ points, invest, paybackMonths, cur }) {
 
 export default function Payback({ data, onNavigate }) {
   const [f, setF] = useState(loadInputs);
+  const [dist, setDist] = useState(null);
+  const [showMonthly, setShowMonthly] = useState(false);
+  const [pickQuery, setPickQuery] = useState('');
   useEffect(() => {
     try { window.localStorage.setItem(INPUT_KEY, JSON.stringify(f)); } catch (e) { /* ignore */ }
   }, [f]);
+  useEffect(() => {
+    let alive = true;
+    loadDistributions().then((d) => { if (alive) setDist(d); });
+    return () => { alive = false; };
+  }, []);
+
+  const entry = f.ticker && dist ? dist.tickers[f.ticker] : null;
+  const actualChange = entry && Number.isFinite(entry.change1y) ? entry.change1y : null;
+
+  // 종목을 고르면 주가·분배금·주기·통화를 최신 데이터로 채움 (주가 변화 가정은 그대로)
+  const pickTicker = (ticker, basis = f.basis || 'quarter') => {
+    const e = dist?.tickers[ticker];
+    if (!e || !e.distributions.length) return;
+    const amount = basisAmount(e, basis);
+    setF((p) => ({
+      ...p,
+      ticker,
+      basis,
+      cur: e.currency,
+      invest: p.cur === e.currency ? p.invest : DEFAULTS[e.currency].invest,
+      price: fmtPrice(e.price, e.currency),
+      dps: fmtPrice(amount, e.currency === 'USD' ? 'USD' : 'KRW'),
+      perYear: inferPerYear(e),
+    }));
+  };
 
   const num = (s) => parseFloat(String(s).replace(/,/g, ''));
   const params = {
@@ -131,7 +175,8 @@ export default function Payback({ data, onNavigate }) {
   };
   const r = useMemo(() => simulatePayback(params), [f]); // eslint-disable-line react-hooks/exhaustive-deps
   const scenarios = useMemo(
-    () => SCENARIOS.map((g) => ({ g, r: simulatePayback({ ...params, annualPriceChange: g }) })),
+    () => [...SCENARIOS, ...(actualChange !== null && actualChange > -1 && !SCENARIOS.includes(actualChange) ? [actualChange] : [])]
+      .map((g) => ({ g, actual: g === actualChange, r: simulatePayback({ ...params, annualPriceChange: g }) })),
     [f], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
@@ -142,7 +187,7 @@ export default function Payback({ data, onNavigate }) {
   }, [r]);
 
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
-  const switchCur = (cur) => setF((p) => (p.cur === cur ? p : { ...p, cur, ...DEFAULTS[cur] }));
+  const switchCur = (cur) => setF((p) => (p.cur === cur ? p : { ...p, cur, ...DEFAULTS[cur], ticker: null }));
 
   const input = {
     width: '100%', background: 'var(--pb-input-bg)', borderRadius: 10, padding: '11px 12px', fontSize: 16,
@@ -156,6 +201,13 @@ export default function Payback({ data, onNavigate }) {
   });
   const unit = f.cur === 'USD' ? '$' : '원';
   const weeklyStocks = data ? data.STOCKS.filter((s) => WEEKLY_TICKERS.has(s.ticker)) : [];
+  const nameOf = (t) => data?.STOCKS.find((s) => s.ticker === t)?.name || t;
+  const pickable = (set) => (dist ? [...set].filter((t) => dist.tickers[t]?.distributions?.length).sort() : []);
+  const pickWeekly = pickable(WEEKLY_TICKERS);
+  const pickMonthly = pickable(MONTHLY_TICKERS);
+  const q = pickQuery.trim().toLowerCase();
+  const pickList = (q ? [...pickWeekly, ...pickMonthly] : [...pickWeekly, ...(showMonthly ? pickMonthly : [])])
+    .filter((t) => !q || t.toLowerCase().includes(q) || nameOf(t).toLowerCase().includes(q));
   const invest = params.invest;
   const lowValue = r && r.valueAtPayback !== null && r.valueAtPayback < invest * 0.5;
 
@@ -165,6 +217,67 @@ export default function Payback({ data, onNavigate }) {
       <p style={{ fontSize: 13, color: soft, margin: '0 0 14px', lineHeight: 1.6 }}>
         받은 분배금만으로 투자 원금을 언제 되찾는지, 그때 남은 주식은 얼마인지 계산해요. 주배당·커버드콜 ETF처럼 분배율이 높은 종목에 맞춰 만들었어요.
       </p>
+
+      {dist && pickWeekly.length > 0 && (
+        <div style={card}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: ink }}>종목으로 채우기</span>
+            <span style={{ fontSize: 12, color: soft }}>{dist.updatedAt} 기준</span>
+          </div>
+          <p style={{ fontSize: 12.5, color: soft, margin: '0 0 10px' }}>누르면 최근 주가·분배금·지급 주기가 자동으로 들어가요</p>
+          {entry && (
+            <div style={{ padding: '12px 14px', borderRadius: 12, background: 'var(--pb-input-bg)', fontSize: 13.5, color: ink, lineHeight: 1.7 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+                <b>{nameOf(f.ticker)}{nameOf(f.ticker) !== f.ticker ? ` (${f.ticker})` : ''}</b>
+                <a href={`/stocks/${f.ticker}`} onClick={(e) => { e.preventDefault(); onNavigate('stocks', f.ticker); }} style={{ color: 'var(--pb-cover)', fontSize: 13, whiteSpace: 'nowrap' }}>종목 정보 →</a>
+              </div>
+              <div style={{ color: soft }}>
+                주가 <b style={{ color: ink }}>{money(entry.price, entry.currency)}</b>{entry.priceDate ? ` (${entry.priceDate})` : ''}
+                {' · '}최근 분배금 <b style={{ color: ink }}>{money(entry.distributions[0].amount, entry.currency)}</b> ({entry.distributions[0].exDate} 배당락)
+                {' · '}최근 1년 {entry.distributions.length}회 합계 <b style={{ color: ink }}>{money(trailingTotal(entry), entry.currency)}</b>
+                {actualChange !== null && <>{' · '}최근 1년 주가 <b style={{ color: actualChange < 0 ? 'var(--pb-stamp)' : ink }}>{pct(actualChange)}</b></>}
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                {BASES.map((b) => (
+                  <button key={b.v} type="button" onClick={() => pickTicker(f.ticker, b.v)} style={{ ...chip(f.basis === b.v), fontSize: 12.5, padding: '7px 0' }}>{b.t}</button>
+                ))}
+              </div>
+              <p style={{ fontSize: 12, color: soft, margin: '8px 0 0' }}>분배금 기준을 바꾸면 1회 분배금이 다시 채워져요. 데이터 출처: {dist.source} (공식 공시와 다를 수 있으니 운용사 페이지도 확인하세요)</p>
+            </div>
+          )}
+          <input
+            value={pickQuery}
+            onChange={(e) => setPickQuery(e.target.value)}
+            placeholder="티커나 종목명 검색 (예: MSTY, JEPI)"
+            aria-label="자동 채우기 종목 검색"
+            style={{ ...input, fontSize: 15, padding: '9px 12px', margin: '12px 0 10px' }}
+          />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {pickList.map((t) => {
+              const on = f.ticker === t;
+              return (
+                <button key={t} type="button" onClick={() => pickTicker(t)} aria-pressed={on} title={nameOf(t)} style={{
+                  padding: '5px 11px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  border: `1px solid ${on ? 'var(--pb-cover)' : 'var(--pb-line-strong)'}`,
+                  background: on ? 'var(--pb-cover)' : 'transparent', color: on ? 'var(--pb-foil)' : 'var(--pb-cover)',
+                }}>
+                  {/^\d{6}$/.test(t) ? nameOf(t) : t}
+                </button>
+              );
+            })}
+            {pickQuery && pickList.length === 0 && <span style={{ fontSize: 13, color: soft }}>자동 채우기 데이터가 있는 종목 중엔 없어요</span>}
+          </div>
+          {!pickQuery && (
+            <div style={{ display: 'flex', gap: 14, marginTop: 10 }}>
+              {pickMonthly.length > 0 && (
+                <button type="button" onClick={() => setShowMonthly((v) => !v)} style={{ background: 'none', border: 'none', padding: 0, fontSize: 13, color: soft, cursor: 'pointer', textDecoration: 'underline' }}>
+                  {showMonthly ? '주배당만 보기' : `월배당 ${pickMonthly.length}개 포함`}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ ...card, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
@@ -208,6 +321,11 @@ export default function Payback({ data, onNavigate }) {
               <button key={o.v} type="button" onClick={() => setF((p) => ({ ...p, change: o.v }))} style={chip(f.change === o.v)}>{o.t}</button>
             ))}
           </div>
+          {actualChange !== null && actualChange > -1 && (
+            <button type="button" onClick={() => setF((p) => ({ ...p, change: actualChange }))} style={{ ...chip(f.change === actualChange), width: '100%', marginBottom: 8 }}>
+              {f.ticker} 최근 1년 추세 그대로 ({pct(actualChange)})
+            </button>
+          )}
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: soft }}>
             직접 입력
             <input type="number" inputMode="decimal" step="1" min="-95" max="100"
@@ -270,9 +388,11 @@ export default function Payback({ data, onNavigate }) {
                 </tr>
               </thead>
               <tbody>
-                {scenarios.map(({ g, r: s }) => (
+                {scenarios.map(({ g, actual, r: s }) => (
                   <tr key={g} style={{ borderTop: `1px solid ${line}`, textAlign: 'right', color: ink }}>
-                    <td style={{ textAlign: 'left', padding: '8px 0', color: soft }}>{g === 0 ? '유지' : `연 ${Math.round(g * 100)}%`}</td>
+                    <td style={{ textAlign: 'left', padding: '8px 0', color: soft }}>
+                      {actual ? `최근 1년 추세 (${pct(g)})` : g === 0 ? '유지' : `연 ${Math.round(g * 100)}%`}
+                    </td>
                     <td style={{ fontWeight: 700 }}>{s.paybackMonths === null ? '회수 못 함' : formatMonths(s.paybackMonths)}</td>
                     <td>{s.valueAtPayback === null ? '-' : `${Math.round((s.valueAtPayback / invest) * 100)}%`}</td>
                   </tr>
@@ -283,7 +403,7 @@ export default function Payback({ data, onNavigate }) {
         </>
       )}
 
-      {weeklyStocks.length > 0 && (
+      {!dist && weeklyStocks.length > 0 && (
         <div style={card}>
           <div style={{ fontSize: 15, fontWeight: 700, color: ink, marginBottom: 4 }}>주배당 종목 살펴보기</div>
           <p style={{ fontSize: 12.5, color: soft, margin: '0 0 10px' }}>최근 분배금은 종목 페이지에 안내된 운용사 공지에서 확인해 입력하세요</p>
