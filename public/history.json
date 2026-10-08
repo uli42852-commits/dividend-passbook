@@ -1,0 +1,528 @@
+{
+ "updatedAt": "2026-10-08",
+ "source": "Yahoo Finance",
+ "tickers": {
+  "105560": {
+   "currency": "KRW",
+   "price": 162800,
+   "yield": 0.02969,
+   "divGrowth": 0.1634,
+   "priceGrowth": 0.1458,
+   "years": 9.9,
+   "asOf": "2026-10-08"
+  },
+  "316140": {
+   "currency": "KRW",
+   "price": 32350,
+   "yield": 0.04328,
+   "divGrowth": 0.1106,
+   "priceGrowth": 0.119,
+   "years": 7.6,
+   "asOf": "2026-10-08"
+  },
+  "402970": {
+   "currency": "KRW",
+   "price": 14105,
+   "yield": 0.03127,
+   "divGrowth": 0.1865,
+   "priceGrowth": 0.0713,
+   "years": 4.9,
+   "asOf": "2026-10-08"
+  },
+  "458730": {
+   "currency": "KRW",
+   "price": 13840,
+   "yield": 0.03136,
+   "divGrowth": 0.0626,
+   "priceGrowth": 0.0953,
+   "years": 3.3,
+   "asOf": "2026-10-08"
+  },
+  "000270": {
+   "currency": "KRW",
+   "price": 106800,
+   "yield": 0.06367,
+   "divGrowth": 0.2262,
+   "priceGrowth": 0.1114,
+   "years": 9.9,
+   "asOf": "2026-10-08"
+  },
+  "005380": {
+   "currency": "KRW",
+   "price": 324500,
+   "yield": 0.03082,
+   "divGrowth": 0.108,
+   "priceGrowth": 0.0939,
+   "years": 9.9,
+   "asOf": "2026-10-08"
+  },
+  "005930": {
+   "currency": "KRW",
+   "price": 262000,
+   "yield": 0.00501,
+   "divGrowth": 0.0344,
+   "priceGrowth": 0.2249,
+   "years": 9.9,
+   "asOf": "2026-10-08"
+  },
+  "017670": {
+   "currency": "KRW",
+   "price": 84100,
+   "yield": 0.01974,
+   "divGrowth": -0.0738,
+   "priceGrowth": 0.0518,
+   "years": 9.9,
+   "asOf": "2026-10-08"
+  },
+  "030200": {
+   "currency": "KRW",
+   "price": 52100,
+   "yield": 0.04607,
+   "divGrowth": 0.1308,
+   "priceGrowth": 0.0577,
+   "years": 9.9,
+   "asOf": "2026-10-08"
+  },
+  "033780": {
+   "currency": "KRW",
+   "price": 177400,
+   "yield": 0.0372,
+   "divGrowth": 0.0702,
+   "priceGrowth": 0.0542,
+   "years": 9.9,
+   "asOf": "2026-10-08"
+  },
+  "055550": {
+   "currency": "KRW",
+   "price": 99500,
+   "yield": 0.02945,
+   "divGrowth": 0.0819,
+   "priceGrowth": 0.0854,
+   "years": 9.9,
+   "asOf": "2026-10-08"
+  },
+  "086790": {
+   "currency": "KRW",
+   "price": 124300,
+   "yield": 0.03689,
+   "divGrowth": 0.1733,
+   "priceGrowth": 0.1458,
+   "years": 9.9,
+   "asOf": "2026-10-08"
+  },
+  "088980": {
+   "currency": "KRW",
+   "price": 9750,
+   "yield": 0.07487,
+   "divGrowth": 0.0556,
+   "priceGrowth": 0.0145,
+   "years": 9.9,
+   "asOf": "2026-10-08"
+  },
+  "AAPL": {
+   "currency": "USD",
+   "price": 336.67,
+   "yield": 0.00315,
+   "divGrowth": 0.0658,
+   "priceGrowth": 0.2863,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "ABBV": {
+   "currency": "USD",
+   "price": 271.36,
+   "yield": 0.02517,
+   "divGrowth": 0.1161,
+   "priceGrowth": 0.1625,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "ADC": {
+   "currency": "USD",
+   "price": 65.16,
+   "yield": 0.04871,
+   "divGrowth": 0.0531,
+   "priceGrowth": 0.0382,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "ARCC": {
+   "currency": "USD",
+   "price": 18.45,
+   "yield": 0.10407,
+   "divGrowth": 0.0265,
+   "priceGrowth": 0.0142,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "AVGO": {
+   "currency": "USD",
+   "price": 376.51,
+   "yield": 0.00691,
+   "divGrowth": 0.2304,
+   "priceGrowth": 0.3656,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "BAC": {
+   "currency": "USD",
+   "price": 53.52,
+   "yield": 0.02167,
+   "divGrowth": 0.1454,
+   "priceGrowth": 0.0981,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "COST": {
+   "currency": "USD",
+   "price": 942.25,
+   "yield": 0.00588,
+   "divGrowth": -0.0517,
+   "priceGrowth": 0.2032,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "CSCO": {
+   "currency": "USD",
+   "price": 117.39,
+   "yield": 0.01423,
+   "divGrowth": 0.0447,
+   "priceGrowth": 0.1479,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "CVX": {
+   "currency": "USD",
+   "price": 205.15,
+   "yield": 0.03437,
+   "divGrowth": 0.0564,
+   "priceGrowth": 0.0633,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "DGRO": {
+   "currency": "USD",
+   "price": 76.33,
+   "yield": 0.01957,
+   "divGrowth": 0.095,
+   "priceGrowth": 0.1042,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "DIVO": {
+   "currency": "USD",
+   "price": 46.98,
+   "yield": 0.06422,
+   "divGrowth": 0.1208,
+   "priceGrowth": 0.0652,
+   "years": 9.8,
+   "asOf": "2026-10-07"
+  },
+  "GS": {
+   "currency": "USD",
+   "price": 887.21,
+   "yield": 0.02029,
+   "divGrowth": 0.2316,
+   "priceGrowth": 0.1511,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "HD": {
+   "currency": "USD",
+   "price": 285.77,
+   "yield": 0.03251,
+   "divGrowth": 0.1206,
+   "priceGrowth": 0.083,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "HDV": {
+   "currency": "USD",
+   "price": 28.28,
+   "yield": 0.03013,
+   "divGrowth": 0.0469,
+   "priceGrowth": 0.0586,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "IBM": {
+   "currency": "USD",
+   "price": 220.51,
+   "yield": 0.03057,
+   "divGrowth": 0.0221,
+   "priceGrowth": 0.0361,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "JEPI": {
+   "currency": "USD",
+   "price": 56.45,
+   "yield": 0.08083,
+   "divGrowth": 0.0011,
+   "priceGrowth": 0.0163,
+   "years": 6.4,
+   "asOf": "2026-10-07"
+  },
+  "JEPQ": {
+   "currency": "USD",
+   "price": 61.27,
+   "yield": 0.11239,
+   "divGrowth": 0.06,
+   "priceGrowth": 0.0694,
+   "years": 4.4,
+   "asOf": "2026-10-07"
+  },
+  "JNJ": {
+   "currency": "USD",
+   "price": 258.45,
+   "yield": 0.02043,
+   "divGrowth": 0.0547,
+   "priceGrowth": 0.0885,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "JPM": {
+   "currency": "USD",
+   "price": 329.58,
+   "yield": 0.01866,
+   "divGrowth": 0.1315,
+   "priceGrowth": 0.153,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "KO": {
+   "currency": "USD",
+   "price": 85.82,
+   "yield": 0.02447,
+   "divGrowth": 0.0415,
+   "priceGrowth": 0.0789,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "LOW": {
+   "currency": "USD",
+   "price": 181.54,
+   "yield": 0.02672,
+   "divGrowth": 0.1387,
+   "priceGrowth": 0.0998,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "MAIN": {
+   "currency": "USD",
+   "price": 54.18,
+   "yield": 0.00554,
+   "divGrowth": -0.2206,
+   "priceGrowth": 0.0408,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "MCD": {
+   "currency": "USD",
+   "price": 230.88,
+   "yield": 0.03222,
+   "divGrowth": 0.0794,
+   "priceGrowth": 0.0688,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "MO": {
+   "currency": "USD",
+   "price": 69.38,
+   "yield": 0.06183,
+   "divGrowth": 0.0628,
+   "priceGrowth": 0.0083,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "MRK": {
+   "currency": "USD",
+   "price": 142.79,
+   "yield": 0.02381,
+   "divGrowth": 0.0742,
+   "priceGrowth": 0.0942,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "MS": {
+   "currency": "USD",
+   "price": 189.71,
+   "yield": 0.02188,
+   "divGrowth": 0.1866,
+   "priceGrowth": 0.1657,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "MSFT": {
+   "currency": "USD",
+   "price": 529.76,
+   "yield": 0.00687,
+   "divGrowth": 0.0995,
+   "priceGrowth": 0.2447,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "NOBL": {
+   "currency": "USD",
+   "price": 54.28,
+   "yield": 0.02162,
+   "divGrowth": 0.0815,
+   "priceGrowth": 0.0736,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "O": {
+   "currency": "USD",
+   "price": 53.35,
+   "yield": 0.06088,
+   "divGrowth": 0.0325,
+   "priceGrowth": -0.0007,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "PEP": {
+   "currency": "USD",
+   "price": 123.73,
+   "yield": 0.04692,
+   "divGrowth": 0.0722,
+   "priceGrowth": 0.0216,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "PFE": {
+   "currency": "USD",
+   "price": 28,
+   "yield": 0.06143,
+   "divGrowth": 0.0416,
+   "priceGrowth": -0.0086,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "PG": {
+   "currency": "USD",
+   "price": 147.82,
+   "yield": 0.02904,
+   "divGrowth": 0.0515,
+   "priceGrowth": 0.0605,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "PLD": {
+   "currency": "USD",
+   "price": 127.3,
+   "yield": 0.03315,
+   "divGrowth": 0.1043,
+   "priceGrowth": 0.0967,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "PM": {
+   "currency": "USD",
+   "price": 192.69,
+   "yield": 0.03119,
+   "divGrowth": 0.0412,
+   "priceGrowth": 0.0818,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "SBUX": {
+   "currency": "USD",
+   "price": 93.58,
+   "yield": 0.0265,
+   "divGrowth": 0.107,
+   "priceGrowth": 0.0494,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "SCHD": {
+   "currency": "USD",
+   "price": 32.65,
+   "yield": 0.03231,
+   "divGrowth": 0.0956,
+   "priceGrowth": 0.0864,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "SPYD": {
+   "currency": "USD",
+   "price": 45.2,
+   "yield": 0.04558,
+   "divGrowth": 0.028,
+   "priceGrowth": 0.0255,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "STAG": {
+   "currency": "USD",
+   "price": 35.28,
+   "yield": 0.04354,
+   "divGrowth": 0.0099,
+   "priceGrowth": 0.0413,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "T": {
+   "currency": "USD",
+   "price": 24.47,
+   "yield": 0.04544,
+   "divGrowth": -0.0615,
+   "priceGrowth": -0.0176,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "TXN": {
+   "currency": "USD",
+   "price": 288.98,
+   "yield": 0.01966,
+   "divGrowth": 0.0905,
+   "priceGrowth": 0.1471,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "VIG": {
+   "currency": "USD",
+   "price": 236.99,
+   "yield": 0.01538,
+   "divGrowth": 0.0726,
+   "priceGrowth": 0.1091,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "VYM": {
+   "currency": "USD",
+   "price": 157.45,
+   "yield": 0.02335,
+   "divGrowth": 0.0477,
+   "priceGrowth": 0.0786,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "VZ": {
+   "currency": "USD",
+   "price": 45.77,
+   "yield": 0.06109,
+   "divGrowth": 0.0209,
+   "priceGrowth": -0.0087,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "WMT": {
+   "currency": "USD",
+   "price": 108.16,
+   "yield": 0.00905,
+   "divGrowth": 0.0422,
+   "priceGrowth": 0.1663,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  },
+  "XOM": {
+   "currency": "USD",
+   "price": 164.05,
+   "yield": 0.02511,
+   "divGrowth": 0.0346,
+   "priceGrowth": 0.0656,
+   "years": 9.9,
+   "asOf": "2026-10-07"
+  }
+ }
+}
