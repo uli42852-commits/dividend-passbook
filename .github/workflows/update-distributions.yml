@@ -24,6 +24,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -42,7 +44,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Update distributions data"
-          git push
+          # 실행 중에 다른 커밋(PR 머지 등)이 main에 들어오면 push가 거절되므로, 최신 main 위로 올려서 다시 시도
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            echo "push 실패, ${i}번째 재시도 준비"
+            sleep $((i * 5))
+          done
+          exit 1
       - name: Report fetch failure
         if: env.FETCH_FAILED == '1'
         run: |
