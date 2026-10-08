@@ -8,6 +8,7 @@ import { loadData, getLoadedData } from './dataStore.js';
 import { MONTHLY_TICKERS, WEEKLY_TICKERS, payScheduleOf } from './payMonths.js';
 import { GUIDE_CATEGORIES, guideCategoryOf } from './guideCategories.js';
 import Payback from './Payback.jsx';
+import Salary from './Salary.jsx';
 import { loadDistributions, trailingTotal, inferPerYear } from './distributions.js';
 import { SITE, HOME_META, TAB_META, TAB_ORDER, stockMeta, articleMeta } from './pageMeta.js';
 
@@ -2192,6 +2193,7 @@ export default function App() {
           )}
 
           {tab === 'calendar' && <DividendCalendar holdings={holdings} data={data} onNavigate={goDeep} />}
+          {tab === 'salary' && <Salary data={data} onNavigate={goDeep} />}
           {tab === 'payback' && <Payback data={data} onNavigate={goDeep} />}
           {tab === 'find' && <TypeFinder />}
           {tab === 'stocks' && (data ? <StockCards deepId={deepId} onNavigate={goDeep} data={data} /> : <Loading />)}

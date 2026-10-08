@@ -15,6 +15,11 @@ export const TAB_META = {
     title: '배당금 계산기 — 보유 종목별 연간·월별 배당, 세후 금액 | 배당 통장',
     description: '보유 수량과 주당 배당금을 넣으면 연간·월평균 배당금, 월별 지급 흐름, 세후 실수령액(국내 15.4%, 미국 15%)을 바로 계산해요. 회원가입 없이 무료.',
   },
+  salary: {
+    label: '배당월급',
+    title: '배당 월급 시뮬레이터 — 매달 모으면 몇 년 뒤 월 배당은 얼마? | 배당 통장',
+    description: '매달 투자금과 기간을 넣으면 몇 년 뒤 매달 받는 배당을 계산해요. 과거 그대로·절반·성장 없음 세 가지 가정과 세후·물가 반영 금액, 대표 배당주 순위를 함께 보여줘요.',
+  },
   payback: {
     label: '원금회수',
     title: '원금회수 계산기 — 주배당·커버드콜 ETF 분배금으로 원금 회수 기간 계산 | 배당 통장',
@@ -42,7 +47,7 @@ export const TAB_META = {
   },
 };
 
-export const TAB_ORDER = ['calc', 'payback', 'calendar', 'find', 'stocks', 'guide'];
+export const TAB_ORDER = ['calc', 'salary', 'payback', 'calendar', 'find', 'stocks', 'guide'];
 
 export function stockMeta(s) {
   return {
