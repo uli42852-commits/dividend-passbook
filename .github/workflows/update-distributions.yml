@@ -1,0 +1,50 @@
+# 주배당·월배당 종목의 최근 분배금(public/distributions.json)과
+# 대표 배당주의 과거 10년 성장 통계(public/history.json)를 매주 갱신해요.
+# 바뀐 내용이 있으면 main에 커밋 → Vercel이 자동으로 다시 배포해요.
+# 수집이 대부분 실패하면(출처 차단·형식 변경) 파일을 건드리지 않고 이 작업이 실패로 표시돼요.
+# Actions 탭에서 "Run workflow" 버튼으로 바로 실행할 수도 있어요.
+name: Update distributions
+
+on:
+  schedule:
+    # 매주 토요일 09:17 KST (금요일 미국장 마감 후, 주배당 ETF 공시가 대부분 반영된 뒤)
+    - cron: '17 0 * * 6'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-distributions
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Fetch distributions and history
+        # 한쪽 데이터만 실패해도 성공한 쪽은 커밋하고, 실패 표시는 마지막 단계에서 해요
+        run: node scripts/fetch-distributions.mjs || echo "FETCH_FAILED=1" >> "$GITHUB_ENV"
+      - name: Commit if changed
+        run: |
+          for f in public/distributions.json public/history.json; do
+            [ -f "$f" ] && git add "$f"
+          done
+          if git diff --cached --quiet; then
+            echo "변경 없음"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update distributions data"
+          git push
+      - name: Report fetch failure
+        if: env.FETCH_FAILED == '1'
+        run: |
+          echo "일부 데이터 수집에 실패했어요. 위 로그에서 실패한 종목과 이유를 확인하세요."
+          exit 1

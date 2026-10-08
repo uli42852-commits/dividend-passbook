@@ -8,6 +8,8 @@ import { loadData, getLoadedData } from './dataStore.js';
 import { MONTHLY_TICKERS, WEEKLY_TICKERS, payScheduleOf } from './payMonths.js';
 import { GUIDE_CATEGORIES, guideCategoryOf } from './guideCategories.js';
 import Payback from './Payback.jsx';
+import Salary from './Salary.jsx';
+import { loadDistributions, trailingTotal, inferPerYear } from './distributions.js';
 import { SITE, HOME_META, TAB_META, TAB_ORDER, stockMeta, articleMeta } from './pageMeta.js';
 
 /* global __STOCK_COUNT__, __ARTICLE_COUNT__ */
@@ -557,6 +559,40 @@ function RelatedLinks({ stock, onNavigate, data }) {
   );
 }
 
+// 종목 카드 안 "최근 분배금" — 매주 갱신되는 distributions.json에 있는 종목만 (주배당·월배당)
+function RecentDistributions({ ticker, onNavigate }) {
+  const [dist, setDist] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    loadDistributions().then((d) => { if (alive) setDist(d); });
+    return () => { alive = false; };
+  }, []);
+  const e = dist?.tickers?.[ticker];
+  if (!e || !e.distributions?.length) return null;
+  const cur = e.currency;
+  const m = (n) => (cur === 'USD' ? `$${n.toFixed(n < 1 ? 4 : 2).replace(/(\.\d\d\d*?)0+$/, '$1')}` : `${Math.round(n).toLocaleString('ko-KR')}원`);
+  const total = trailingTotal(e);
+  return (
+    <div style={{ marginTop: 10, background: 'var(--pb-input-bg)', border: `1px solid ${C.line}`, borderRadius: 10, padding: '10px 12px' }}>
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: C.ink, marginBottom: 4 }}>최근 분배금</div>
+      <p style={{ fontSize: 13, color: C.inkSoft, margin: '0 0 6px', lineHeight: 1.6 }}>
+        최근 1년 {e.distributions.length}회({({ 52: '매주', 12: '매월', 4: '분기' })[inferPerYear(e)]}) · 합계 <b style={{ color: C.ink }}>{m(total)}</b>
+        {e.price > 0 && <> · 주가 {m(e.price)} 대비 약 {((total / e.price) * 100).toFixed(1)}%</>}
+        {Number.isFinite(e.change1y) && <> · 1년 주가 {(e.change1y * 100).toFixed(1)}%</>}
+      </p>
+      {e.distributions.slice(0, 6).map((d) => (
+        <div key={d.exDate} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: C.inkSoft, padding: '2px 0' }}>
+          <span>{d.exDate}</span><span style={{ color: C.ink, fontWeight: 600 }}>{m(d.amount)}</span>
+        </div>
+      ))}
+      <p style={{ fontSize: 12, color: C.inkSoft, margin: '6px 0 0' }}>
+        {dist.updatedAt} 기준 {dist.source} 자료 ·{' '}
+        <a href="/payback" onClick={(ev) => { ev.preventDefault(); onNavigate?.('payback'); }} style={{ color: C.cover }}>원금회수 계산하기 →</a>
+      </p>
+    </div>
+  );
+}
+
 function StockCards({ deepId, onNavigate, data }) {
   const { STOCKS } = data;
   const [q, setQ] = useState('');
@@ -761,6 +797,7 @@ function StockCards({ deepId, onNavigate, data }) {
                   <p key={i} style={{ fontSize: 13, lineHeight: 1.7, color: C.inkSoft, margin: '0 0 5px' }}>· {c}</p>
                 ))}
               </div>
+              <RecentDistributions ticker={s.ticker} onNavigate={onNavigate} />
               <RelatedLinks stock={s} onNavigate={onNavigate} data={data} />
               <button
                 onClick={(e) => { e.preventDefault(); copyLink(s.ticker); }}
@@ -1322,7 +1359,7 @@ export default function App() {
   const goDeep = (targetTab, id) => {
     setTab(targetTab);
     setDeepId(id);
-    window.history.pushState({}, '', `/${targetTab}/${id}`);
+    window.history.pushState({}, '', id == null ? `/${targetTab}` : `/${targetTab}/${id}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -2156,6 +2193,7 @@ export default function App() {
           )}
 
           {tab === 'calendar' && <DividendCalendar holdings={holdings} data={data} onNavigate={goDeep} />}
+          {tab === 'salary' && <Salary data={data} onNavigate={goDeep} />}
           {tab === 'payback' && <Payback data={data} onNavigate={goDeep} />}
           {tab === 'find' && <TypeFinder />}
           {tab === 'stocks' && (data ? <StockCards deepId={deepId} onNavigate={goDeep} data={data} /> : <Loading />)}

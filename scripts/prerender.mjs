@@ -22,11 +22,39 @@ import {
   SITE, SITE_NAME, HOME_META, TAB_META, TAB_ORDER, stockMeta, articleMeta,
 } from '../src/pageMeta.js';
 import { GUIDE_CATEGORIES, guideCategoryOf } from '../src/guideCategories.js';
+import { inferPerYear, trailingTotal } from '../src/distributions.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(__dirname, '..', 'dist');
 const OG_IMAGE = `${SITE}/og.png`;
 const BUILD_DATE = new Date().toISOString().slice(0, 10);
+
+// 매주 GitHub Actions가 갱신하는 최근 분배금 데이터 — 없으면 해당 섹션만 빠짐
+let PAYOUTS = null;
+try {
+  PAYOUTS = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'public', 'distributions.json'), 'utf-8'));
+} catch (e) { /* 아직 수집 전 */ }
+
+const FREQ_LABEL = { 52: '매주', 12: '매월', 4: '분기' };
+function distMoney(n, cur) {
+  // 1달러 미만은 소수 넷째 자리까지 보여주되 최소 둘째 자리는 유지 ($0.20, $0.1834)
+  return cur === 'USD' ? `$${n.toFixed(n < 1 ? 4 : 2).replace(/(\.\d\d\d*?)0+$/, '$1')}` : `${Math.round(n).toLocaleString('ko-KR')}원`;
+}
+
+// 종목 페이지의 "최근 분배금" 섹션 (최근 8회 + 1년 합계·주기·주가 대비 비율)
+function distributionsHtml(ticker) {
+  const e = PAYOUTS?.tickers?.[ticker];
+  if (!e || !e.distributions?.length) return '';
+  const cur = e.currency;
+  const total = trailingTotal(e);
+  const rate = e.price > 0 ? (total / e.price) * 100 : null;
+  const rows = e.distributions.slice(0, 8)
+    .map((d) => `<tr><td>${escapeHtml(d.exDate)}</td><td style="text-align:right">${escapeHtml(distMoney(d.amount, cur))}</td></tr>`).join('');
+  return `<h2>최근 분배금</h2>
+<p>최근 1년 동안 ${e.distributions.length}회(${FREQ_LABEL[inferPerYear(e)]}) 지급, 합계 ${escapeHtml(distMoney(total, cur))}${rate !== null ? ` — ${escapeHtml(e.priceDate || PAYOUTS.updatedAt)} 주가 ${escapeHtml(distMoney(e.price, cur))} 대비 약 ${rate.toFixed(1)}%` : ''}${Number.isFinite(e.change1y) ? `, 같은 기간 주가 변화 ${(e.change1y * 100).toFixed(1)}%` : ''}.</p>
+<table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th style="text-align:left">배당락일</th><th style="text-align:right">주당 분배금</th></tr></thead><tbody>${rows}</tbody></table>
+<p class="s-note">${escapeHtml(PAYOUTS.updatedAt)} 기준 ${escapeHtml(PAYOUTS.source)} 자료이며 매주 자동 갱신돼요. 공식 공시와 다를 수 있으니 운용사 발표를 함께 확인하세요. <a href="/payback">이 분배금으로 원금회수 기간 계산하기 →</a></p>`;
+}
 
 function escapeHtml(s) {
   return String(s)
@@ -167,6 +195,7 @@ ${crumbs(trail)}
 <p class="s-meta">${escapeHtml(s.typeTag)}</p>
 <p>${escapeHtml(s.basic)}</p>
 ${s.detail.map((p) => `<p>${escapeHtml(p)}</p>`).join('\n')}
+${distributionsHtml(s.ticker)}
 <h2>주의할 점</h2>
 <ul class="s-list">${s.caution.map((p) => `<li>${escapeHtml(p)}</li>`).join('\n')}</ul>
 ${relatedArticles.length ? `<h2>관련 가이드</h2><ul class="s-list">${relatedArticles.map((a) => `<li><a href="/guide/${escapeHtml(a.id)}">${escapeHtml(a.t)}</a></li>`).join('\n')}</ul>` : ''}
@@ -285,6 +314,14 @@ function tabPages() {
 <h2>자주 묻는 질문</h2>
 <p><b>Q. 계산된 배당금이 실제 받는 금액과 다를 수 있나요?</b><br>네. 기업이 배당을 늘리거나 줄이면 실제 지급액이 달라져요. 최신 주당배당금은 기업 IR·DART·운용사 페이지에서 확인 후 입력하세요.</p>
 <p><b>Q. 달러 배당은 어떻게 원화로 바꿔 계산하나요?</b><br>계산기에 설정한 환율(기본 1달러 1,400원, 직접 변경 가능)로 환산한 근사치예요.</p>`),
+    tabPage('salary', `<h1>배당 월급 시뮬레이터</h1>
+<p>매달 투자금과 투자 기간(10·20·30년)을 넣으면, 그 기간 뒤 매달 받게 될 세후 배당을 계산해요. 배당 재투자 여부와 물가상승률을 반영한 "오늘 돈 가치"도 함께 보여줘요.</p>
+<h2>과거 성장률을 그대로 믿지 않는 계산</h2>
+<p>과거 10년 동안 많이 오른 종목의 성장률을 30년 내내 그대로 이어가면 결과가 지나치게 크게 나와요. 그래서 같은 종목을 "과거 그대로", "과거의 절반", "성장 없음" 세 가지 가정으로 나란히 계산하고, 종목 순위는 중간인 "과거의 절반" 기준으로 매겨요.</p>
+<h2>자주 묻는 질문</h2>
+<p><b>Q. 과거 데이터는 어디서 오나요?</b><br>대표 배당주·배당 ETF의 최근 최대 10년 주가와 배당 이력으로 연평균 배당 증가율, 주가 상승률, 현재 배당수익률을 계산해 매주 갱신해요.</p>
+<p><b>Q. 왜 결과가 다른 서비스보다 작게 나오나요?</b><br>세금과 물가를 반영하고, 과거의 높은 성장률이 수십 년 그대로 이어진다고 가정하지 않기 때문이에요.</p>
+<p>관련 가이드: <a href="/guide/dividend-income-living">배당금으로 생활비 만들기</a> · <a href="/guide/monthly-dividend-3million-required-capital">월 300만원 배당에 필요한 투자금</a></p>`),
     tabPage('payback', `<h1>원금회수 계산기</h1>
 <p>투자금, 매입가, 1회 주당 분배금, 지급 주기(매주·매월·분기)를 넣으면 받은 분배금만으로 투자 원금을 되찾는 데 걸리는 기간을 계산해요. 주배당 ETF나 커버드콜 ETF처럼 분배율이 높은 종목에 맞춰 만들었어요.</p>
 <h2>주가 변화까지 함께 봐야 하는 이유</h2>
