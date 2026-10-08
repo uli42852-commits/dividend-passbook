@@ -18,10 +18,11 @@ export const MONTHLY_TICKERS = new Set([
   'PFD', 'PFO', 'FLC', 'DFP',
   'NCV', 'NCZ', 'JQC', 'EVV', 'EFT',
   'SLG', 'GWRS', 'PECO', 'PNNT',
+  'PEY', 'KBWD', 'DIV', 'SRET', 'TLTW', 'SVOL',
 ]);
 
 // 주배당(매주) 지급 종목 티커 (종목분석 탭의 "주배당" 필터 칩에서 사용)
-export const WEEKLY_TICKERS = new Set(['MSTY', 'PLTY', 'TSLY', 'NVDY', 'CONY', 'YMAX', 'YMAG', 'ULTY', 'AMZY', 'AMDY', 'APLY', 'GOOY', 'CVNY', 'NFLY', 'MSFO', 'SNOY', 'GMEY', 'HOOY', 'RBLY', 'BABO', 'PYPY', 'MARO', 'JPMO', 'OARK', 'DISO', 'XOMO', 'BRKC', 'YBIT', 'RDYY', 'MRNY', 'SHOY', 'PDDY', 'JDY', 'DRAY', 'GPTY', 'GDXY', 'CHPY', 'SMCY', 'LFGY', 'MINY', 'AIYY', 'CRSH', 'DIPS', 'WNTR', 'SLTY', 'FIAT', 'YQQQ', 'QDTY']);
+export const WEEKLY_TICKERS = new Set(['MSTY', 'PLTY', 'TSLY', 'NVDY', 'CONY', 'YMAX', 'YMAG', 'ULTY', 'AMZY', 'AMDY', 'APLY', 'GOOY', 'CVNY', 'NFLY', 'MSFO', 'SNOY', 'GMEY', 'HOOY', 'RBLY', 'BABO', 'PYPY', 'MARO', 'JPMO', 'OARK', 'DISO', 'XOMO', 'BRKC', 'YBIT', 'RDYY', 'MRNY', 'SHOY', 'PDDY', 'JDY', 'DRAY', 'GPTY', 'GDXY', 'CHPY', 'SMCY', 'LFGY', 'MINY', 'AIYY', 'CRSH', 'DIPS', 'WNTR', 'SLTY', 'FIAT', 'YQQQ', 'QDTY', 'XDTE', 'QDTE', 'RDTE']);
 
 // 정기 배당 지급월이 확인된 종목 (특별배당 달은 제외)
 export const KNOWN_PAY_MONTHS = {
