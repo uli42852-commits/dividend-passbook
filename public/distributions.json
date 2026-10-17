@@ -1,12 +1,12 @@
 {
- "updatedAt": "2026-10-10",
+ "updatedAt": "2026-10-17",
  "source": "Yahoo Finance",
  "tickers": {
   "329200": {
    "currency": "KRW",
-   "price": 4035,
-   "priceDate": "2026-10-08",
-   "change1y": -0.0745,
+   "price": 3985,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0891,
    "distributions": [
     {
      "exDate": "2026-09-29",
@@ -60,10 +60,14 @@
   },
   "402970": {
    "currency": "KRW",
-   "price": 14105,
-   "priceDate": "2026-10-08",
-   "change1y": 0.137,
+   "price": 14635,
+   "priceDate": "2026-10-16",
+   "change1y": 0.1937,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 38
+    },
     {
      "exDate": "2026-09-14",
      "amount": 35
@@ -107,18 +111,14 @@
     {
      "exDate": "2025-11-13",
      "amount": 21
-    },
-    {
-     "exDate": "2025-10-14",
-     "amount": 37
     }
    ]
   },
   "429000": {
    "currency": "KRW",
-   "price": 12260,
-   "priceDate": "2026-10-08",
-   "change1y": -0.0033,
+   "price": 12820,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0419,
    "distributions": [
     {
      "exDate": "2026-09-29",
@@ -172,10 +172,14 @@
   },
   "441640": {
    "currency": "KRW",
-   "price": 12095,
-   "priceDate": "2026-10-08",
-   "change1y": -0.0199,
+   "price": 12140,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0057,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 94
+    },
     {
      "exDate": "2026-09-14",
      "amount": 96
@@ -219,18 +223,14 @@
     {
      "exDate": "2025-11-13",
      "amount": 96
-    },
-    {
-     "exDate": "2025-10-14",
-     "amount": 93
     }
    ]
   },
   "446720": {
    "currency": "KRW",
-   "price": 12680,
-   "priceDate": "2026-10-08",
-   "change1y": 0.1296,
+   "price": 13200,
+   "priceDate": "2026-10-16",
+   "change1y": 0.1903,
    "distributions": [
     {
      "exDate": "2026-09-29",
@@ -284,9 +284,9 @@
   },
   "452360": {
    "currency": "KRW",
-   "price": 12760,
-   "priceDate": "2026-10-08",
-   "change1y": 0.182,
+   "price": 13365,
+   "priceDate": "2026-10-16",
+   "change1y": 0.2508,
    "distributions": [
     {
      "exDate": "2026-09-29",
@@ -340,9 +340,9 @@
   },
   "458730": {
    "currency": "KRW",
-   "price": 13840,
-   "priceDate": "2026-10-08",
-   "change1y": 0.134,
+   "price": 14410,
+   "priceDate": "2026-10-16",
+   "change1y": 0.1924,
    "distributions": [
     {
      "exDate": "2026-09-29",
@@ -396,9 +396,9 @@
   },
   "458760": {
    "currency": "KRW",
-   "price": 10070,
-   "priceDate": "2026-10-08",
-   "change1y": 0.0645,
+   "price": 10460,
+   "priceDate": "2026-10-16",
+   "change1y": 0.1098,
    "distributions": [
     {
      "exDate": "2026-09-29",
@@ -452,9 +452,9 @@
   },
   "472150": {
    "currency": "KRW",
-   "price": 19510,
-   "priceDate": "2026-10-08",
-   "change1y": 0.5278,
+   "price": 16200,
+   "priceDate": "2026-10-16",
+   "change1y": 0.2457,
    "distributions": [
     {
      "exDate": "2026-09-29",
@@ -508,10 +508,14 @@
   },
   "489250": {
    "currency": "KRW",
-   "price": 11935,
-   "priceDate": "2026-10-08",
-   "change1y": 0.1356,
+   "price": 12400,
+   "priceDate": "2026-10-16",
+   "change1y": 0.1952,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 37
+    },
     {
      "exDate": "2026-09-14",
      "amount": 24
@@ -555,18 +559,14 @@
     {
      "exDate": "2025-11-13",
      "amount": 21
-    },
-    {
-     "exDate": "2025-10-14",
-     "amount": 31
     }
    ]
   },
   "ADC": {
    "currency": "USD",
-   "price": 65.95,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0853,
+   "price": 67.04,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1068,
    "distributions": [
     {
      "exDate": "2026-09-30",
@@ -620,9 +620,9 @@
   },
   "AGNC": {
    "currency": "USD",
-   "price": 8.67,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1269,
+   "price": 8.72,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1271,
    "distributions": [
     {
      "exDate": "2026-09-30",
@@ -676,17 +676,21 @@
   },
   "AIYY": {
    "currency": "USD",
-   "price": 7.44,
-   "priceDate": "2026-10-09",
-   "change1y": -0.7171,
+   "price": 7.22,
+   "priceDate": "2026-10-16",
+   "change1y": -0.7124,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.089
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.088
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.098
+     "amount": 0.088
     },
     {
      "exDate": "2026-09-24",
@@ -892,17 +896,21 @@
   },
   "AMDY": {
    "currency": "USD",
-   "price": 49.47,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0189,
+   "price": 42.77,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1043,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.668
+    },
     {
      "exDate": "2026-10-08",
      "amount": 1.025
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.987
+     "amount": 1.025
     },
     {
      "exDate": "2026-09-24",
@@ -1108,17 +1116,21 @@
   },
   "AMZY": {
    "currency": "USD",
-   "price": 10.6,
-   "priceDate": "2026-10-09",
-   "change1y": -0.2498,
+   "price": 10.12,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2629,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.055
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.053
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.049
+     "amount": 0.053
     },
     {
      "exDate": "2026-09-24",
@@ -1324,9 +1336,9 @@
   },
   "APLE": {
    "currency": "USD",
-   "price": 16.31,
-   "priceDate": "2026-10-09",
-   "change1y": 0.4421,
+   "price": 17.05,
+   "priceDate": "2026-10-16",
+   "change1y": 0.4762,
    "distributions": [
     {
      "exDate": "2026-09-30",
@@ -1380,17 +1392,21 @@
   },
   "APLY": {
    "currency": "USD",
-   "price": 11.82,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1079,
+   "price": 11.86,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1143,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.058
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.06
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.068
+     "amount": 0.06
     },
     {
      "exDate": "2026-09-24",
@@ -1596,10 +1612,14 @@
   },
   "ARR": {
    "currency": "USD",
-   "price": 13.59,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1311,
+   "price": 13.2,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1571,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.24
+    },
     {
      "exDate": "2026-09-15",
      "amount": 0.24
@@ -1643,26 +1663,26 @@
     {
      "exDate": "2025-11-17",
      "amount": 0.24
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.24
     }
    ]
   },
   "BABO": {
    "currency": "USD",
-   "price": 7.14,
-   "priceDate": "2026-10-09",
-   "change1y": -0.529,
+   "price": 7.03,
+   "priceDate": "2026-10-16",
+   "change1y": -0.5573,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.046
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.042
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.046
+     "amount": 0.042
     },
     {
      "exDate": "2026-09-24",
@@ -1863,26 +1883,26 @@
     {
      "exDate": "2025-10-16",
      "amount": 0.135
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 1.888
     }
    ]
   },
   "BRKC": {
    "currency": "USD",
-   "price": 39.78,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1532,
+   "price": 40.6625,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1323,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.095
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.101
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.118
+     "amount": 0.101
     },
     {
      "exDate": "2026-09-24",
@@ -2088,10 +2108,14 @@
   },
   "BST": {
    "currency": "USD",
-   "price": 50.54,
-   "priceDate": "2026-10-09",
-   "change1y": 0.2152,
+   "price": 47.35,
+   "priceDate": "2026-10-16",
+   "change1y": 0.1443,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.25
+    },
     {
      "exDate": "2026-09-15",
      "amount": 2.554
@@ -2135,19 +2159,19 @@
     {
      "exDate": "2025-11-14",
      "amount": 0.25
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.25
     }
    ]
   },
   "CHPY": {
    "currency": "USD",
-   "price": 67.92,
-   "priceDate": "2026-10-09",
-   "change1y": 0.2453,
+   "price": 60.04,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0434,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 0.514
+    },
     {
      "exDate": "2026-10-07",
      "amount": 0.585
@@ -2351,23 +2375,19 @@
     {
      "exDate": "2025-10-22",
      "amount": 0.579
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.407
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.431
     }
    ]
   },
   "CLM": {
    "currency": "USD",
-   "price": 6.59,
-   "priceDate": "2026-10-09",
-   "change1y": -0.2012,
+   "price": 6.18,
+   "priceDate": "2026-10-16",
+   "change1y": -0.25,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.122
+    },
     {
      "exDate": "2026-09-15",
      "amount": 0.122
@@ -2411,26 +2431,26 @@
     {
      "exDate": "2025-11-14",
      "amount": 0.122
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.122
     }
    ]
   },
   "CONY": {
    "currency": "USD",
-   "price": 19.04,
-   "priceDate": "2026-10-09",
-   "change1y": -0.7322,
+   "price": 18.32,
+   "priceDate": "2026-10-16",
+   "change1y": -0.7129,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.215
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.222
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.258
+     "amount": 0.222
     },
     {
      "exDate": "2026-09-24",
@@ -2636,10 +2656,14 @@
   },
   "CRF": {
    "currency": "USD",
-   "price": 6.22,
-   "priceDate": "2026-10-09",
-   "change1y": -0.2215,
+   "price": 5.9,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2616,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.118
+    },
     {
      "exDate": "2026-09-15",
      "amount": 0.118
@@ -2683,26 +2707,26 @@
     {
      "exDate": "2025-11-14",
      "amount": 0.117
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.117
     }
    ]
   },
   "CRSH": {
    "currency": "USD",
-   "price": 18.4423,
-   "priceDate": "2026-10-09",
-   "change1y": -0.407,
+   "price": 19.399,
+   "priceDate": "2026-10-16",
+   "change1y": -0.3402,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.164
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.163
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.172
+     "amount": 0.163
     },
     {
      "exDate": "2026-09-24",
@@ -2908,10 +2932,14 @@
   },
   "CSWC": {
    "currency": "USD",
-   "price": 23.54,
-   "priceDate": "2026-10-09",
-   "change1y": 0.209,
+   "price": 23.08,
+   "priceDate": "2026-10-16",
+   "change1y": 0.1314,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.193
+    },
     {
      "exDate": "2026-09-15",
      "amount": 0.253
@@ -2955,19 +2983,19 @@
     {
      "exDate": "2025-11-14",
      "amount": 0.193
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.193
     }
    ]
   },
   "CVNY": {
    "currency": "USD",
-   "price": 17.544,
-   "priceDate": "2026-10-09",
-   "change1y": -0.5108,
+   "price": 16.279,
+   "priceDate": "2026-10-16",
+   "change1y": -0.5367,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.181
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.201
@@ -3180,9 +3208,9 @@
   },
   "DFP": {
    "currency": "USD",
-   "price": 18.9,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1254,
+   "price": 18.78,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1273,
    "distributions": [
     {
      "exDate": "2026-09-23",
@@ -3236,17 +3264,21 @@
   },
   "DIPS": {
    "currency": "USD",
-   "price": 31.1636,
-   "priceDate": "2026-10-08",
-   "change1y": -0.4618,
+   "price": 32.4134,
+   "priceDate": "2026-10-16",
+   "change1y": -0.4363,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.202
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.196
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.202
+     "amount": 0.196
     },
     {
      "exDate": "2026-09-24",
@@ -3447,18 +3479,14 @@
     {
      "exDate": "2025-10-16",
      "amount": 0.59
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 1.64
     }
    ]
   },
   "DIV": {
    "currency": "USD",
-   "price": 18.86,
-   "priceDate": "2026-10-09",
-   "change1y": 0.1193,
+   "price": 19.05,
+   "priceDate": "2026-10-16",
+   "change1y": 0.1082,
    "distributions": [
     {
      "exDate": "2026-10-05",
@@ -3512,9 +3540,9 @@
   },
   "DIVO": {
    "currency": "USD",
-   "price": 47.44,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0881,
+   "price": 47.81,
+   "priceDate": "2026-10-16",
+   "change1y": 0.08,
    "distributions": [
     {
      "exDate": "2026-09-29",
@@ -3568,9 +3596,9 @@
   },
   "DOC": {
    "currency": "USD",
-   "price": 18.8,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0416,
+   "price": 18.98,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0232,
    "distributions": [
     {
      "exDate": "2026-09-14",
@@ -3624,17 +3652,21 @@
   },
   "DRAY": {
    "currency": "USD",
-   "price": 11.49,
-   "priceDate": "2026-10-09",
-   "change1y": -0.6832,
+   "price": 11.012,
+   "priceDate": "2026-10-16",
+   "change1y": -0.6978,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.108
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.09
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.095
+     "amount": 0.09
     },
     {
      "exDate": "2026-09-24",
@@ -3840,9 +3872,9 @@
   },
   "DX": {
    "currency": "USD",
-   "price": 10.86,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1633,
+   "price": 10.93,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1831,
    "distributions": [
     {
      "exDate": "2026-09-21",
@@ -3896,10 +3928,14 @@
   },
   "ECC": {
    "currency": "USD",
-   "price": 3.09,
-   "priceDate": "2026-10-09",
-   "change1y": -0.5332,
+   "price": 2.9,
+   "priceDate": "2026-10-16",
+   "change1y": -0.5215,
    "distributions": [
+    {
+     "exDate": "2026-10-13",
+     "amount": 0.06
+    },
     {
      "exDate": "2026-09-10",
      "amount": 0.06
@@ -3943,18 +3979,14 @@
     {
      "exDate": "2025-11-10",
      "amount": 0.14
-    },
-    {
-     "exDate": "2025-10-14",
-     "amount": 0.14
     }
    ]
   },
   "EFC": {
    "currency": "USD",
-   "price": 11.66,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1318,
+   "price": 11.65,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1434,
    "distributions": [
     {
      "exDate": "2026-09-30",
@@ -4008,10 +4040,14 @@
   },
   "EFT": {
    "currency": "USD",
-   "price": 10.65,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0944,
+   "price": 10.59,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0807,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.07
+    },
     {
      "exDate": "2026-09-15",
      "amount": 0.071
@@ -4055,18 +4091,14 @@
     {
      "exDate": "2025-11-14",
      "amount": 0.086
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.086
     }
    ]
   },
   "EIC": {
    "currency": "USD",
-   "price": 8.98,
-   "priceDate": "2026-10-09",
-   "change1y": -0.2816,
+   "price": 9.1,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2547,
    "distributions": [
     {
      "exDate": "2026-05-11",
@@ -4095,18 +4127,14 @@
     {
      "exDate": "2025-11-10",
      "amount": 0.13
-    },
-    {
-     "exDate": "2025-10-14",
-     "amount": 0.13
     }
    ]
   },
   "EPR": {
    "currency": "USD",
-   "price": 54.74,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0162,
+   "price": 55.71,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0228,
    "distributions": [
     {
      "exDate": "2026-09-30",
@@ -4160,10 +4188,14 @@
   },
   "EVV": {
    "currency": "USD",
-   "price": 8.44,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1602,
+   "price": 8.32,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1579,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 0.067
+    },
     {
      "exDate": "2026-09-14",
      "amount": 0.07
@@ -4207,18 +4239,14 @@
     {
      "exDate": "2025-11-13",
      "amount": 0.073
-    },
-    {
-     "exDate": "2025-10-14",
-     "amount": 0.074
     }
    ]
   },
   "FFC": {
    "currency": "USD",
-   "price": 14.78,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1123,
+   "price": 14.56,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1239,
    "distributions": [
     {
      "exDate": "2026-09-23",
@@ -4272,10 +4300,14 @@
   },
   "FIAT": {
    "currency": "USD",
-   "price": 15.68,
-   "priceDate": "2026-10-09",
-   "change1y": -0.3851,
+   "price": 16.14,
+   "priceDate": "2026-10-16",
+   "change1y": -0.3671,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.166
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.163
@@ -4488,9 +4520,9 @@
   },
   "FLC": {
    "currency": "USD",
-   "price": 15.58,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1218,
+   "price": 15.63,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1169,
    "distributions": [
     {
      "exDate": "2026-09-23",
@@ -4544,9 +4576,9 @@
   },
   "GAIN": {
    "currency": "USD",
-   "price": 15.25,
-   "priceDate": "2026-10-09",
-   "change1y": 0.1553,
+   "price": 15.05,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0827,
    "distributions": [
     {
      "exDate": "2026-09-21",
@@ -4600,17 +4632,21 @@
   },
   "GDXY": {
    "currency": "USD",
-   "price": 10.07,
-   "priceDate": "2026-10-09",
-   "change1y": -0.3977,
+   "price": 9.91,
+   "priceDate": "2026-10-16",
+   "change1y": -0.4136,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.078
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.077
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.07
+     "amount": 0.077
     },
     {
      "exDate": "2026-09-24",
@@ -4811,18 +4847,14 @@
     {
      "exDate": "2025-10-16",
      "amount": 0.113
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 1.003
     }
    ]
   },
   "GLAD": {
    "currency": "USD",
-   "price": 18.81,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0259,
+   "price": 18.88,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0207,
    "distributions": [
     {
      "exDate": "2026-09-21",
@@ -4880,17 +4912,21 @@
   },
   "GMEY": {
    "currency": "USD",
-   "price": 25.839,
-   "priceDate": "2026-10-09",
-   "change1y": -0.4747,
+   "price": 25.7738,
+   "priceDate": "2026-10-16",
+   "change1y": -0.4506,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.378
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.417
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.39
+     "amount": 0.417
     },
     {
      "exDate": "2026-09-24",
@@ -5096,10 +5132,14 @@
   },
   "GOF": {
    "currency": "USD",
-   "price": 8.83,
-   "priceDate": "2026-10-09",
-   "change1y": -0.4066,
+   "price": 8.48,
+   "priceDate": "2026-10-16",
+   "change1y": -0.3982,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.182
+    },
     {
      "exDate": "2026-09-15",
      "amount": 0.182
@@ -5143,18 +5183,14 @@
     {
      "exDate": "2025-11-14",
      "amount": 0.182
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.182
     }
    ]
   },
   "GOOD": {
    "currency": "USD",
-   "price": 12.68,
-   "priceDate": "2026-10-09",
-   "change1y": 0.1211,
+   "price": 12.47,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0843,
    "distributions": [
     {
      "exDate": "2026-09-21",
@@ -5208,10 +5244,14 @@
   },
   "GOOY": {
    "currency": "USD",
-   "price": 12.19,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0786,
+   "price": 11.8,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1443,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.071
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.059
@@ -5424,9 +5464,9 @@
   },
   "GPIQ": {
    "currency": "USD",
-   "price": 58.19,
-   "priceDate": "2026-10-09",
-   "change1y": 0.135,
+   "price": 55.55,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0615,
    "distributions": [
     {
      "exDate": "2026-10-01",
@@ -5480,10 +5520,14 @@
   },
   "GPTY": {
    "currency": "USD",
-   "price": 42.84,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0789,
+   "price": 39.03,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1746,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 0.287
+    },
     {
      "exDate": "2026-10-07",
      "amount": 0.297
@@ -5687,23 +5731,19 @@
     {
      "exDate": "2025-10-22",
      "amount": 0.456
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.314
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.301
     }
    ]
   },
   "GWRS": {
    "currency": "USD",
-   "price": 8.14,
-   "priceDate": "2026-10-09",
-   "change1y": -0.215,
+   "price": 7.99,
+   "priceDate": "2026-10-16",
+   "change1y": -0.219,
    "distributions": [
+    {
+     "exDate": "2026-10-16",
+     "amount": 0.025
+    },
     {
      "exDate": "2026-09-16",
      "amount": 0.025
@@ -5756,17 +5796,21 @@
   },
   "HOOY": {
    "currency": "USD",
-   "price": 25.63,
-   "priceDate": "2026-10-09",
-   "change1y": -0.6544,
+   "price": 23.2,
+   "priceDate": "2026-10-16",
+   "change1y": -0.6402,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.301
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.338
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.43
+     "amount": 0.338
     },
     {
      "exDate": "2026-09-24",
@@ -5972,10 +6016,14 @@
   },
   "HRZN": {
    "currency": "USD",
-   "price": 4.585,
-   "priceDate": "2026-10-09",
-   "change1y": -0.2229,
+   "price": 4.29,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2667,
    "distributions": [
+    {
+     "exDate": "2026-10-16",
+     "amount": 0.09
+    },
     {
      "exDate": "2026-09-16",
      "amount": 0.09
@@ -6028,9 +6076,9 @@
   },
   "JEPI": {
    "currency": "USD",
-   "price": 56.77,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0138,
+   "price": 57.04,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0032,
    "distributions": [
     {
      "exDate": "2026-10-01",
@@ -6084,9 +6132,9 @@
   },
   "JEPQ": {
    "currency": "USD",
-   "price": 61.09,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0845,
+   "price": 58.81,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0231,
    "distributions": [
     {
      "exDate": "2026-10-01",
@@ -6140,10 +6188,14 @@
   },
   "JQC": {
    "currency": "USD",
-   "price": 4.65,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1023,
+   "price": 4.48,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0986,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.05
+    },
     {
      "exDate": "2026-09-15",
      "amount": 0.05
@@ -6187,18 +6239,14 @@
     {
      "exDate": "2025-11-14",
      "amount": 0.054
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.054
     }
    ]
   },
   "KBWD": {
    "currency": "USD",
-   "price": 10.635,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1937,
+   "price": 10.47,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2163,
    "distributions": [
     {
      "exDate": "2026-09-21",
@@ -6252,9 +6300,9 @@
   },
   "LAND": {
    "currency": "USD",
-   "price": 9.48,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0522,
+   "price": 9.28,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0254,
    "distributions": [
     {
      "exDate": "2026-09-21",
@@ -6308,10 +6356,14 @@
   },
   "LFGY": {
    "currency": "USD",
-   "price": 18.23,
-   "priceDate": "2026-10-09",
-   "change1y": -0.5023,
+   "price": 16.42,
+   "priceDate": "2026-10-16",
+   "change1y": -0.5494,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 0.141
+    },
     {
      "exDate": "2026-10-07",
      "amount": 0.15
@@ -6515,22 +6567,14 @@
     {
      "exDate": "2025-10-22",
      "amount": 0.579
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.583
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.51
     }
    ]
   },
   "LTC": {
    "currency": "USD",
-   "price": 42.46,
-   "priceDate": "2026-10-09",
-   "change1y": 0.2386,
+   "price": 43.68,
+   "priceDate": "2026-10-16",
+   "change1y": 0.2402,
    "distributions": [
     {
      "exDate": "2026-09-22",
@@ -6584,9 +6628,9 @@
   },
   "MAIN": {
    "currency": "USD",
-   "price": 53.74,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0247,
+   "price": 53.83,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0741,
    "distributions": [
     {
      "exDate": "2026-10-08",
@@ -6656,17 +6700,21 @@
   },
   "MARO": {
    "currency": "USD",
-   "price": 3.25,
-   "priceDate": "2026-10-09",
-   "change1y": -0.8145,
+   "price": 2.52,
+   "priceDate": "2026-10-16",
+   "change1y": -0.8575,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.039
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.047
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.071
+     "amount": 0.047
     },
     {
      "exDate": "2026-09-24",
@@ -6867,19 +6915,19 @@
     {
      "exDate": "2025-10-16",
      "amount": 0.304
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 1.577
     }
    ]
   },
   "MINY": {
    "currency": "USD",
-   "price": 35.5986,
-   "priceDate": "2026-10-09",
+   "price": 33.8616,
+   "priceDate": "2026-10-16",
    "change1y": null,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 0.207
+    },
     {
      "exDate": "2026-10-07",
      "amount": 0.209
@@ -7008,17 +7056,21 @@
   },
   "MRNY": {
    "currency": "USD",
-   "price": 43.63,
-   "priceDate": "2026-10-09",
-   "change1y": 1.5817,
+   "price": 42,
+   "priceDate": "2026-10-16",
+   "change1y": 1.561,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.811
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.746
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.807
+     "amount": 0.746
     },
     {
      "exDate": "2026-09-24",
@@ -7219,26 +7271,26 @@
     {
      "exDate": "2025-10-16",
      "amount": 0.22
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 1.15
     }
    ]
   },
   "MSFO": {
    "currency": "USD",
-   "price": 12.59,
-   "priceDate": "2026-10-09",
-   "change1y": -0.2735,
+   "price": 12.43,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2752,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.075
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.062
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.057
+     "amount": 0.062
     },
     {
      "exDate": "2026-09-24",
@@ -7444,17 +7496,21 @@
   },
   "MSTY": {
    "currency": "USD",
-   "price": 15.66,
-   "priceDate": "2026-10-09",
-   "change1y": -0.7587,
+   "price": 13.84,
+   "priceDate": "2026-10-16",
+   "change1y": -0.7666,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.247
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.245
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.311
+     "amount": 0.245
     },
     {
      "exDate": "2026-09-24",
@@ -7660,10 +7716,14 @@
   },
   "NCV": {
    "currency": "USD",
-   "price": 15.67,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0156,
+   "price": 14.78,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0378,
    "distributions": [
+    {
+     "exDate": "2026-10-13",
+     "amount": 0.136
+    },
     {
      "exDate": "2026-09-14",
      "amount": 0.136
@@ -7706,20 +7766,20 @@
     },
     {
      "exDate": "2025-11-13",
-     "amount": 0.136
-    },
-    {
-     "exDate": "2025-10-14",
      "amount": 0.136
     }
    ]
   },
   "NCZ": {
    "currency": "USD",
-   "price": 14.51,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0372,
+   "price": 13.76,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0036,
    "distributions": [
+    {
+     "exDate": "2026-10-13",
+     "amount": 0.12
+    },
     {
      "exDate": "2026-09-14",
      "amount": 0.12
@@ -7763,19 +7823,19 @@
     {
      "exDate": "2025-11-13",
      "amount": 0.12
-    },
-    {
-     "exDate": "2025-10-14",
-     "amount": 0.12
     }
    ]
   },
   "NFLY": {
    "currency": "USD",
-   "price": 6.71,
-   "priceDate": "2026-10-09",
-   "change1y": -0.5933,
+   "price": 6.82,
+   "priceDate": "2026-10-16",
+   "change1y": -0.5708,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.033
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.033
@@ -7988,17 +8048,21 @@
   },
   "NVDY": {
    "currency": "USD",
-   "price": 12.57,
-   "priceDate": "2026-10-09",
-   "change1y": -0.2024,
+   "price": 11.69,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2559,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.08
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.076
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.087
+     "amount": 0.076
     },
     {
      "exDate": "2026-09-24",
@@ -8199,18 +8263,14 @@
     {
      "exDate": "2025-10-16",
      "amount": 0.109
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.795
     }
    ]
   },
   "O": {
    "currency": "USD",
-   "price": 54.18,
-   "priceDate": "2026-10-09",
-   "change1y": -0.07,
+   "price": 56.08,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0644,
    "distributions": [
     {
      "exDate": "2026-09-30",
@@ -8264,17 +8324,21 @@
   },
   "OARK": {
    "currency": "USD",
-   "price": 29.8893,
-   "priceDate": "2026-10-09",
-   "change1y": -0.3313,
+   "price": 27.2073,
+   "priceDate": "2026-10-16",
+   "change1y": -0.3795,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.191
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.167
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.204
+     "amount": 0.167
     },
     {
      "exDate": "2026-09-24",
@@ -8480,9 +8544,9 @@
   },
   "ORC": {
    "currency": "USD",
-   "price": 5.08,
-   "priceDate": "2026-10-09",
-   "change1y": -0.2825,
+   "price": 4.97,
+   "priceDate": "2026-10-16",
+   "change1y": -0.322,
    "distributions": [
     {
      "exDate": "2026-09-30",
@@ -8536,10 +8600,14 @@
   },
   "OXLC": {
    "currency": "USD",
-   "price": 8.56,
-   "priceDate": "2026-10-09",
-   "change1y": -0.4796,
+   "price": 7.91,
+   "priceDate": "2026-10-16",
+   "change1y": -0.481,
    "distributions": [
+    {
+     "exDate": "2026-10-16",
+     "amount": 0.2
+    },
     {
      "exDate": "2026-09-16",
      "amount": 0.2
@@ -8592,10 +8660,14 @@
   },
   "PDI": {
    "currency": "USD",
-   "price": 14.36,
-   "priceDate": "2026-10-09",
-   "change1y": -0.2722,
+   "price": 14.26,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2475,
    "distributions": [
+    {
+     "exDate": "2026-10-13",
+     "amount": 0.221
+    },
     {
      "exDate": "2026-09-11",
      "amount": 0.221
@@ -8638,20 +8710,20 @@
     },
     {
      "exDate": "2025-11-14",
-     "amount": 0.221
-    },
-    {
-     "exDate": "2025-10-14",
      "amount": 0.221
     }
    ]
   },
   "PDO": {
    "currency": "USD",
-   "price": 12.1,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1425,
+   "price": 11.79,
+   "priceDate": "2026-10-16",
+   "change1y": -0.145,
    "distributions": [
+    {
+     "exDate": "2026-10-13",
+     "amount": 0.128
+    },
     {
      "exDate": "2026-09-11",
      "amount": 0.128
@@ -8695,19 +8767,19 @@
     {
      "exDate": "2025-11-14",
      "amount": 0.128
-    },
-    {
-     "exDate": "2025-10-14",
-     "amount": 0.128
     }
    ]
   },
   "PDT": {
    "currency": "USD",
-   "price": 12.04,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0809,
+   "price": 11.92,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0852,
    "distributions": [
+    {
+     "exDate": "2026-10-13",
+     "amount": 0.088
+    },
     {
      "exDate": "2026-09-11",
      "amount": 0.088
@@ -8751,19 +8823,19 @@
     {
      "exDate": "2025-11-13",
      "amount": 0.083
-    },
-    {
-     "exDate": "2025-10-14",
-     "amount": 0.083
     }
    ]
   },
   "PECO": {
    "currency": "USD",
-   "price": 37.57,
-   "priceDate": "2026-10-09",
-   "change1y": 0.1299,
+   "price": 38.21,
+   "priceDate": "2026-10-16",
+   "change1y": 0.1072,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.115
+    },
     {
      "exDate": "2026-09-15",
      "amount": 0.115
@@ -8807,18 +8879,14 @@
     {
      "exDate": "2025-11-17",
      "amount": 0.108
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.108
     }
    ]
   },
   "PEY": {
    "currency": "USD",
-   "price": 22.936,
-   "priceDate": "2026-10-09",
-   "change1y": 0.1232,
+   "price": 23.608,
+   "priceDate": "2026-10-16",
+   "change1y": 0.1285,
    "distributions": [
     {
      "exDate": "2026-09-21",
@@ -8872,9 +8940,9 @@
   },
   "PFD": {
    "currency": "USD",
-   "price": 10.58,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1064,
+   "price": 10.51,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1108,
    "distributions": [
     {
      "exDate": "2026-09-23",
@@ -8928,9 +8996,9 @@
   },
   "PFF": {
    "currency": "USD",
-   "price": 29.38,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0562,
+   "price": 28.86,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0812,
    "distributions": [
     {
      "exDate": "2026-10-01",
@@ -8984,9 +9052,9 @@
   },
   "PFFA": {
    "currency": "USD",
-   "price": 19.52,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0904,
+   "price": 19.21,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1094,
    "distributions": [
     {
      "exDate": "2026-09-21",
@@ -9040,10 +9108,14 @@
   },
   "PFLT": {
    "currency": "USD",
-   "price": 6.68,
-   "priceDate": "2026-10-09",
-   "change1y": -0.215,
+   "price": 6.51,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2359,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.083
+    },
     {
      "exDate": "2026-09-15",
      "amount": 0.083
@@ -9087,18 +9159,14 @@
     {
      "exDate": "2025-11-17",
      "amount": 0.103
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.103
     }
    ]
   },
   "PFO": {
    "currency": "USD",
-   "price": 8.56,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1184,
+   "price": 8.54,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1205,
    "distributions": [
     {
      "exDate": "2026-09-23",
@@ -9152,17 +9220,21 @@
   },
   "PLTY": {
    "currency": "USD",
-   "price": 38.95,
-   "priceDate": "2026-10-09",
-   "change1y": -0.3515,
+   "price": 34.52,
+   "priceDate": "2026-10-16",
+   "change1y": -0.4305,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.563
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.289
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.229
+     "amount": 0.289
     },
     {
      "exDate": "2026-09-24",
@@ -9363,19 +9435,19 @@
     {
      "exDate": "2025-10-16",
      "amount": 0.741
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 3.285
     }
    ]
   },
   "PNNT": {
    "currency": "USD",
-   "price": 3.18,
-   "priceDate": "2026-10-09",
-   "change1y": -0.5016,
+   "price": 3.04,
+   "priceDate": "2026-10-16",
+   "change1y": -0.5272,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.08
+    },
     {
      "exDate": "2026-09-15",
      "amount": 0.08
@@ -9419,18 +9491,14 @@
     {
      "exDate": "2025-11-17",
      "amount": 0.08
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.08
     }
    ]
   },
   "PSEC": {
    "currency": "USD",
-   "price": 1.72,
-   "priceDate": "2026-10-09",
-   "change1y": -0.3558,
+   "price": 1.6,
+   "priceDate": "2026-10-16",
+   "change1y": -0.4139,
    "distributions": [
     {
      "exDate": "2026-09-28",
@@ -9484,10 +9552,14 @@
   },
   "PTY": {
    "currency": "USD",
-   "price": 10.97,
-   "priceDate": "2026-10-09",
-   "change1y": -0.2403,
+   "price": 10.71,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2289,
    "distributions": [
+    {
+     "exDate": "2026-10-13",
+     "amount": 0.119
+    },
     {
      "exDate": "2026-09-11",
      "amount": 0.119
@@ -9531,18 +9603,14 @@
     {
      "exDate": "2025-11-14",
      "amount": 0.119
-    },
-    {
-     "exDate": "2025-10-14",
-     "amount": 0.119
     }
    ]
   },
   "PVL": {
    "currency": "USD",
    "price": 1.79,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0287,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0229,
    "distributions": [
     {
      "exDate": "2026-09-30",
@@ -9596,17 +9664,21 @@
   },
   "PYPY": {
    "currency": "USD",
-   "price": 25.73,
-   "priceDate": "2026-10-09",
-   "change1y": -0.525,
+   "price": 25.88,
+   "priceDate": "2026-10-16",
+   "change1y": -0.4916,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.154
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.127
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.151
+     "amount": 0.127
     },
     {
      "exDate": "2026-09-24",
@@ -9812,10 +9884,14 @@
   },
   "QDTE": {
    "currency": "USD",
-   "price": 29.5,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1414,
+   "price": 27.82,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2042,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.129
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.113
@@ -10023,19 +10099,19 @@
     {
      "exDate": "2025-10-16",
      "amount": 0.204
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.204
     }
    ]
   },
   "QDTY": {
    "currency": "USD",
-   "price": 39.265,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1051,
+   "price": 36.738,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1802,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 0.234
+    },
     {
      "exDate": "2026-10-07",
      "amount": 0.239
@@ -10239,22 +10315,14 @@
     {
      "exDate": "2025-10-22",
      "amount": 0.345
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.246
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.247
     }
    ]
   },
   "QQQI": {
    "currency": "USD",
-   "price": 56.27,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0537,
+   "price": 53.62,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0158,
    "distributions": [
     {
      "exDate": "2026-09-16",
@@ -10308,9 +10376,9 @@
   },
   "QYLD": {
    "currency": "USD",
-   "price": 18.69,
-   "priceDate": "2026-10-09",
-   "change1y": 0.1072,
+   "price": 18.32,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0602,
    "distributions": [
     {
      "exDate": "2026-09-21",
@@ -10364,17 +10432,21 @@
   },
   "RBLY": {
    "currency": "USD",
-   "price": 9.4658,
-   "priceDate": "2026-10-09",
-   "change1y": -0.8052,
+   "price": 9.7351,
+   "priceDate": "2026-10-16",
+   "change1y": -0.8026,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.113
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.107
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.13
+     "amount": 0.107
     },
     {
      "exDate": "2026-09-24",
@@ -10580,10 +10652,14 @@
   },
   "RDTE": {
    "currency": "USD",
-   "price": 26.12,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1938,
+   "price": 25.13,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2298,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.148
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.102
@@ -10791,26 +10867,26 @@
     {
      "exDate": "2025-10-16",
      "amount": 0.227
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.225
     }
    ]
   },
   "RDYY": {
    "currency": "USD",
-   "price": 15.59,
-   "priceDate": "2026-10-09",
-   "change1y": -0.6261,
+   "price": 15.12,
+   "priceDate": "2026-10-16",
+   "change1y": -0.6228,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.171
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.16
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.156
+     "amount": 0.16
     },
     {
      "exDate": "2026-09-24",
@@ -11016,10 +11092,14 @@
   },
   "RQI": {
    "currency": "USD",
-   "price": 11.23,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0673,
+   "price": 11.2,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0887,
    "distributions": [
+    {
+     "exDate": "2026-10-13",
+     "amount": 0.09
+    },
     {
      "exDate": "2026-09-08",
      "amount": 0.09
@@ -11067,18 +11147,14 @@
     {
      "exDate": "2025-11-12",
      "amount": 0.08
-    },
-    {
-     "exDate": "2025-10-14",
-     "amount": 0.08
     }
    ]
   },
   "RYLD": {
    "currency": "USD",
-   "price": 15.57,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0422,
+   "price": 15.19,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0104,
    "distributions": [
     {
      "exDate": "2026-09-21",
@@ -11132,9 +11208,9 @@
   },
   "SLG": {
    "currency": "USD",
-   "price": 48.41,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1225,
+   "price": 47,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1063,
    "distributions": [
     {
      "exDate": "2026-09-30",
@@ -11160,10 +11236,14 @@
   },
   "SLTY": {
    "currency": "USD",
-   "price": 19.996,
-   "priceDate": "2026-10-09",
-   "change1y": -0.5032,
+   "price": 19.563,
+   "priceDate": "2026-10-16",
+   "change1y": -0.5031,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 0.213
+    },
     {
      "exDate": "2026-10-07",
      "amount": 0.216
@@ -11371,23 +11451,19 @@
     {
      "exDate": "2025-10-22",
      "amount": 0.626
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.461
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.609
     }
    ]
   },
   "SMCY": {
    "currency": "USD",
-   "price": 5.34,
-   "priceDate": "2026-10-09",
-   "change1y": -0.6698,
+   "price": 4,
+   "priceDate": "2026-10-16",
+   "change1y": -0.7401,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.059
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.081
@@ -11600,17 +11676,21 @@
   },
   "SNOY": {
    "currency": "USD",
-   "price": 11.79,
-   "priceDate": "2026-10-09",
-   "change1y": -0.2309,
+   "price": 9.95,
+   "priceDate": "2026-10-16",
+   "change1y": -0.3313,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.138
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.098
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.11
+     "amount": 0.098
     },
     {
      "exDate": "2026-09-24",
@@ -11816,9 +11896,9 @@
   },
   "SPHD": {
    "currency": "USD",
-   "price": 48.82,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0148,
+   "price": 50.61,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0418,
    "distributions": [
     {
      "exDate": "2026-09-21",
@@ -11872,9 +11952,9 @@
   },
   "SPYI": {
    "currency": "USD",
-   "price": 54.09,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0513,
+   "price": 53.35,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0218,
    "distributions": [
     {
      "exDate": "2026-09-16",
@@ -11928,9 +12008,9 @@
   },
   "SRET": {
    "currency": "USD",
-   "price": 19.37,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0848,
+   "price": 19.581,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0928,
    "distributions": [
     {
      "exDate": "2026-10-05",
@@ -11984,9 +12064,9 @@
   },
   "STAG": {
    "currency": "USD",
-   "price": 36.01,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0144,
+   "price": 35.83,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0616,
    "distributions": [
     {
      "exDate": "2026-09-30",
@@ -12016,9 +12096,9 @@
   },
   "SVOL": {
    "currency": "USD",
-   "price": 16.67,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0303,
+   "price": 16.49,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0479,
    "distributions": [
     {
      "exDate": "2026-09-25",
@@ -12072,9 +12152,9 @@
   },
   "TLTW": {
    "currency": "USD",
-   "price": 20.105,
-   "priceDate": "2026-10-09",
-   "change1y": -0.1481,
+   "price": 20.625,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1349,
    "distributions": [
     {
      "exDate": "2026-10-02",
@@ -12128,10 +12208,14 @@
   },
   "TRIN": {
    "currency": "USD",
-   "price": 17.1,
-   "priceDate": "2026-10-09",
-   "change1y": 0.1842,
+   "price": 16.09,
+   "priceDate": "2026-10-16",
+   "change1y": 0.0879,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.17
+    },
     {
      "exDate": "2026-09-10",
      "amount": 0.17
@@ -12176,17 +12260,21 @@
   },
   "TSLY": {
    "currency": "USD",
-   "price": 22.45,
-   "priceDate": "2026-10-09",
-   "change1y": -0.4436,
+   "price": 20.77,
+   "priceDate": "2026-10-16",
+   "change1y": -0.5043,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.206
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.219
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.23
+     "amount": 0.219
     },
     {
      "exDate": "2026-09-24",
@@ -12392,9 +12480,9 @@
   },
   "UDR": {
    "currency": "USD",
-   "price": 34.12,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0445,
+   "price": 34.26,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0507,
    "distributions": [
     {
      "exDate": "2026-09-15",
@@ -12415,19 +12503,19 @@
     {
      "exDate": "2026-01-12",
      "amount": 0.43
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.43
     }
    ]
   },
   "ULTY": {
    "currency": "USD",
-   "price": 25.52,
-   "priceDate": "2026-10-09",
-   "change1y": -0.5194,
+   "price": 23.59,
+   "priceDate": "2026-10-16",
+   "change1y": -0.5419,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 0.296
+    },
     {
      "exDate": "2026-10-07",
      "amount": 0.302
@@ -12631,22 +12719,14 @@
     {
      "exDate": "2025-10-22",
      "amount": 0.9
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.91
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.9
     }
    ]
   },
   "UTG": {
    "currency": "USD",
-   "price": 36.39,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0972,
+   "price": 35.08,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1261,
    "distributions": [
     {
      "exDate": "2026-09-17",
@@ -12700,17 +12780,21 @@
   },
   "WNTR": {
    "currency": "USD",
-   "price": 15.08,
-   "priceDate": "2026-10-09",
-   "change1y": -0.5051,
+   "price": 16.2,
+   "priceDate": "2026-10-16",
+   "change1y": -0.4662,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.178
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.184
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.193
+     "amount": 0.184
     },
     {
      "exDate": "2026-09-24",
@@ -12916,10 +13000,14 @@
   },
   "XDTE": {
    "currency": "USD",
-   "price": 38.71,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0975,
+   "price": 37.8,
+   "priceDate": "2026-10-16",
+   "change1y": -0.1287,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.144
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.111
@@ -13127,26 +13215,26 @@
     {
      "exDate": "2025-10-16",
      "amount": 0.212
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.212
     }
    ]
   },
   "XOMO": {
    "currency": "USD",
-   "price": 10.99,
-   "priceDate": "2026-10-09",
-   "change1y": -0.0493,
+   "price": 11.48,
+   "priceDate": "2026-10-16",
+   "change1y": -0.0154,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.056
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.064
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.054
+     "amount": 0.064
     },
     {
      "exDate": "2026-09-24",
@@ -13352,9 +13440,9 @@
   },
   "XYLD": {
    "currency": "USD",
-   "price": 41.93,
-   "priceDate": "2026-10-09",
-   "change1y": 0.0768,
+   "price": 41.8,
+   "priceDate": "2026-10-16",
+   "change1y": 0.051,
    "distributions": [
     {
      "exDate": "2026-09-21",
@@ -13408,17 +13496,21 @@
   },
   "YBIT": {
    "currency": "USD",
-   "price": 20.32,
-   "priceDate": "2026-10-09",
-   "change1y": -0.5832,
+   "price": 20.15,
+   "priceDate": "2026-10-16",
+   "change1y": -0.5389,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.159
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.166
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.163
+     "amount": 0.166
     },
     {
      "exDate": "2026-09-24",
@@ -13624,10 +13716,14 @@
   },
   "YMAG": {
    "currency": "USD",
-   "price": 11.44,
-   "priceDate": "2026-10-09",
-   "change1y": -0.2378,
+   "price": 11.04,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2708,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 0.077
+    },
     {
      "exDate": "2026-10-07",
      "amount": 0.086
@@ -13831,23 +13927,19 @@
     {
      "exDate": "2025-10-22",
      "amount": 0.217
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.201
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.209
     }
    ]
   },
   "YMAX": {
    "currency": "USD",
-   "price": 7.61,
-   "priceDate": "2026-10-09",
-   "change1y": -0.3878,
+   "price": 7.22,
+   "priceDate": "2026-10-16",
+   "change1y": -0.4149,
    "distributions": [
+    {
+     "exDate": "2026-10-14",
+     "amount": 0.059
+    },
     {
      "exDate": "2026-10-07",
      "amount": 0.06
@@ -14051,30 +14143,26 @@
     {
      "exDate": "2025-10-22",
      "amount": 0.157
-    },
-    {
-     "exDate": "2025-10-15",
-     "amount": 0.174
-    },
-    {
-     "exDate": "2025-10-09",
-     "amount": 0.147
     }
    ]
   },
   "YQQQ": {
    "currency": "USD",
-   "price": 9.3,
-   "priceDate": "2026-10-09",
-   "change1y": -0.278,
+   "price": 9.592,
+   "priceDate": "2026-10-16",
+   "change1y": -0.2465,
    "distributions": [
+    {
+     "exDate": "2026-10-15",
+     "amount": 0.035
+    },
     {
      "exDate": "2026-10-08",
      "amount": 0.034
     },
     {
      "exDate": "2026-10-01",
-     "amount": 0.037
+     "amount": 0.034
     },
     {
      "exDate": "2026-09-24",
